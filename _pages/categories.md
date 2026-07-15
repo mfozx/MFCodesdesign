@@ -1,6 +1,6 @@
 ---
 layout: categories
-title: Anasayfa
+title: Kategoriler
 permalink: /categories
 ---
-selamlar
+
