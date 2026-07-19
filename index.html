@@ -1,61 +1,170 @@
 ---
-layout: default
-title: Home
+layout: null
+title: MFCodes
+permalink: /
 ---
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#00eaff">
+<meta name="description" content="MFCodes — AI/ML, kod ve teknoloji üzerine kişisel blog.">
+<title>MFCodes | AI/ML // Kod // Teknoloji</title>
+<link rel="icon" href="{{ site.baseurl }}/assets/images/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+<style>
+:root {
+    --bg: #050705;
+    --neon: #00eaff;
+    --neon-dim: rgba(0, 234, 255, 0.35);
+    --neon-glow: rgba(0, 234, 255, 0.12);
+    --text: #c8d6e5;
+    --muted: #4a5a6a;
+    --border: #16222e;
+    --font-display: 'Share Tech Mono', monospace;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+    background: var(--bg);
+    background-image:
+        linear-gradient(rgba(0, 234, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 234, 255, 0.025) 1px, transparent 1px);
+    background-size: 44px 44px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+.scanlines {
+    position: fixed; inset: 0; pointer-events: none; z-index: 2000;
+    background: repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0,0,0,.08) 3px, transparent 4px);
+    mix-blend-mode: overlay;
+}
+.landing { text-align: center; padding: 2rem 1rem; max-width: 860px; width: 100%; }
+.logo-title {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    letter-spacing: .3em;
+    color: var(--neon);
+    text-transform: uppercase;
+    margin-bottom: .8rem;
+    animation: glowpulse 3.5s ease-in-out infinite;
+}
+@keyframes glowpulse {
+    0%,100% { text-shadow: 0 0 8px var(--neon-dim), 0 0 26px var(--neon-glow); }
+    50% { text-shadow: 0 0 16px var(--neon-dim), 0 0 44px var(--neon-glow); }
+}
+.tagline {
+    font-family: var(--font-display);
+    color: var(--muted);
+    letter-spacing: .18em;
+    font-size: 1.02rem;
+    margin-bottom: 2.6rem;
+    white-space: nowrap;
+}
+.tagline .typed {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: bottom;
+    white-space: nowrap;
+    animation: typing 2.4s steps(26, end) both;
+}
+@keyframes typing { from { max-width: 0; } to { max-width: 30ch; } }
+.tagline .block-cursor {
+    display: inline-block;
+    width: .55em; height: 1.05em;
+    background: var(--neon);
+    vertical-align: text-bottom;
+    margin-left: 2px;
+    animation: blink 1.1s step-end infinite;
+}
+@keyframes blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
+.linkrow { margin-bottom: 2.8rem; font-size: .95rem; letter-spacing: .06em; }
+.linkrow a { color: var(--neon); text-decoration: none; font-weight: 700; padding: 0 1rem; transition: text-shadow .2s, color .2s; }
+.linkrow a:hover { color: #7ff4ff; text-shadow: 0 0 10px var(--neon-dim); }
+.linkrow .sep { color: var(--muted); }
+.tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-bottom: 3rem; }
+.tiles a {
+    display: inline-flex; align-items: center; gap: 9px;
+    color: var(--text); text-decoration: none;
+    border: 1px solid var(--border);
+    background: rgba(10, 16, 22, .6);
+    padding: 11px 22px; border-radius: 3px;
+    font-size: .92rem; letter-spacing: .04em;
+    transition: border-color .2s, box-shadow .2s, color .2s, transform .2s;
+}
+.tiles a i { color: var(--neon); }
+.tiles a:hover {
+    border-color: var(--neon);
+    color: var(--neon);
+    box-shadow: 0 0 18px var(--neon-glow), inset 0 0 12px rgba(0,234,255,.04);
+    transform: translateY(-2px);
+}
+.divider { width: 220px; height: 1px; background: linear-gradient(90deg, transparent, var(--neon-dim), transparent); margin: 0 auto 2.2rem; }
+.stack { color: var(--muted); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 3rem; }
+.stack i { color: var(--neon); margin: 0 4px 0 14px; }
+.foot { color: var(--muted); font-size: .75rem; letter-spacing: .08em; }
+.foot a { color: var(--muted); text-decoration: none; }
+.foot a:hover { color: var(--neon); }
+.foot .status { color: var(--neon); font-family: var(--font-display); letter-spacing: .2em; margin-bottom: .6rem; }
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--neon); margin-right: 6px; animation: statuspulse 2s ease-in-out infinite; }
+@keyframes statuspulse { 0%,100% { box-shadow: 0 0 4px var(--neon); opacity: 1; } 50% { box-shadow: 0 0 12px var(--neon); opacity: .55; } }
+@media (max-width: 600px) {
+    .logo-title { font-size: 2rem; letter-spacing: .2em; }
+    .tagline { font-size: .85rem; }
+    .linkrow a { padding: 0 .5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .logo-title, .block-cursor, .status-dot { animation: none; }
+    .typed { animation: none; max-width: none; }
+    .scanlines { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="scanlines" aria-hidden="true"></div>
 
-{% if page.url == "/" %}
+<main class="landing">
 
-<!-- Featured
-================================================== -->
-<section class="featured-posts">
-    <div class="section-title">
-        <h2><span>Featured</span></h2>
-    </div>
-    <div class="row">
+    <h1 class="logo-title">MFCodes</h1>
 
-    {% for post in site.posts %}
+    <p class="tagline"><span class="typed">ai/ml // kod // teknoloji</span><span class="block-cursor"></span></p>
 
-        {% if post.featured == true %}
+    <nav class="linkrow">
+        <a href="{{ site.baseurl }}/blog/">blog/yazılar</a><span class="sep">|</span>
+        <a href="https://github.com/mfozx" target="_blank" rel="noopener">github</a><span class="sep">|</span>
+        <a href="mailto:mfurknozz@gmail.com">email</a><span class="sep">|</span>
+        <a href="{{ site.baseurl }}/contact">contact</a>
+    </nav>
 
-            {% include featuredbox.html %}
+    <nav class="tiles">
+        <a href="{{ site.baseurl }}/blog/"><i class="fas fa-rss"></i> Blog</a>
+        <a href="{{ site.baseurl }}/categories"><i class="fas fa-folder-open"></i> Kategoriler</a>
+        <a href="{{ site.baseurl }}/about"><i class="fas fa-user"></i> Hakkımda</a>
+        <a href="{{ site.baseurl }}/contact"><i class="fas fa-terminal"></i> İletişim</a>
+    </nav>
 
-        {% endif %}
+    <div class="divider"></div>
 
-    {% endfor %}
+    <p class="stack">Yazdığım konular:<i class="fas fa-robot"></i>Yapay Zeka<i class="fas fa-code"></i>Kod<i class="fas fa-microchip"></i>Teknoloji</p>
 
-    </div>
-</section>
+    <footer class="foot">
+        <p class="status"><span class="status-dot"></span>SYSTEM ONLINE</p>
+        <p>© {{ site.time | date: "%Y" }} MFCodes | All rights reserved.</p>
+    </footer>
 
-{% endif %}
+</main>
 
-<!-- Posts Index
-================================================== -->
-<section class="recent-posts">
-
-    <div class="section-title">
-
-        <h2><span>All Stories</span></h2>
-
-    </div>
-
-    <div class="row listrecent">
-
-        {% for post in paginator.posts %}
-
-        {% include postbox.html %}
-
-        {% endfor %}
-
-    </div>
-
-</section>
-
-<!-- Pagination
-================================================== -->
-<div class="bottompagination">
-<div class="pointerup"><i class="fa fa-caret-up"></i></div>
-<span class="navigation" role="navigation">
-    {% include pagination.html %}
-</span>
-</div>
-
+</body>
+</html>

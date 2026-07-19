@@ -19,8 +19,8 @@ authors:
     display_name: MFOz
     gravatar: e56154546cf4be74e393c62d1ae9f9d4
     email:
-    web: 
-    twitter: 
+    web:
+    twitter:
     description: ""
 
 # Plugins
@@ -30,7 +30,7 @@ plugins:
   - jekyll-feed
   - jekyll-seo-tag
   - jekyll-archives
-    
+
 # Archives
 jekyll-archives:
   enabled:
@@ -38,11 +38,11 @@ jekyll-archives:
   layout: archive
   permalinks:
     category: '/category/:name/'
-    
-# Pagination 
+
+# Pagination
 paginate: 6
-paginate_path: /page:num/
-    
+paginate_path: /blog/page:num/
+
 # Other
 markdown: kramdown
 
