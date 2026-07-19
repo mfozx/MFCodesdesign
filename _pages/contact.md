@@ -3,7 +3,6 @@ layout: page
 title: Iletisim
 permalink: /contact
 ---
-
 <div class="terminal-window">
     <div class="terminal-titlebar">
         <span class="t-dot t-red"></span><span class="t-dot t-yellow"></span><span class="t-dot t-green"></span>
@@ -22,6 +21,5 @@ permalink: /contact
             <textarea id="t-msg" name="message" rows="6" required></textarea>
             <button type="submit" class="transmit-btn">&gt; TRANSMIT DATA</button>
         </form>
-        <p class="t-line t-muted">// dogrudan e-posta: <a href="mailto:mfurknozz@gmail.com">mfurknozz@gmail.com</a></p>
     </div>
 </div>
