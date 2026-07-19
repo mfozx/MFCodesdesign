@@ -128,6 +128,21 @@ img {
     font-family: var(--font-display);
 }
 
+.mediumnavigation .navbar-brand {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+    margin-right: 1rem;
+}
+
+.mediumnavigation .navbar-logo {
+    display: block;
+    height: 36px;
+    width: auto;
+    max-width: min(220px, 55vw);
+    object-fit: contain;
+    filter: drop-shadow(0 0 8px rgba(0, 234, 255, 0.35));
+}
+
 .mediumnavigation .navbar-brand.brand-text {
     font-family: var(--font-display);
     color: var(--neon);
