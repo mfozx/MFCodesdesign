@@ -754,7 +754,7 @@ ul.tags li a:hover {
     box-shadow: 0 0 12px var(--neon-glow);
 }
 
-.terminal-form input:invalid:not(:placeholder-shown) {
+.terminal-form input:user-invalid {
     border-color: var(--danger);
 }
 
