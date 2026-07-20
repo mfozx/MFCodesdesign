@@ -1,0 +1,52 @@
+---
+layout: null
+title: Stars History
+permalink: /projects/stars-history/
+---
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#00eaff">
+<meta name="description" content="Stars History — etkileşimli planetaryum: yıldızlar, takımyıldızlar, mitolojiler ve doğum haritası.">
+<title>Stars History | MFCodes</title>
+<link rel="icon" href="{{ site.baseurl }}/assets/images/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050705;
+  --neon: #00eaff;
+  --neon-dim: rgba(0, 234, 255, 0.35);
+  --muted: #4a5a6a;
+  --border: #16222e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); }
+body { display: flex; flex-direction: column; font-family: 'Share Tech Mono', monospace; }
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  background: rgba(5, 7, 5, .95);
+}
+header a {
+  color: var(--neon); text-decoration: none; letter-spacing: .15em; font-size: .85rem;
+}
+header a:hover { text-shadow: 0 0 10px var(--neon-dim); }
+header .title { color: var(--muted); letter-spacing: .25em; font-size: .8rem; text-transform: uppercase; }
+header .title b { color: var(--neon); }
+iframe { flex: 1; width: 100%; border: 0; display: block; }
+</style>
+</head>
+<body>
+<header>
+  <a href="{{ site.baseurl }}/">&larr; MFCODES</a>
+  <span class="title"><b>&#10022;</b> STARS HISTORY &mdash; ETKİLEŞİMLİ PLANETARYUM</span>
+  <a href="https://github.com/mfozx/stars-history" target="_blank" rel="noopener">github &nearr;</a>
+</header>
+<iframe src="https://mfozx.github.io/stars-history/" title="Stars History planetaryum" allow="fullscreen"></iframe>
+</body>
+</html>
