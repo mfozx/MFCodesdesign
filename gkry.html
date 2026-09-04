@@ -118,7 +118,7 @@ button{font-family:inherit}
 .row.on{background:var(--accent-soft)}
 .row .rlogo{width:26px;height:26px;border-radius:6px;background:var(--panel-2);flex:none;object-fit:cover;margin-top:2px}
 .row .rbody{min-width:0;flex:1}
-.row .rtitle{font-size:13.5px;font-weight:500;line-height:1.4}
+.row .rtitle{font-size:13.5px;font-weight:500;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .row .rsub{font-size:11.5px;color:var(--faint);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row .rmeta{display:flex;align-items:center;gap:7px;margin-top:5px;flex-wrap:wrap}
 .tag{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:5px;letter-spacing:.03em;color:#fff}
@@ -289,6 +289,7 @@ body.gate-locked .app{display:none}
 #gatePass:focus{outline:2px solid var(--accent);outline-offset:1px}
 .gateerr{color:var(--crit);font-size:12px;margin-top:12px;min-height:16px;font-family:"IBM Plex Mono",monospace}
 .mbackdrop{display:none}
+.railbackdrop{display:none}
 .setmodal{position:fixed;inset:0;z-index:98;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;background:rgba(0,0,0,.55)}
 .setmodal.open{display:flex}
 .setbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:520px;width:100%;padding:0}
@@ -314,11 +315,60 @@ body.gate-locked .app{display:none}
   .mbackdrop.open{display:block}
 }
 @media(max-width:720px){
-  .isb{position:fixed;left:0;top:0;z-index:96;transform:translateX(-100%);transition:transform .2s;width:200px;align-items:flex-start;padding:16px 10px}
+  .app{grid-template-columns:1fr}
+  .isb{position:fixed;left:0;top:0;z-index:96;transform:translateX(-100%);transition:transform .2s;width:220px;height:100vh;align-items:flex-start;padding:16px 10px;overflow-y:auto}
   .isb .itm{width:100%;flex-direction:row;justify-content:flex-start;gap:10px;padding:10px 8px}
+  .isb .foot{align-items:flex-start;width:100%}
   body.rail-open .isb{transform:none}
-  .menu-btn{display:inline-flex!important}
-  .searchbig{order:3;flex-basis:100%}
+  .railbackdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:95}
+  body.rail-open .railbackdrop{display:block}
+  .menu-btn{display:inline-flex!important;position:relative;z-index:97}
+
+  .topbar{padding:10px 12px;gap:8px}
+  .searchbig{order:3;flex-basis:100%;min-width:0}
+  .qf{width:100%}
+  .qf .dt,.qf .sel{flex:1 1 auto;min-width:0}
+
+  .view{padding:14px 12px 40px}
+  .tiles{grid-template-columns:repeat(2,1fr);gap:8px}
+  .tile{padding:11px 12px;gap:9px}
+  .tile .n{font-size:17px}
+  .tile .l{font-size:9.5px}
+
+  .grid3{gap:12px}
+  .mapgrid{grid-template-columns:repeat(2,1fr)}
+  .factgrid{grid-template-columns:1fr 1fr;gap:12px 14px}
+  .catgrid{grid-template-columns:1fr}
+  .donutwrap{flex-wrap:wrap}
+  .wxrow{flex-direction:column;align-items:flex-start;gap:12px}
+  .wxdays{width:100%;justify-content:space-between;gap:6px}
+  .wxday{min-width:0;flex:1;padding:6px 4px}
+
+  .profhead{flex-wrap:wrap}
+  .profhead .leader{margin-left:0;flex-basis:100%}
+
+  .brief{padding:20px 14px}
+  .briefcover h1{font-size:19px}
+  .briefmeta{flex-direction:column;gap:5px;align-items:center}
+
+  .setbox{max-width:none;width:calc(100vw - 32px)}
+  .gatebox{max-width:none;width:calc(100vw - 48px)}
+  .setrow{flex-direction:column}
+
+  .chiprow{gap:5px}
+  .chip2{padding:5px 10px;font-size:11.5px}
+
+  .row{gap:9px;padding:10px 4px}
+  .row .rlogo{width:22px;height:22px}
+  .rtitle{font-size:13px}
+
+  .dbody,.mbody{padding:14px}
+  .barrow{grid-template-columns:96px 1fr 30px}
+}
+@media(max-width:420px){
+  .tiles{grid-template-columns:1fr 1fr}
+  .factgrid{grid-template-columns:1fr}
+  .mapgrid{grid-template-columns:1fr 1fr}
 }
 .menu-btn{display:none;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);width:36px;height:36px;border-radius:9px;cursor:pointer;font-size:16px;flex:none}
 </style>
@@ -344,6 +394,7 @@ body.gate-locked .app{display:none}
   </div>
 </div>
 <div class="mbackdrop" id="mbackdrop"></div>
+<div class="railbackdrop" id="railBackdrop"></div>
 <div class="setmodal" id="setModal">
   <div class="setbox">
     <div class="sethead"><h3>⚙ Ayarlar — Kaynak Ekle</h3><button class="dclose" id="setClose" aria-label="Kapat">×</button></div>
@@ -1204,6 +1255,7 @@ $("#dashClear").addEventListener('click',()=>loadDashboard());
 $("#refreshBtn").addEventListener('click',()=>currentView==='dashboard'?loadDashboard():(searching?runSearch():load()));
 $("#printBtn").addEventListener('click',()=>window.print());
 $("#menuBtn").addEventListener('click',()=>document.body.classList.toggle('rail-open'));
+$("#railBackdrop").addEventListener('click',()=>document.body.classList.remove('rail-open'));
 $("#bellBtn").addEventListener('click',()=>{ switchView('dashboard'); document.getElementById('dashRows').scrollIntoView({behavior:'smooth'}); });
 function toggleTheme(){ const r=document.documentElement,c=r.getAttribute('data-theme'),d=c?c==='dark':true; r.setAttribute('data-theme', d?'light':'dark'); }
 $("#themeBtn").addEventListener('click',toggleTheme);
