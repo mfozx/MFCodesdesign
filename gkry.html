@@ -172,6 +172,18 @@ button{font-family:inherit}
 
 /* ---------- Haberler view (kategori çipleri + eski akış) ---------- */
 .chiprow{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.catcard{display:flex;align-items:center;gap:12px;background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--cc,var(--line));border-radius:10px;padding:13px 14px;cursor:pointer;text-align:left}
+.catcard:hover{border-color:var(--accent)}
+.catcard .cic{font-size:20px;flex:none}
+.catcard .cn{font-size:13.5px;font-weight:500;line-height:1.3}
+.catcard .ccnt{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);margin-top:2px}
+.srcrow2{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line-2)}
+.srcrow2:last-child{border-bottom:none}
+.srcrow2 img{width:20px;height:20px;border-radius:5px;flex:none}
+.srcrow2 .sn{flex:1;font-size:13px}
+.srcrow2 .st2{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--faint);background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+.srcrow2 .sc{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted)}
 .chip2{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 13px;cursor:pointer;font-size:12px;color:var(--muted)}
 .chip2 .dot{width:8px;height:8px;border-radius:50%}
 .chip2[aria-current="true"]{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent)}
@@ -409,6 +421,27 @@ body.gate-locked .app{display:none}
       <div class="status" id="status"></div>
       <div class="rows" id="feed"></div>
     </div>
+
+    <!-- ================= KATEGORİLER ================= -->
+    <div class="view" id="view-kategoriler">
+      <div class="panel">
+        <h4>14 KATEGORİ <span style="text-transform:none;font-weight:400;color:var(--faint)">— birine tıklayınca o kategorinin haberlerine gider</span></h4>
+        <div class="catgrid" id="catGrid"></div>
+      </div>
+    </div>
+
+    <!-- ================= KAYNAKLAR ================= -->
+    <div class="view" id="view-kaynaklar">
+      <div class="panel">
+        <h4>TAKİP EDİLEN KAYNAKLAR</h4>
+        <p style="font-size:12px;color:var(--muted);margin:0 0 16px">Bu pano aşağıdaki kaynakları doğrudan (RSS/Telegram/YouTube) ve Google Haberler üzerinden (TR+EN+Rumca) tarıyor. Sayılar bugünkü canlı akıştaki madde sayısı.</p>
+        <div id="srcList2"></div>
+      </div>
+      <div class="panel">
+        <h4>SEN EKLEDİN</h4>
+        <div id="srcListUser"></div>
+      </div>
+    </div>
   </div>
 
   <aside class="detail" id="detail">
@@ -495,7 +528,7 @@ const THEMES=[
   q:'(Akrotiri OR Dhekelia OR "Andreas Papandreou" OR "Evangelos Florakis" OR "joint exercise" OR "US Cyprus" OR Israel military)'},
 ];
 
-let currentView='dashboard', active='home', searching=false, currentItems=[], dashItems=[], dashStats=null;
+let currentView='dashboard', active='home', searching=false, currentItems=[], dashItems=[], dashStats=null, dashBreakdown=null;
 let currentArticle=null, detailLang='tr', selectedIdx=null;
 
 /* ================= yardımcılar ================= */
@@ -513,20 +546,31 @@ function buildInav(){
   $("#inav").innerHTML = NAVS.map(n=>`<button class="itm" data-v="${n.k}" aria-current="${n.k===currentView}"><span class="ic">${n.ic}</span><span class="lb">${n.name}</span></button>`).join("");
   $("#inav").querySelectorAll('.itm').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.v)));
 }
+function showOnlyView(id){
+  ['view-dashboard','view-haberler','view-kategoriler','view-kaynaklar'].forEach(v=>{
+    $("#"+v).classList.toggle('active', v===id);
+  });
+}
 function switchView(v){
   currentView=v;
   $("#inav").querySelectorAll('.itm').forEach(b=>b.setAttribute('aria-current', b.dataset.v===v));
   document.body.classList.remove('rail-open');
   if(v==='dashboard'||v==='harita'||v==='timeline'){
-    $("#view-dashboard").classList.add('active'); $("#view-haberler").classList.remove('active');
+    showOnlyView('view-dashboard');
     if(!dashStats) loadDashboard();
     if(v==='harita') document.getElementById('mapgrid').scrollIntoView({behavior:'smooth',block:'center'});
     if(v==='timeline') document.getElementById('timeline').scrollIntoView({behavior:'smooth',block:'center'});
-  } else if(v==='haberler'||v==='kategoriler'||v==='kaynaklar'){
-    $("#view-haberler").classList.add('active'); $("#view-dashboard").classList.remove('active');
+  } else if(v==='haberler'){
+    showOnlyView('view-haberler');
     if(!currentItems.length) load();
+  } else if(v==='kategoriler'){
+    showOnlyView('view-kategoriler');
+    if(!dashStats) loadDashboard().then(renderCatGrid); else renderCatGrid();
+  } else if(v==='kaynaklar'){
+    showOnlyView('view-kaynaklar');
+    if(!dashStats) loadDashboard().then(renderSrcLists); else renderSrcLists();
   } else if(v==='arama'){
-    $("#view-haberler").classList.add('active'); $("#view-dashboard").classList.remove('active');
+    showOnlyView('view-haberler');
     $("#q").focus();
   } else if(v==='raporlar'){
     window.print();
@@ -587,7 +631,7 @@ async function loadDashboard(){
     const r=await apiFetch(API_BASE+'/api/feed?cat=home'+sourcesParam(),{cache:'no-store'});
     const j=await r.json();
     if(!j.ok) throw new Error(j.error||'bilinmeyen hata');
-    dashItems=j.items; dashStats=j.stats||{};
+    dashItems=j.items; dashStats=j.stats||{}; dashBreakdown=j.breakdown||[];
     renderTiles(j.stats);
     $("#dashStatus").textContent = `${dashItems.length} haber · son güncelleme ${fmtHM(Date.parse(j.updatedAt))}`;
     $("#dashRows").innerHTML = dashItems.slice(0,10).map((n,i)=>newsRow(n,i,{list:'dash'})).join("") || `<div class="empty">Seçilen filtrelere uygun haber bulunamadı.</div>`;
@@ -697,6 +741,46 @@ function renderCatChart(breakdown){
       <span class="bv">${b.count}</span>
     </button>`).join("");
   el.querySelectorAll('.barrow').forEach(b=>b.addEventListener('click',()=>{ active=b.dataset.k; searching=false; switchView('haberler'); syncChips(); load(); }));
+}
+
+/* ================= Kategoriler sayfası ================= */
+function renderCatGrid(){
+  const counts={}; (dashBreakdown||[]).forEach(b=>counts[b.key]=b.count);
+  $("#catGrid").innerHTML = CATS.filter(c=>c.k!=='home').map(c=>`<button class="catcard" style="--cc:${catColor(c.k)}" data-k="${c.k}">
+      <span class="cic">${c.ic}</span>
+      <div><div class="cn">${esc(c.name)}</div><div class="ccnt">${counts[c.k]!==undefined?counts[c.k]+' haber (bugün)':'—'}</div></div>
+    </button>`).join("");
+  $("#catGrid").querySelectorAll('.catcard').forEach(b=>b.addEventListener('click',()=>{
+    active=b.dataset.k; searching=false; $("#q").value=""; $("#after").value=""; $("#before").value="";
+    switchView('haberler'); syncChips(); load();
+  }));
+}
+
+/* ================= Kaynaklar sayfası ================= */
+const CURATED_LIST=[
+ {name:'Philenews',domain:'philenews.com',type:'RSS'},{name:'Cyprus Mail',domain:'cyprus-mail.com',type:'RSS'},
+ {name:'Politis',domain:'politis.com.cy',type:'RSS'},{name:'Sigma Live',domain:'sigmalive.com',type:'RSS'},
+ {name:'Ant1 Live',domain:'ant1live.com',type:'RSS'},{name:'AlphaNews',domain:'alphanews.live',type:'RSS'},
+ {name:'In-Cyprus',domain:'in-cyprus.philenews.com',type:'RSS'},{name:'Cyprus Times',domain:'cyprustimes.com',type:'RSS'},
+ {name:'Haber Kıbrıs',domain:'haberkibris.com',type:'RSS'},{name:'Kıbrıs Gazetesi',domain:'kibrisgazetesi.com',type:'RSS'},
+ {name:'Financial Mirror',domain:'financialmirror.com',type:'RSS'},{name:'Famagusta Gazette',domain:'famagusta-gazette.com',type:'RSS'},
+ {name:'Euractiv',domain:'euractiv.com',type:'RSS'},{name:'Anadolu Ajansı',domain:'aa.com.tr',type:'RSS'},
+ {name:'TRT Haber',domain:'trthaber.com',type:'RSS'},
+ {name:'@haberkibriscom',domain:null,type:'TG'},{name:'@kibrispostasi',domain:null,type:'TG'},
+ {name:'@cyprus_mail',domain:null,type:'TG'},{name:'@askeriistihbarat',domain:null,type:'TG'},
+];
+function renderSrcLists(){
+  const counts={}; (dashItems||[]).forEach(it=>counts[it.source]=(counts[it.source]||0)+1);
+  $("#srcList2").innerHTML = CURATED_LIST.map(s=>{
+    const key = s.type==='TG' ? s.name.replace('@','') : s.name;
+    const c = counts[s.name] ?? counts[key] ?? 0;
+    const logo = s.domain ? favicon(s.domain) : null;
+    return `<div class="srcrow2">${logo?`<img src="${esc(logo)}" alt="">`:'<span style="width:20px"></span>'}<span class="sn">${esc(s.name)}</span><span class="st2">${s.type}</span><span class="sc">${c}</span></div>`;
+  }).join("") + `<div class="srcrow2"><span style="width:20px"></span><span class="sn">Google Haberler (TR+EN+Rumca agregasyonu)</span><span class="st2">RSS</span><span class="sc">—</span></div>`;
+
+  const userList=getSources();
+  $("#srcListUser").innerHTML = userList.length ? userList.map(s=>`<div class="srcrow2"><span style="width:20px"></span><span class="sn">${esc(s)}</span><span class="st2">Özel</span></div>`).join("")
+    : '<div class="empty">Ayarlar\'dan henüz kaynak eklemedin.</div>';
 }
 
 function renderSrcDonut(dist){
