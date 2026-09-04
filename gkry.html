@@ -663,7 +663,8 @@ function showOnlyView(id){
     $("#"+v).classList.toggle('active', v===id);
   });
 }
-function switchView(v){
+function switchView(v, opts){
+  opts = opts || {};
   currentView=v;
   $("#inav").querySelectorAll('.itm').forEach(b=>b.setAttribute('aria-current', b.dataset.v===v));
   document.body.classList.remove('rail-open');
@@ -674,7 +675,7 @@ function switchView(v){
     if(v==='timeline') document.getElementById('timeline').scrollIntoView({behavior:'smooth',block:'center'});
   } else if(v==='haberler'){
     showOnlyView('view-haberler');
-    if(!currentItems.length) load();
+    if(!opts.skipLoad && !currentItems.length) load();
   } else if(v==='kategoriler'){
     showOnlyView('view-kategoriler');
     if(!dashStats) loadDashboard().then(renderCatGrid); else renderCatGrid();
@@ -722,7 +723,7 @@ function newsRow(n, idx, opts){
   const logo = favicon(n.sourceDomain);
   const breaking = isBreaking(n);
   return `<article class="row ${selectedIdx===idx && opts.list==='dash'?'':''}" data-idx="${idx}" data-list="${opts.list||'feed'}" style="border-left-color:${catColor(n.cat)}">
-    ${logo?`<img class="rlogo" src="${esc(logo)}" alt="" loading="lazy">`:'<span class="rlogo"></span>'}
+    ${logo?`<img class="rlogo" src="${esc(logo)}" alt="" loading="lazy" onerror="this.outerHTML='&lt;span class=&quot;rlogo&quot;&gt;&lt;/span&gt;'">`:'<span class="rlogo"></span>'}
     <div class="rbody">
       <div class="rtitle">${esc(shown)}</div>
       <div class="rsub">${esc(sub)}</div>
@@ -1072,7 +1073,7 @@ async function load(){
 }
 
 async function runSearch(overrideQ, label){
-  switchView('haberler');
+  switchView('haberler', {skipLoad:true});
   const q=(overrideQ!==undefined?overrideQ:$("#q").value.trim()), after=$("#after").value, before=$("#before").value;
   if(!q && !after && !before){ searching=false; return load(); }
   searching=true;
