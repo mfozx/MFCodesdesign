@@ -233,6 +233,18 @@ button{font-family:inherit}
 }
 
 /* ---------- Mobile ---------- */
+/* ---------- Giriş kapısı ---------- */
+.gate{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);align-items:center;justify-content:center;padding:20px}
+body.gate-locked .gate{display:flex}
+body.gate-locked .app{display:none}
+.gatebox{max-width:340px;width:100%;text-align:center}
+.gateflag{font-size:44px;margin-bottom:10px}
+.gatebox h1{font-size:19px;margin:0 0 8px}
+.gatesub{font-size:12.5px;color:var(--muted);margin:0 0 22px;line-height:1.5}
+#gateForm{display:flex;gap:8px}
+#gatePass{flex:1;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:10px 14px;color:var(--ink);font-family:inherit;font-size:14px}
+#gatePass:focus{outline:2px solid var(--accent);outline-offset:1px}
+.gateerr{color:var(--crit);font-size:12px;margin-top:12px;min-height:16px;font-family:"IBM Plex Mono",monospace}
 .mbackdrop{display:none}
 .setmodal{position:fixed;inset:0;z-index:98;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;background:rgba(0,0,0,.55)}
 .setmodal.open{display:flex}
@@ -270,11 +282,23 @@ button{font-family:inherit}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 </head>
-<body>
+<body class="gate-locked">
 <div class="printbar">
   <h1>GKRY İstihbarat Brifingi</h1>
   <div class="meta" id="printMeta"></div>
   <div class="meta">Açık Kaynak (OSINT) — mfcodes.org/projects/gkry</div>
+</div>
+<div class="gate">
+  <div class="gatebox">
+    <div class="gateflag">🇨🇾</div>
+    <h1>GKRY OSINT Monitor</h1>
+    <p class="gatesub">Bu pano sınırlı erişime açık. Devam etmek için şifreni gir.</p>
+    <form id="gateForm">
+      <input type="password" id="gatePass" placeholder="Şifre" autocomplete="current-password" required>
+      <button type="submit" id="gateBtn" class="gobtn">Giriş</button>
+    </form>
+    <div class="gateerr" id="gateErr"></div>
+  </div>
 </div>
 <div class="mbackdrop" id="mbackdrop"></div>
 <div class="setmodal" id="setModal">
@@ -398,6 +422,38 @@ const esc=s=>String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>
 const API_BASE = (location.protocol==='file:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')
   ? 'http://127.0.0.1:8787'
   : 'https://gkry-intel.mfpl12.workers.dev';
+
+/* ================= Giriş kapısı ================= */
+const AUTH_KEY='gkry-auth-key';
+function getAuthKey(){ try{ return localStorage.getItem(AUTH_KEY)||''; }catch{ return ''; } }
+function setAuthKey(v){ try{ localStorage.setItem(AUTH_KEY, v); }catch{} }
+function clearAuthKey(){ try{ localStorage.removeItem(AUTH_KEY); }catch{} }
+
+async function apiFetch(url, opts){
+  opts = opts || {};
+  const headers = Object.assign({}, opts.headers, { 'x-gkry-auth': getAuthKey() });
+  const r = await fetch(url, Object.assign({}, opts, { headers }));
+  if(r.status===401){ clearAuthKey(); showGate('Şifre yanlış veya süresi doldu, tekrar gir.'); throw new Error('unauthorized'); }
+  return r;
+}
+function dlUrl(u){ return API_BASE+'/api/download?url='+encodeURIComponent(u)+'&auth='+encodeURIComponent(getAuthKey()); }
+
+function showGate(msg){
+  document.body.classList.add('gate-locked');
+  $("#gateErr").textContent = msg||'';
+  $("#gatePass").value='';
+  setTimeout(()=>$("#gatePass").focus(),50);
+}
+function hideGate(){ document.body.classList.remove('gate-locked'); }
+async function tryUnlock(pass){
+  setAuthKey(pass);
+  try{
+    const r = await fetch(API_BASE+'/api/profile',{headers:{'x-gkry-auth':pass},cache:'no-store'});
+    if(r.status===401){ clearAuthKey(); $("#gateErr").textContent='Şifre yanlış.'; return false; }
+    hideGate(); boot();
+    return true;
+  }catch(e){ $("#gateErr").textContent='Bağlanılamadı: '+e.message; return false; }
+}
 
 const CATS=[
  {k:"home",name:"Son Dakika",v:"--c-home",ic:"🔴"},
@@ -528,7 +584,7 @@ async function loadDashboard(){
   $("#dashStatus").textContent='Yükleniyor…';
   $("#dashRows").innerHTML=Array(5).fill('<div class="skel"></div>').join("");
   try{
-    const r=await fetch(API_BASE+'/api/feed?cat=home'+sourcesParam(),{cache:'no-store'});
+    const r=await apiFetch(API_BASE+'/api/feed?cat=home'+sourcesParam(),{cache:'no-store'});
     const j=await r.json();
     if(!j.ok) throw new Error(j.error||'bilinmeyen hata');
     dashItems=j.items; dashStats=j.stats||{};
@@ -560,7 +616,7 @@ async function loadProfile(){
   const el=$("#profilePanel");
   el.innerHTML='<div class="status">Ülke profili yükleniyor…</div>';
   try{
-    const r=await fetch(API_BASE+'/api/profile',{cache:'no-store'});
+    const r=await apiFetch(API_BASE+'/api/profile',{cache:'no-store'});
     const j=await r.json();
     if(!j.ok) throw new Error('profil alınamadı');
     renderProfile(j.profile, j.weather);
@@ -716,7 +772,7 @@ async function load(){
   feed.innerHTML=Array(6).fill('<div class="skel"></div>').join("");
   try{
     const url = API_BASE+'/api/feed?cat='+encodeURIComponent(active)+sourcesParam();
-    const r=await fetch(url,{cache:'no-store'});
+    const r=await apiFetch(url,{cache:'no-store'});
     const j=await r.json();
     if(!j.ok) throw new Error(j.error||'bilinmeyen hata');
     currentItems=j.items;
@@ -741,7 +797,7 @@ async function runSearch(overrideQ, label){
   feed.innerHTML=Array(6).fill('<div class="skel"></div>').join("");
   try{
     const params=new URLSearchParams(); if(q)params.set('q',q); if(after)params.set('after',after); if(before)params.set('before',before);
-    const r=await fetch(API_BASE+'/api/search?'+params.toString(),{cache:'no-store'});
+    const r=await apiFetch(API_BASE+'/api/search?'+params.toString(),{cache:'no-store'});
     const j=await r.json();
     if(!j.ok) throw new Error(j.error||'bilinmeyen hata');
     currentItems=j.items;
@@ -849,7 +905,7 @@ async function openArticle(item){
   openDetail();
   detailShell(`<div class="dtop"><span class="dbadge">Yükleniyor…</span><button class="dclose" id="dclose" aria-label="Kapat">×</button></div><div class="dstatus">Haberin tam metni getiriliyor…</div>`);
   try{
-    const r=await fetch(API_BASE+'/api/article?url='+encodeURIComponent(item.link),{cache:'no-store'});
+    const r=await apiFetch(API_BASE+'/api/article?url='+encodeURIComponent(item.link),{cache:'no-store'});
     const j=await r.json();
     if(!j.ok) throw new Error(j.error||'içerik alınamadı');
     currentArticle=j; currentArticle.__item=item;
@@ -917,10 +973,23 @@ $("#srcAdd").addEventListener('click',()=>{
 $("#srcInput").addEventListener('keydown',e=>{ if(e.key==='Enter') $("#srcAdd").click(); });
 
 /* ================= init ================= */
-buildInav(); buildCatSel(); buildChips();
-switchView('dashboard');
-loadProfile();
-setInterval(()=>{ if(currentView==='dashboard') loadDashboard(); else if(!searching) load(); }, 3*60*1000);
+let booted=false;
+function boot(){
+  if(booted) return; booted=true;
+  buildInav(); buildCatSel(); buildChips();
+  switchView('dashboard');
+  loadProfile();
+  setInterval(()=>{ if(currentView==='dashboard') loadDashboard(); else if(!searching) load(); }, 3*60*1000);
+}
+
+$("#gateForm").addEventListener('submit',(e)=>{
+  e.preventDefault();
+  const btn=$("#gateBtn"); btn.disabled=true; btn.textContent='Kontrol ediliyor…';
+  tryUnlock($("#gatePass").value).finally(()=>{ btn.disabled=false; btn.textContent='Giriş'; });
+});
+
+const savedKey=getAuthKey();
+if(savedKey){ tryUnlock(savedKey); } else { showGate(); }
 </script>
 </body>
 </html>
