@@ -184,6 +184,32 @@ button{font-family:inherit}
 .srcrow2 .sn{flex:1;font-size:13px}
 .srcrow2 .st2{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--faint);background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
 .srcrow2 .sc{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted)}
+
+/* ---------- İşaretleme yıldızı ---------- */
+.markbtn{border:none;background:none;color:var(--line);font-size:17px;cursor:pointer;flex:none;align-self:flex-start;padding:2px;line-height:1}
+.row:hover .markbtn{color:var(--faint)}
+.markbtn.on{color:var(--warn)}
+.markbtn:hover{color:var(--warn)!important}
+
+/* ---------- Brifing dokümanı ---------- */
+.brief{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:36px 40px;max-width:820px;margin:0 auto}
+.briefcover{text-align:center;border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:26px}
+.briefeyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;color:var(--accent-ink);font-weight:600;margin-bottom:10px}
+.briefcover h1{font-size:24px;margin:0 0 14px}
+.briefmeta{display:flex;justify-content:center;gap:22px;flex-wrap:wrap;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted)}
+.briefsec{margin-bottom:26px}
+.briefsech{display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--line-2);color:var(--ink)}
+.briefsq{width:11px;height:11px;border-radius:3px;background:var(--cc);flex:none}
+.briefcnt{font-family:"IBM Plex Mono",monospace;color:var(--faint);font-weight:400;text-transform:none;letter-spacing:0}
+.briefitem{padding:12px 0;border-bottom:1px solid var(--line-2)}
+.briefitem:last-child{border-bottom:none}
+.briefit-title{font-size:14.5px;font-weight:600;line-height:1.4}
+.briefit-orig{font-size:12px;color:var(--faint);font-style:italic;margin-top:3px}
+.briefit-meta{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted);margin-top:5px}
+.briefit-note{background:var(--accent-soft);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;padding:8px 11px;margin-top:8px;font-size:12.5px;color:var(--ink)}
+.briefit-link{margin-top:6px}
+.briefit-link a{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--accent-ink);text-decoration:none;word-break:break-all}
+.briefit-link a:hover{text-decoration:underline}
 .chip2{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 13px;cursor:pointer;font-size:12px;color:var(--muted)}
 .chip2 .dot{width:8px;height:8px;border-radius:50%}
 .chip2[aria-current="true"]{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent)}
@@ -235,13 +261,18 @@ button{font-family:inherit}
 /* ---------- Printbar ---------- */
 .printbar{display:none}
 @media print{
-  .isb,.topbar,.detail{display:none!important}
+  .isb,.topbar,.detail,.brief-toolbar{display:none!important}
   .app{display:block}
-  .view{display:block!important;max-width:none;padding:0}
+  .view{display:none!important}
+  .view.active{display:block!important;max-width:none;padding:0}
   .printbar{display:block;font-family:"IBM Plex Mono",monospace;margin-bottom:16px;color:#000}
   .printbar h1{font-size:20px;margin:0 0 4px}
   body{background:#fff;color:#000}
-  .panel,.row,.tile{border-color:#ccc!important;background:#fff!important;color:#000!important}
+  .panel,.row,.tile,.brief{border-color:#ccc!important;background:#fff!important;color:#000!important;box-shadow:none!important}
+  .briefcover{border-bottom-color:#000!important}
+  .briefit-note{background:#f2f2f2!important;border-left-color:#000!important}
+  .briefsech{color:#000!important;border-bottom-color:#ccc!important}
+  body:has(#view-rapor.active) .printbar{display:none!important}
 }
 
 /* ---------- Mobile ---------- */
@@ -331,6 +362,13 @@ body.gate-locked .app{display:none}
       <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line-2);display:flex;align-items:center;justify-content:space-between">
         <span style="font-size:12.5px;color:var(--muted)">Görünüm teması</span>
         <button class="tbtn" id="themeBtn2">◐ Tema değiştir</button>
+      </div>
+      <div style="margin-top:12px;padding-top:14px;border-top:1px solid var(--line-2)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12.5px;color:var(--muted)">Son dakika bildirimleri</span>
+          <button class="tbtn" id="notifBtn">🔔 Kapalı</button>
+        </div>
+        <p class="sethint" style="margin:8px 0 0">Açarsan, bu sekme açıkken (arka planda da olsa) 30 dakikadan yeni bir haber geldiğinde tarayıcı bildirimi alırsın. Sekmeyi tamamen kapatırsan bildirim gelmez.</p>
       </div>
     </div>
   </div>
@@ -442,6 +480,28 @@ body.gate-locked .app{display:none}
         <div id="srcListUser"></div>
       </div>
     </div>
+
+    <!-- ================= RAPORLAR (özel brifing) ================= -->
+    <div class="view" id="view-rapor">
+      <div class="panel" id="briefEmpty">
+        <div class="empty">Henüz işaretlenmiş haber yok. Herhangi bir haberin sağındaki ★ ikonuna tıklayarak brifinge ekleyebilirsin.</div>
+      </div>
+      <div id="briefWrap" hidden>
+        <div class="panel brief-toolbar" style="display:flex;align-items:center;gap:10px">
+          <button class="gobtn" id="briefPrintBtn">🖨 PDF / Yazdır</button>
+          <button class="gobtn ghost" id="briefClearBtn">Tümünü Kaldır</button>
+          <span style="margin-left:auto;font-size:12px;color:var(--muted)" id="briefCountLabel"></span>
+        </div>
+        <div class="brief" id="briefDoc">
+          <div class="briefcover">
+            <div class="briefeyebrow">AÇIK KAYNAK (OSINT) — ANALİST SEÇKİSİ</div>
+            <h1>GKRY İstihbarat Brifingi</h1>
+            <div class="briefmeta" id="briefMeta"></div>
+          </div>
+          <div id="briefBody"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <aside class="detail" id="detail">
@@ -543,11 +603,12 @@ function isBreaking(it){ return (Date.now()-it.ts) < 30*60*1000; }
 
 /* ================= sidebar ================= */
 function buildInav(){
-  $("#inav").innerHTML = NAVS.map(n=>`<button class="itm" data-v="${n.k}" aria-current="${n.k===currentView}"><span class="ic">${n.ic}</span><span class="lb">${n.name}</span></button>`).join("");
+  $("#inav").innerHTML = NAVS.map(n=>`<button class="itm" data-v="${n.k}" aria-current="${n.k===currentView}" style="position:relative"><span class="ic">${n.ic}</span><span class="lb">${n.name}</span>${n.k==='raporlar'?'<span class="badge" id="markBadge" hidden>0</span>':''}</button>`).join("");
   $("#inav").querySelectorAll('.itm').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.v)));
+  updateMarkBadge();
 }
 function showOnlyView(id){
-  ['view-dashboard','view-haberler','view-kategoriler','view-kaynaklar'].forEach(v=>{
+  ['view-dashboard','view-haberler','view-kategoriler','view-kaynaklar','view-rapor'].forEach(v=>{
     $("#"+v).classList.toggle('active', v===id);
   });
 }
@@ -573,7 +634,8 @@ function switchView(v){
     showOnlyView('view-haberler');
     $("#q").focus();
   } else if(v==='raporlar'){
-    window.print();
+    showOnlyView('view-rapor');
+    renderBrief();
   } else if(v==='ayarlar'){
     openSettings();
   }
@@ -620,6 +682,7 @@ function newsRow(n, idx, opts){
         ${breaking?'<span class="breaking-pill">SON DAKİKA</span>':''}
       </div>
     </div>
+    <button class="markbtn ${isMarked(n.link)?'on':''}" data-mark="${idx}" data-list="${opts.list||'feed'}" title="Brifinge ekle/çıkar">★</button>
   </article>`;
 }
 
@@ -642,6 +705,7 @@ async function loadDashboard(){
     renderEntities(j.stats.entities, j.stats.geo, j.breakdown);
     renderSrcPerf(j.stats.sourcePerf);
     renderBell(dashItems);
+    notifyNewBreaking(dashItems);
     $("#updNote").textContent = 'Güncellendi\n'+fmtHM(Date.parse(j.updatedAt));
   }catch(e){
     $("#dashStatus").className='status err';
@@ -783,6 +847,52 @@ function renderSrcLists(){
     : '<div class="empty">Ayarlar\'dan henüz kaynak eklemedin.</div>';
 }
 
+/* ================= Raporlar (özel brifing) ================= */
+function readNote(link){ try{ return localStorage.getItem(noteKey(link))||''; }catch{ return ''; } }
+function renderBrief(){
+  const marked = getMarked().sort((a,b)=>b.ts-a.ts);
+  $("#briefEmpty").hidden = marked.length>0;
+  $("#briefWrap").hidden = marked.length===0;
+  if(!marked.length) return;
+
+  const now = new Date();
+  const srcCount = new Set(marked.map(m=>m.source)).size;
+  $("#briefMeta").innerHTML = `
+    <div>Üretildi: ${esc(now.toLocaleString('tr-TR'))}</div>
+    <div>Kapsam: Analist tarafından seçilmiş ${marked.length} madde</div>
+    <div>Kaynak sayısı: ${srcCount}</div>`;
+  $("#briefCountLabel").textContent = `${marked.length} madde işaretli`;
+
+  const groups={};
+  marked.forEach(m=>{ const k=m.cat||'dgr'; (groups[k]=groups[k]||[]).push(m); });
+  const order = CATS.filter(c=>c.k!=='home').map(c=>c.k);
+  const sortedKeys = Object.keys(groups).sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+
+  $("#briefBody").innerHTML = sortedKeys.map(k=>{
+    const items = groups[k];
+    return `<div class="briefsec">
+      <div class="briefsech" style="--cc:${catColor(k)}"><span class="briefsq"></span>${esc(catName(k))} <span class="briefcnt">(${items.length})</span></div>
+      ${items.map(m=>{
+        const noteTxt = readNote(m.link);
+        const showOrig = m.titleTr && m.titleTr!==m.title;
+        return `<div class="briefitem">
+          <div class="briefit-title">${esc(m.titleTr||m.title)}</div>
+          ${showOrig?`<div class="briefit-orig">${esc(m.title)}</div>`:''}
+          <div class="briefit-meta">${esc(m.source)} · ${esc(fmtDate(m.ts))}</div>
+          ${noteTxt?`<div class="briefit-note"><b>Analist Notu:</b> ${esc(noteTxt)}</div>`:''}
+          <div class="briefit-link"><a href="${esc(m.link)}" target="_blank" rel="noopener">${esc(m.link)}</a></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+$("#briefPrintBtn")?.addEventListener('click',()=>window.print());
+$("#briefClearBtn")?.addEventListener('click',()=>{
+  if(!confirm('Tüm işaretli haberler brifingden kaldırılsın mı?')) return;
+  saveMarked([]); updateMarkBadge(); renderBrief();
+  document.querySelectorAll('.markbtn.on').forEach(b=>b.classList.remove('on'));
+});
+
 function renderSrcDonut(dist){
   dist=dist||[];
   const total=dist.reduce((a,b)=>a+b.count,0)||1;
@@ -843,6 +953,45 @@ function renderBell(items){
   $("#bellBadge").textContent = n;
 }
 
+/* ================= Son dakika bildirimi ================= */
+const NOTIF_KEY='gkry-notif-enabled', SEEN_KEY='gkry-notif-seen';
+function notifEnabled(){ try{ return localStorage.getItem(NOTIF_KEY)==='1'; }catch{ return false; } }
+function getSeen(){ try{ return JSON.parse(localStorage.getItem(SEEN_KEY)||'[]'); }catch{ return []; } }
+function addSeen(links){
+  const cur=new Set(getSeen());
+  links.forEach(l=>cur.add(l));
+  const arr=[...cur].slice(-300);
+  try{ localStorage.setItem(SEEN_KEY, JSON.stringify(arr)); }catch{}
+}
+function updateNotifBtn(){
+  const b=$("#notifBtn"); if(!b) return;
+  const on = notifEnabled() && typeof Notification!=='undefined' && Notification.permission==='granted';
+  b.textContent = on ? '🔔 Açık' : '🔕 Kapalı';
+}
+async function toggleNotif(){
+  if(notifEnabled()){ try{ localStorage.setItem(NOTIF_KEY,'0'); }catch{} updateNotifBtn(); return; }
+  if(typeof Notification==='undefined'){ alert('Bu tarayıcı bildirimleri desteklemiyor.'); return; }
+  const perm = Notification.permission==='granted' ? 'granted' : await Notification.requestPermission();
+  if(perm!=='granted'){ alert('Bildirime izin vermedin, tarayıcı ayarlarından açabilirsin.'); return; }
+  try{ localStorage.setItem(NOTIF_KEY,'1'); }catch{}
+  addSeen(dashItems.map(i=>i.link)); // açar açmaz mevcut haberler için bildirim patlamasın
+  updateNotifBtn();
+}
+function notifyNewBreaking(items){
+  if(!notifEnabled() || typeof Notification==='undefined' || Notification.permission!=='granted') return;
+  const seen=new Set(getSeen());
+  const fresh = items.filter(it=>isBreaking(it) && !seen.has(it.link));
+  if(!fresh.length){ return; }
+  fresh.slice(0,4).forEach(it=>{
+    try{
+      const n=new Notification('🔴 GKRY Son Dakika', { body: it.titleTr||it.title, tag: it.link });
+      n.onclick=()=>{ window.focus(); openArticle(it); n.close(); };
+    }catch{}
+  });
+  addSeen(items.map(i=>i.link));
+}
+$("#notifBtn")?.addEventListener('click',toggleNotif);
+
 /* ================= Haberler (tam akış) ================= */
 function renderMeta(count, extra){
   const now=new Date().toLocaleString('tr-TR');
@@ -898,6 +1047,27 @@ async function runSearch(overrideQ, label){
 function dlUrl(u){ return API_BASE+'/api/download?url='+encodeURIComponent(u); }
 function noteKey(link){ return 'gkry-note:'+link; }
 
+/* ================= İşaretleme (brifing için) ================= */
+const MARK_KEY='gkry-marked-items';
+function getMarked(){ try{ return JSON.parse(localStorage.getItem(MARK_KEY)||'[]'); }catch{ return []; } }
+function saveMarked(list){ try{ localStorage.setItem(MARK_KEY, JSON.stringify(list)); }catch{} }
+function isMarked(link){ return getMarked().some(m=>m.link===link); }
+function toggleMark(item){
+  const list=getMarked();
+  const i=list.findIndex(m=>m.link===item.link);
+  let nowOn;
+  if(i>=0){ list.splice(i,1); nowOn=false; }
+  else{ list.push({link:item.link,title:item.title,titleTr:item.titleTr,source:item.source,ts:item.ts,cat:item.cat,image:item.image||null}); nowOn=true; }
+  saveMarked(list);
+  updateMarkBadge();
+  return nowOn;
+}
+function updateMarkBadge(){
+  const n=getMarked().length;
+  const b=$("#markBadge"); if(!b) return;
+  b.hidden = n===0; b.textContent=n;
+}
+
 function openDetail(){ document.body.classList.add('detail-open'); $("#detail").classList.add('open'); $("#mbackdrop").classList.add('open'); }
 function closeDetail(){ $("#detail").classList.remove('open'); $("#mbackdrop").classList.remove('open'); }
 $("#mbackdrop").addEventListener('click', closeDetail);
@@ -932,7 +1102,9 @@ function renderDetail(){
   const savedNote = item ? (localStorage.getItem(noteKey(item.link))||'') : '';
 
   detailShell(`
-    <div class="dtop"><span class="dbadge">${esc((j.lang||'?').toUpperCase())} kaynak</span><button class="dclose" id="dclose" aria-label="Kapat">×</button></div>
+    <div class="dtop"><span class="dbadge">${esc((j.lang||'?').toUpperCase())} kaynak</span>
+      ${item?`<button class="markbtn ${isMarked(item.link)?'on':''}" id="dMarkBtn" style="font-size:20px" title="Brifinge ekle/çıkar">★</button>`:''}
+      <button class="dclose" id="dclose" aria-label="Kapat">×</button></div>
     <div class="dlangbar"><div class="dlang">
       <button class="${isTr?'on':''}" data-lang="tr">Türkçe</button>
       <button class="${!isTr?'on':''}" data-lang="orig">Orijinal</button>
@@ -960,6 +1132,8 @@ function renderDetail(){
     </div>`);
 
   $("#detail").querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>{detailLang=b.dataset.lang;renderDetail();}));
+  const dMarkBtn=$("#dMarkBtn");
+  if(dMarkBtn && item) dMarkBtn.addEventListener('click',()=>{ const on=toggleMark(item); dMarkBtn.classList.toggle('on', on); });
   $("#detail").querySelectorAll('.simrow').forEach(row=>{
     const t=row.querySelector('.st').textContent;
     const match=sims.find(s=>(s.titleTr||s.title)===t);
@@ -1008,6 +1182,14 @@ async function openArticle(item){
 }
 
 document.addEventListener('click',(e)=>{
+  const markBtn=e.target.closest('.markbtn');
+  if(markBtn){
+    e.stopPropagation();
+    const pool = markBtn.dataset.list==='dash' ? dashItems : currentItems;
+    const item = pool[+markBtn.dataset.mark];
+    if(item){ const on=toggleMark(item); markBtn.classList.toggle('on', on); }
+    return;
+  }
   const row=e.target.closest('.row'); if(!row) return;
   const idx=+row.dataset.idx; const pool = row.dataset.list==='dash' ? dashItems : currentItems;
   const item=pool[idx]; if(item) openArticle(item);
@@ -1042,7 +1224,7 @@ function renderSrcList(){
     const list=getSources(); list.splice(+b.dataset.i,1); saveSources(list); renderSrcList();
   }));
 }
-function openSettings(){ renderSrcList(); $("#setModal").classList.add('open'); }
+function openSettings(){ renderSrcList(); updateNotifBtn(); $("#setModal").classList.add('open'); }
 function closeSettings(){ $("#setModal").classList.remove('open'); }
 $("#setClose").addEventListener('click',closeSettings);
 $("#setModal").addEventListener('click',(e)=>{ if(e.target.id==='setModal') closeSettings(); });
