@@ -1,0 +1,926 @@
+---
+layout: null
+title: GKRY OSINT Monitor
+permalink: /projects/gkry/
+---
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Güney Kıbrıs Rum Yönetimi (GKRY) — açık kaynak (OSINT) istihbarat izleme panosu.">
+<title>GKRY OSINT Monitor | MFCodes</title>
+<link rel="icon" href="{{ site.baseurl }}/assets/images/logo.png">
+<style>
+:root{
+  --bg:#0d0d0d;--panel:#15161a;--panel-2:#1b1c21;--line:rgba(255,255,255,.10);--line-2:rgba(255,255,255,.06);--hover:#20222a;
+  --ink:#ffffff;--muted:#c3c2b7;--faint:#898781;--accent:#3987e5;--accent-soft:rgba(57,135,229,.14);--accent-ink:#8fb8ee;
+  --good:#0ca30c;--warn:#c98500;--crit:#e66767;--breaking:#e34948;
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#3fae3f;--s7:#9085e9;--s8:#e66767;
+  --seq-200:#9ec5f4;--seq-300:#6da7ec;--seq-400:#3987e5;--seq-500:#256abf;
+  --c-geo:#5f8a6a;--c-uls:#4a6f9c;--c-sos:#b0803f;--c-siy:#9c4f52;--c-eko:#199e70;--c-enj:#c98500;--c-tek:#9085e9;
+  --c-dip:#3987e5;--c-goc:#d55181;--c-adl:#e34948;--c-bio:#8f97a3;--c-rmmo:#7a8f4a;--c-ybn:#d9752f;--c-dgr:#6b6d76;--c-home:#e34948;
+}
+:root[data-theme="light"]{
+  --bg:#f5f6f8;--panel:#ffffff;--panel-2:#f6f8fa;--line:#e5e7eb;--line-2:#eef1f4;--hover:#f1f5f9;
+  --ink:#0f172a;--muted:#52514e;--faint:#898781;--accent:#2a78d6;--accent-soft:#e6f0fb;--accent-ink:#184f95;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+button{font-family:inherit}
+
+/* ---------- App shell ---------- */
+.app{display:grid;grid-template-columns:76px minmax(0,1fr) 360px;min-height:100vh}
+.app.no-detail{grid-template-columns:76px minmax(0,1fr)}
+.isb{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.isb .logo{width:34px;height:34px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;margin-bottom:14px;flex:none}
+.isb .inav{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%}
+.itm{display:flex;flex-direction:column;align-items:center;gap:4px;width:64px;padding:8px 2px;border-radius:10px;border:none;background:none;color:var(--faint);cursor:pointer;font-family:inherit}
+.itm .ic{font-size:17px;line-height:1}
+.itm .lb{font-size:9.5px;letter-spacing:.02em}
+.itm:hover{background:var(--hover);color:var(--muted)}
+.itm[aria-current="true"]{background:var(--accent-soft);color:var(--accent-ink)}
+.isb .foot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:10px}
+.isb .live{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--good)}
+.isb .live .d{width:6px;height:6px;border-radius:50%;background:var(--good);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.isb .upd{font-size:8.5px;color:var(--faint);text-align:center;padding:0 4px}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:30;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:12px 20px;flex-wrap:wrap}
+.searchbig{flex:1;min-width:200px;display:flex;align-items:center;gap:9px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:9px 14px}
+.searchbig input{flex:1;border:none;background:none;color:var(--ink);font-size:14px;font-family:inherit;outline:none}
+.searchbig .kbd{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+.qf{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.dt{font-family:"IBM Plex Mono",monospace;font-size:11px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--muted);color-scheme:dark}
+:root[data-theme="light"] .dt{color-scheme:light}
+.sel{font-family:inherit;font-size:12.5px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--muted)}
+.tbtn{border:1px solid var(--line);background:var(--panel-2);color:var(--muted);border-radius:9px;padding:8px 10px;cursor:pointer;font-size:13px;position:relative}
+.tbtn:hover{border-color:var(--accent);color:var(--accent-ink)}
+.tbtn .badge{position:absolute;top:-5px;right:-5px;background:var(--breaking);color:#fff;font-size:9px;font-family:"IBM Plex Mono",monospace;border-radius:999px;padding:1px 5px;min-width:15px;text-align:center}
+.gobtn{border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:9px;padding:8px 14px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600}
+.gobtn.ghost{background:none;color:var(--muted);border-color:var(--line)}
+
+.view{display:none;padding:20px 22px 60px;max-width:1400px;width:100%;margin:0 auto}
+.view.active{display:block}
+
+/* ---------- Stat tiles ---------- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:16px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 16px;display:flex;align-items:center;gap:12px}
+.tile .ic{width:38px;height:38px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:16px;flex:none}
+.tile .n{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.tile .l{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.tile .delta{font-size:10.5px;color:var(--good);margin-top:2px}
+
+/* ---------- Ülke profili ---------- */
+.profhead{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.profhead .flag{font-size:32px}
+.profhead .pname{font-size:16px;font-weight:600}
+.profhead .psub{font-size:11.5px;color:var(--faint);margin-top:2px}
+.profhead .leader{margin-left:auto;display:flex;align-items:center;gap:10px}
+.profhead .lav{width:36px;height:36px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:16px}
+.profhead .ln{font-size:12.5px;font-weight:600}
+.profhead .lr{font-size:10.5px;color:var(--faint)}
+.factgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px 20px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line-2)}
+.fact .fl{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint)}
+.fact .fv{font-size:13px;color:var(--muted);margin-top:2px}
+.wxrow{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line-2)}
+.wxnow{display:flex;align-items:center;gap:10px}
+.wxnow .t{font-family:"IBM Plex Mono",monospace;font-size:26px;font-weight:600}
+.wxnow .m{font-size:11px;color:var(--faint)}
+.wxdays{display:flex;gap:10px;flex:1;flex-wrap:wrap}
+.wxday{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;text-align:center;min-width:58px}
+.wxday .wd{font-size:9.5px;color:var(--faint)}
+.wxday .wt{font-family:"IBM Plex Mono",monospace;font-size:11.5px;margin-top:3px}
+.forceov{font-size:12.5px;color:var(--muted);line-height:1.65;margin-bottom:12px}
+.proflinks{display:flex;gap:8px;flex-wrap:wrap}
+.proflinks a{font-size:11px;color:var(--accent-ink);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+.proflinks a:hover{border-color:var(--accent);text-decoration:underline}
+
+/* ---------- Panels ---------- */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px}
+.panel h4{margin:0 0 14px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;font-family:"IBM Plex Mono",monospace;display:flex;align-items:center;gap:8px}
+.panel h4 .live2{display:inline-flex;align-items:center;gap:5px;color:var(--good);font-size:10px}
+.panel h4 .live2 .d{width:6px;height:6px;border-radius:50%;background:var(--good);animation:pulse 1.6s infinite}
+.panel h4 .link{margin-left:auto;color:var(--accent-ink);text-decoration:none;cursor:pointer;font-size:11px;text-transform:none;letter-spacing:0}
+.panel h4 .link:hover{text-decoration:underline}
+.grid3{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:16px}
+@media(max-width:1150px){.grid3{grid-template-columns:1fr}}
+
+/* ---------- Live feed rows ---------- */
+.rows{display:flex;flex-direction:column}
+.row{display:flex;align-items:flex-start;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line-2);cursor:pointer;border-left:3px solid transparent}
+.row:last-child{border-bottom:none}
+.row:hover{background:var(--hover)}
+.row.on{background:var(--accent-soft)}
+.row .rlogo{width:26px;height:26px;border-radius:6px;background:var(--panel-2);flex:none;object-fit:cover;margin-top:2px}
+.row .rbody{min-width:0;flex:1}
+.row .rtitle{font-size:13.5px;font-weight:500;line-height:1.4}
+.row .rsub{font-size:11.5px;color:var(--faint);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .rmeta{display:flex;align-items:center;gap:7px;margin-top:5px;flex-wrap:wrap}
+.tag{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:5px;letter-spacing:.03em;color:#fff}
+.tag.RSS{background:#3987e5}.tag.TG{background:#2aabee}.tag.X{background:#444}.tag.YT{background:#e34948}
+.rtime{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint)}
+.rsrc{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted)}
+.breaking-pill{background:var(--breaking);color:#fff;font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.04em}
+
+/* ---------- Bars / lists ---------- */
+.barrow{display:grid;grid-template-columns:130px 1fr 34px;gap:9px;align-items:center;margin-bottom:8px;background:none;border:none;width:100%;padding:0;cursor:pointer;font-family:inherit}
+.barrow .bl{font-size:11.5px;color:var(--muted);text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.barrow:hover .bl{color:var(--ink)}
+.bt-wrap{display:block;background:var(--line-2);border-radius:4px;height:14px;overflow:hidden;width:100%}
+.bt{display:block;height:100%;border-radius:4px;min-width:3px}
+.barrow .bv{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);text-align:right}
+
+/* ---------- Donut / legend ---------- */
+.donutwrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.donut{width:112px;height:112px;border-radius:50%;flex:none;position:relative}
+.donut::after{content:'';position:absolute;inset:18px;border-radius:50%;background:var(--panel)}
+.donut .dn{position:absolute;inset:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace}
+.donut .dn b{font-size:17px;line-height:1}
+.donut .dn span{font-size:8.5px;color:var(--faint);text-transform:uppercase}
+.legend{display:flex;flex-direction:column;gap:6px;flex:1;min-width:140px}
+.legend .li{display:flex;align-items:center;gap:8px;font-size:12px}
+.legend .sw{width:9px;height:9px;border-radius:3px;flex:none}
+.legend .lname{flex:1;color:var(--muted)}
+.legend .lval{font-family:"IBM Plex Mono",monospace;color:var(--faint);font-size:11px}
+
+/* ---------- Map ---------- */
+.mapgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mapdot{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px 8px;text-align:center;position:relative;overflow:hidden}
+.mapdot .glow{position:absolute;inset:0;border-radius:10px}
+.mapdot .dname{font-size:11px;color:var(--muted);position:relative}
+.mapdot .dcount{font-family:"IBM Plex Mono",monospace;font-size:18px;font-weight:600;position:relative;margin-top:3px}
+
+/* ---------- Timeline ---------- */
+.tlwrap{overflow-x:auto;padding-bottom:4px}
+.tl{display:flex;align-items:flex-start;gap:0;min-width:600px;position:relative;padding:20px 6px 0}
+.tl::before{content:'';position:absolute;top:26px;left:0;right:0;height:1px;background:var(--line)}
+.tlitem{flex:1;text-align:center;position:relative;cursor:pointer}
+.tlitem .tdot{width:11px;height:11px;border-radius:50%;margin:0 auto 8px;border:2px solid var(--panel);position:relative;z-index:1}
+.tlitem .tt{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--faint)}
+.tlitem .tlab{font-size:11px;color:var(--muted);margin-top:4px;padding:0 4px;line-height:1.3}
+.tlitem:hover .tlab{color:var(--ink)}
+
+/* ---------- Tabs ---------- */
+.tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+.tab{border:none;background:none;color:var(--faint);padding:8px 4px;margin-right:14px;font-family:inherit;font-size:12.5px;cursor:pointer;border-bottom:2px solid transparent}
+.tab.on{color:var(--ink);border-bottom-color:var(--accent)}
+
+/* ---------- Haberler view (kategori çipleri + eski akış) ---------- */
+.chiprow{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.chip2{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 13px;cursor:pointer;font-size:12px;color:var(--muted)}
+.chip2 .dot{width:8px;height:8px;border-radius:50%}
+.chip2[aria-current="true"]{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent)}
+.status{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);padding:6px 0 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.status.err{color:var(--crit)}
+.skel{height:64px;border-radius:10px;background:linear-gradient(90deg,var(--panel-2) 25%,var(--hover) 50%,var(--panel-2) 75%);background-size:200% 100%;animation:sh 1.3s infinite;margin-bottom:8px}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.empty{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--faint);padding:30px 10px;text-align:center;border:1px dashed var(--line);border-radius:10px}
+
+/* ---------- Detail panel ---------- */
+.detail{background:var(--panel);border-left:1px solid var(--line);height:100vh;position:sticky;top:0;overflow-y:auto;display:flex;flex-direction:column}
+.dtop{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+.dtop .dbadge{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted)}
+.dclose{border:none;background:none;font-size:19px;line-height:1;cursor:pointer;color:var(--muted);padding:2px 4px}
+.dclose:hover{color:var(--ink)}
+.dlangbar{display:flex;justify-content:center;padding:8px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.dlang{display:inline-flex;gap:4px;background:var(--panel);border-radius:8px;padding:3px;border:1px solid var(--line)}
+.dlang button{border:none;background:none;font-family:inherit;font-size:11.5px;padding:5px 12px;border-radius:6px;cursor:pointer;color:var(--muted)}
+.dlang button.on{background:var(--accent);color:#fff}
+.dbody{padding:18px;flex:1}
+.dtitle{font-size:17px;font-weight:600;line-height:1.35;margin:0 0 10px}
+.dmedia img{display:block;width:100%;border-radius:10px;max-height:280px;object-fit:cover}
+.dmedia iframe{display:block;width:100%;height:220px;border:0;border-radius:10px}
+.dmedia video{display:block;width:100%;border-radius:10px;max-height:280px}
+.ddl{display:inline-flex;align-items:center;gap:6px;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--accent-ink);text-decoration:none;margin-top:7px}
+.ddl:hover{text-decoration:underline}
+.dtext p{font-size:13.5px;line-height:1.7;margin:0 0 13px;color:var(--ink)}
+.dsec{margin-top:18px;padding-top:14px;border-top:1px solid var(--line-2)}
+.dsec h5{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-family:"IBM Plex Mono",monospace}
+.entpill{display:inline-flex;align-items:center;gap:5px;background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:11.5px;color:var(--muted);margin:0 6px 6px 0;cursor:pointer}
+.entpill:hover{border-color:var(--accent);color:var(--accent-ink)}
+.simrow{padding:9px 0;border-bottom:1px solid var(--line-2);cursor:pointer}
+.simrow:last-child{border-bottom:none}
+.simrow .st{font-size:12.5px;line-height:1.4}
+.simrow .sd{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--faint);margin-top:3px}
+.simrow:hover .st{color:var(--accent-ink)}
+.notearea{width:100%;min-height:70px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;color:var(--ink);font-family:inherit;font-size:12.5px;resize:vertical}
+.notearea:focus{outline:2px solid var(--accent);outline-offset:1px}
+.notesaved{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--good);margin-top:5px;height:14px}
+.dfoot{display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line-2);font-family:"IBM Plex Mono",monospace;font-size:11px}
+.dfoot a{color:var(--accent-ink);text-decoration:none}
+.dfoot a:hover{text-decoration:underline}
+.dstatus{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);padding:20px}
+.dempty{padding:60px 24px;text-align:center;color:var(--faint);font-family:"IBM Plex Mono",monospace;font-size:12px}
+.dempty .bigic{font-size:30px;margin-bottom:10px;opacity:.5}
+.relbtn{border:1px solid var(--line);background:var(--panel-2);color:var(--muted);border-radius:8px;padding:7px 12px;cursor:pointer;font-family:inherit;font-size:12px;margin-top:8px}
+.relbtn:hover{border-color:var(--accent);color:var(--accent-ink)}
+
+/* ---------- Printbar ---------- */
+.printbar{display:none}
+@media print{
+  .isb,.topbar,.detail{display:none!important}
+  .app{display:block}
+  .view{display:block!important;max-width:none;padding:0}
+  .printbar{display:block;font-family:"IBM Plex Mono",monospace;margin-bottom:16px;color:#000}
+  .printbar h1{font-size:20px;margin:0 0 4px}
+  body{background:#fff;color:#000}
+  .panel,.row,.tile{border-color:#ccc!important;background:#fff!important;color:#000!important}
+}
+
+/* ---------- Mobile ---------- */
+.mbackdrop{display:none}
+.setmodal{position:fixed;inset:0;z-index:98;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;background:rgba(0,0,0,.55)}
+.setmodal.open{display:flex}
+.setbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:520px;width:100%;padding:0}
+.sethead{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+.sethead h3{margin:0;font-size:15px}
+.setbody{padding:20px}
+.setrow{display:flex;gap:8px;margin-bottom:10px}
+.setrow input{flex:1;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:9px 12px;color:var(--ink);font-family:inherit;font-size:13px}
+.setrow input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.sethint{font-size:11.5px;color:var(--faint);line-height:1.6;margin:0 0 16px}
+.sethint code{background:var(--panel-2);padding:1px 5px;border-radius:4px;font-family:"IBM Plex Mono",monospace}
+.srclist{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+.srcitem{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.srcitem .su{flex:1;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srcitem button{border:none;background:none;color:var(--faint);cursor:pointer;font-size:15px}
+.srcitem button:hover{color:var(--crit)}
+.setempty{font-size:12px;color:var(--faint);text-align:center;padding:10px}
+@media(max-width:1180px){
+  .app{grid-template-columns:76px minmax(0,1fr)}
+  .detail{position:fixed;right:0;top:0;width:min(420px,100vw);z-index:95;box-shadow:-12px 0 40px rgba(0,0,0,.4);transform:translateX(100%);transition:transform .2s}
+  .detail.open{transform:none}
+  .mbackdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90}
+  .mbackdrop.open{display:block}
+}
+@media(max-width:720px){
+  .isb{position:fixed;left:0;top:0;z-index:96;transform:translateX(-100%);transition:transform .2s;width:200px;align-items:flex-start;padding:16px 10px}
+  .isb .itm{width:100%;flex-direction:row;justify-content:flex-start;gap:10px;padding:10px 8px}
+  body.rail-open .isb{transform:none}
+  .menu-btn{display:inline-flex!important}
+  .searchbig{order:3;flex-basis:100%}
+}
+.menu-btn{display:none;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);width:36px;height:36px;border-radius:9px;cursor:pointer;font-size:16px;flex:none}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+</head>
+<body>
+<div class="printbar">
+  <h1>GKRY İstihbarat Brifingi</h1>
+  <div class="meta" id="printMeta"></div>
+  <div class="meta">Açık Kaynak (OSINT) — mfcodes.org/projects/gkry</div>
+</div>
+<div class="mbackdrop" id="mbackdrop"></div>
+<div class="setmodal" id="setModal">
+  <div class="setbox">
+    <div class="sethead"><h3>⚙ Ayarlar — Kaynak Ekle</h3><button class="dclose" id="setClose" aria-label="Kapat">×</button></div>
+    <div class="setbody">
+      <p class="sethint">
+        Takip etmek istediğin bir haber sitesinin ana sayfa adresini, bir Telegram kanalının linkini
+        (<code>t.me/kanaladi</code>) ya da doğrudan bir RSS besleme linkini kutuya yapıştırıp <b>Ekle</b>'ye bas.
+        Sitenin RSS beslemesini otomatik buluruz; eklediğin kaynağın haberleri bundan sonraki yüklemelerde
+        panoya dahil olur. Sadece bu tarayıcıda saklanır.
+      </p>
+      <div class="setrow">
+        <input id="srcInput" placeholder="ör. cyprus-mail.com veya t.me/haberkibriscom" autocomplete="off">
+        <button class="gobtn" id="srcAdd">Ekle</button>
+      </div>
+      <div class="srclist" id="srcList"></div>
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line-2);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12.5px;color:var(--muted)">Görünüm teması</span>
+        <button class="tbtn" id="themeBtn2">◐ Tema değiştir</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="app" id="app">
+  <aside class="isb" id="isb">
+    <a class="logo" href="{{ site.baseurl }}/" title="MFCodes'e dön" style="text-decoration:none">GK</a>
+    <nav class="inav" id="inav"></nav>
+    <div class="foot">
+      <span class="live"><span class="d"></span>CANLI</span>
+      <span class="upd" id="updNote">—</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="menu-btn" id="menuBtn" aria-label="Menü">☰</button>
+      <div class="searchbig">
+        <span>🔍</span>
+        <input id="q" placeholder="Ülke, konu, kişi, kurum veya kelime arayın…" autocomplete="off">
+        <span class="kbd">⌘K</span>
+      </div>
+      <div class="qf">
+        <input class="dt" id="after" type="date" title="Başlangıç tarihi">
+        <input class="dt" id="before" type="date" title="Bitiş tarihi">
+        <select class="sel" id="catSel"></select>
+        <button class="gobtn" id="go">Ara</button>
+        <button class="gobtn ghost" id="clear">Temizle</button>
+      </div>
+      <div class="qf">
+        <button class="tbtn" id="printBtn" title="PDF / Yazdır">📄</button>
+        <button class="tbtn" id="themeBtn" title="Tema">◐</button>
+        <button class="tbtn" id="refreshBtn" title="Yenile">↻</button>
+        <button class="tbtn" id="bellBtn" title="Son dakika">🔔<span class="badge" id="bellBadge" hidden>0</span></button>
+      </div>
+    </div>
+
+    <!-- ================= DASHBOARD ================= -->
+    <div class="view active" id="view-dashboard">
+      <div class="tiles" id="tiles"></div>
+
+      <div class="panel" id="profilePanel"></div>
+
+      <div class="panel">
+        <h4><span class="live2"><span class="d"></span>CANLI HABER AKIŞI</span><span class="link" id="dashClear">Filtreleri Temizle</span></h4>
+        <div id="dashStatus" class="status"></div>
+        <div class="rows" id="dashRows"></div>
+        <div style="text-align:center;margin-top:10px">
+          <button class="relbtn" id="gotoHaberler">Tüm Haber Akışını Görüntüle →</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h4>OLAY ZAMAN ÇİZELGESİ</h4>
+        <div class="tlwrap"><div class="tl" id="timeline"></div></div>
+      </div>
+
+      <div class="grid3">
+        <div class="panel">
+          <h4>KIBRIS HABER YOĞUNLUĞU (İLÇE)</h4>
+          <div class="mapgrid" id="mapgrid"></div>
+        </div>
+        <div class="panel">
+          <h4>KATEGORİ DAĞILIMI</h4>
+          <div id="catChart"></div>
+        </div>
+        <div class="panel">
+          <h4>KAYNAK DAĞILIMI</h4>
+          <div class="donutwrap" id="srcDonut"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h4>EN ÇOK GEÇEN ENTİTELER <span style="text-transform:none;font-weight:400;color:var(--faint)">(otomatik tespit, yaklaşık)</span></h4>
+        <div class="tabs" id="entTabs"></div>
+        <div id="entBody"></div>
+      </div>
+
+      <div class="panel">
+        <h4>KAYNAK PERFORMANSI</h4>
+        <div id="srcPerf"></div>
+      </div>
+    </div>
+
+    <!-- ================= HABERLER ================= -->
+    <div class="view" id="view-haberler">
+      <div class="chiprow" id="chiprow"></div>
+      <div class="status" id="status"></div>
+      <div class="rows" id="feed"></div>
+    </div>
+  </div>
+
+  <aside class="detail" id="detail">
+    <div class="dempty" id="detailEmpty"><div class="bigic">📰</div>Bir habere tıklayın, detayı burada görünsün.</div>
+  </aside>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+const API_BASE = (location.protocol==='file:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')
+  ? 'http://127.0.0.1:8787'
+  : 'https://gkry-intel.mfpl12.workers.dev';
+
+const CATS=[
+ {k:"home",name:"Son Dakika",v:"--c-home",ic:"🔴"},
+ {k:"siy",name:"Siyasi",v:"--c-siy",ic:"🏛"},
+ {k:"eko",name:"Ekonomik",v:"--c-eko",ic:"💰"},
+ {k:"enj",name:"Enerji & Hidrokarbon",v:"--c-enj",ic:"⚡"},
+ {k:"dip",name:"Dış İlişkiler & Diplomasi",v:"--c-dip",ic:"🤝"},
+ {k:"goc",name:"Göç & İltica",v:"--c-goc",ic:"🚤"},
+ {k:"adl",name:"Adli & Güvenlik",v:"--c-adl",ic:"⚖"},
+ {k:"bio",name:"Biyografik İstihbarat",v:"--c-bio",ic:"🪪"},
+ {k:"rmmo",name:"RMMO Gelişmeleri",v:"--c-rmmo",ic:"🛡"},
+ {k:"ybn",name:"Yabancı Ülke Askeri",v:"--c-ybn",ic:"✈"},
+ {k:"uls",name:"Ulaştırma & Muhabere",v:"--c-uls",ic:"🚢"},
+ {k:"sos",name:"Sosyal",v:"--c-sos",ic:"👥"},
+ {k:"tek",name:"İlmi & Teknolojik",v:"--c-tek",ic:"🔬"},
+ {k:"geo",name:"Coğrafi",v:"--c-geo",ic:"🗺"},
+ {k:"dgr",name:"Diğer Faaliyetler",v:"--c-dgr",ic:"•"},
+];
+const SEQ=['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)','var(--s6)','var(--s7)','var(--s8)'];
+
+const NAVS=[
+ {k:"dashboard",name:"Dashboard",ic:"▦"},
+ {k:"haberler",name:"Haberler",ic:"📰"},
+ {k:"kaynaklar",name:"Kaynaklar",ic:"🗂"},
+ {k:"kategoriler",name:"Kategoriler",ic:"🏷"},
+ {k:"harita",name:"Harita",ic:"🗺"},
+ {k:"timeline",name:"Timeline",ic:"⏱"},
+ {k:"arama",name:"Arama",ic:"🔍"},
+ {k:"raporlar",name:"Raporlar",ic:"📄"},
+ {k:"ayarlar",name:"Ayarlar",ic:"⚙"},
+];
+
+const THEMES=[
+ {k:"enj-tema",name:"A · Enerji & Doğalgaz Aramaları",
+  q:'(ExxonMobil OR ENI OR TotalEnergies OR "block 6" OR "block 10" OR "block 12" OR "kıta sahanlığı" OR "Mavi Vatan" OR LNG)'},
+ {k:"goc-tema",name:"B · Mülteci & Göç (Suriye/Lübnan)",
+  q:'(migrant boat OR "irregular migration" OR asylum suspended OR Frontex OR Lebanon OR Syria) sığınma'},
+ {k:"askeri-tema",name:"C · Askeri & Jeopolitik (ABD/İsrail)",
+  q:'(Akrotiri OR Dhekelia OR "Andreas Papandreou" OR "Evangelos Florakis" OR "joint exercise" OR "US Cyprus" OR Israel military)'},
+];
+
+let currentView='dashboard', active='home', searching=false, currentItems=[], dashItems=[], dashStats=null;
+let currentArticle=null, detailLang='tr', selectedIdx=null;
+
+/* ================= yardımcılar ================= */
+function relTime(ms){let s=(Date.now()-ms)/1000;if(s<60)return"az önce";if(s<3600)return Math.floor(s/60)+" dk önce";if(s<86400)return Math.floor(s/3600)+" sa önce";return Math.floor(s/86400)+" gün önce";}
+function fmtDate(ms){return new Date(ms).toLocaleString('tr-TR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function fmtHM(ms){return new Date(ms).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});}
+function badgeFor(it){ if(it.platform==='telegram') return 'TG'; if(it.platform==='x') return 'X'; if(it.embedUrl && /youtube/.test(it.embedUrl)) return 'YT'; return 'RSS'; }
+function catColor(k){ return `var(--c-${k||'dgr'})`; }
+function catName(k){ return (CATS.find(c=>c.k===k)||{}).name || 'Diğer'; }
+function favicon(domain){ return domain ? `https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}` : null; }
+function isBreaking(it){ return (Date.now()-it.ts) < 30*60*1000; }
+
+/* ================= sidebar ================= */
+function buildInav(){
+  $("#inav").innerHTML = NAVS.map(n=>`<button class="itm" data-v="${n.k}" aria-current="${n.k===currentView}"><span class="ic">${n.ic}</span><span class="lb">${n.name}</span></button>`).join("");
+  $("#inav").querySelectorAll('.itm').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.v)));
+}
+function switchView(v){
+  currentView=v;
+  $("#inav").querySelectorAll('.itm').forEach(b=>b.setAttribute('aria-current', b.dataset.v===v));
+  document.body.classList.remove('rail-open');
+  if(v==='dashboard'||v==='harita'||v==='timeline'){
+    $("#view-dashboard").classList.add('active'); $("#view-haberler").classList.remove('active');
+    if(!dashStats) loadDashboard();
+    if(v==='harita') document.getElementById('mapgrid').scrollIntoView({behavior:'smooth',block:'center'});
+    if(v==='timeline') document.getElementById('timeline').scrollIntoView({behavior:'smooth',block:'center'});
+  } else if(v==='haberler'||v==='kategoriler'||v==='kaynaklar'){
+    $("#view-haberler").classList.add('active'); $("#view-dashboard").classList.remove('active');
+    if(!currentItems.length) load();
+  } else if(v==='arama'){
+    $("#view-haberler").classList.add('active'); $("#view-dashboard").classList.remove('active');
+    $("#q").focus();
+  } else if(v==='raporlar'){
+    window.print();
+  } else if(v==='ayarlar'){
+    openSettings();
+  }
+}
+$("#gotoHaberler").addEventListener('click',()=>switchView('haberler'));
+
+/* ================= kategori seçici + çipler ================= */
+function buildCatSel(){
+  $("#catSel").innerHTML = CATS.map(c=>`<option value="${c.k}">${c.ic} ${c.name}</option>`).join("");
+  $("#catSel").addEventListener('change',()=>{ active=$("#catSel").value; searching=false; switchView('haberler'); load(); });
+}
+function buildChips(){
+  $("#chiprow").innerHTML = CATS.map(c=>`<button class="chip2" data-k="${c.k}" aria-current="${c.k===active}"><span class="dot" style="background:${catColor(c.k)}"></span>${c.name}</button>`).join("")
+    + THEMES.map(t=>`<button class="chip2" data-t="${t.k}">${t.name}</button>`).join("");
+  $("#chiprow").querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>{
+    active=b.dataset.k; searching=false; $("#q").value=""; $("#after").value=""; $("#before").value="";
+    syncChips(); load();
+  }));
+  $("#chiprow").querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>{
+    const t=THEMES.find(x=>x.k===b.dataset.t);
+    $("#q").value=""; $("#after").value=""; $("#before").value="";
+    runSearch(t.q, t.name);
+  }));
+}
+function syncChips(){ $("#chiprow").querySelectorAll('[data-k]').forEach(b=>b.setAttribute('aria-current', b.dataset.k===active)); $("#catSel").value=active; }
+
+/* ================= liste satırı ================= */
+function newsRow(n, idx, opts){
+  opts = opts||{};
+  const badge=badgeFor(n);
+  const shown = n.titleTr || n.title;
+  const sub = (n.description || (n.titleTr && n.titleTr!==n.title ? n.title : n.source)) || '';
+  const logo = favicon(n.sourceDomain);
+  const breaking = isBreaking(n);
+  return `<article class="row ${selectedIdx===idx && opts.list==='dash'?'':''}" data-idx="${idx}" data-list="${opts.list||'feed'}" style="border-left-color:${catColor(n.cat)}">
+    ${logo?`<img class="rlogo" src="${esc(logo)}" alt="" loading="lazy">`:'<span class="rlogo"></span>'}
+    <div class="rbody">
+      <div class="rtitle">${esc(shown)}</div>
+      <div class="rsub">${esc(sub)}</div>
+      <div class="rmeta">
+        <span class="tag ${badge}">${badge}</span>
+        <span class="rsrc">${esc(n.source)}</span>
+        <span class="rtime" title="${fmtDate(n.ts)}">${relTime(n.ts)}</span>
+        ${breaking?'<span class="breaking-pill">SON DAKİKA</span>':''}
+      </div>
+    </div>
+  </article>`;
+}
+
+/* ================= Dashboard ================= */
+async function loadDashboard(){
+  $("#dashStatus").textContent='Yükleniyor…';
+  $("#dashRows").innerHTML=Array(5).fill('<div class="skel"></div>').join("");
+  try{
+    const r=await fetch(API_BASE+'/api/feed?cat=home'+sourcesParam(),{cache:'no-store'});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||'bilinmeyen hata');
+    dashItems=j.items; dashStats=j.stats||{};
+    renderTiles(j.stats);
+    $("#dashStatus").textContent = `${dashItems.length} haber · son güncelleme ${fmtHM(Date.parse(j.updatedAt))}`;
+    $("#dashRows").innerHTML = dashItems.slice(0,10).map((n,i)=>newsRow(n,i,{list:'dash'})).join("") || `<div class="empty">Seçilen filtrelere uygun haber bulunamadı.</div>`;
+    renderTimeline(dashItems);
+    renderMap(j.stats.geo);
+    renderCatChart(j.breakdown);
+    renderSrcDonut(j.stats.sourceDist);
+    renderEntities(j.stats.entities, j.stats.geo, j.breakdown);
+    renderSrcPerf(j.stats.sourcePerf);
+    renderBell(dashItems);
+    $("#updNote").textContent = 'Güncellendi\n'+fmtHM(Date.parse(j.updatedAt));
+  }catch(e){
+    $("#dashStatus").className='status err';
+    $("#dashStatus").textContent='Çekilemedi: '+e.message;
+    $("#dashRows").innerHTML='';
+  }
+}
+
+const WMO={0:'☀️ Açık',1:'🌤 Az bulutlu',2:'⛅ Parçalı bulutlu',3:'☁️ Kapalı',45:'🌫 Sisli',48:'🌫 Kırağı sis',
+  51:'🌦 Çisenti',61:'🌧 Yağmurlu',63:'🌧 Yağmurlu',65:'🌧 Şiddetli yağmur',71:'🌨 Kar',80:'🌧 Sağanak',95:'⛈ Fırtına'};
+function wxLabel(code){ return WMO[code] || '—'; }
+
+let profileLoaded=false;
+async function loadProfile(){
+  if(profileLoaded) return; profileLoaded=true;
+  const el=$("#profilePanel");
+  el.innerHTML='<div class="status">Ülke profili yükleniyor…</div>';
+  try{
+    const r=await fetch(API_BASE+'/api/profile',{cache:'no-store'});
+    const j=await r.json();
+    if(!j.ok) throw new Error('profil alınamadı');
+    renderProfile(j.profile, j.weather);
+  }catch(e){
+    el.innerHTML=`<div class="status err">Ülke profili yüklenemedi: ${esc(e.message)}</div>`;
+    profileLoaded=false;
+  }
+}
+
+function renderProfile(p, wx){
+  const facts=[
+    ['Resmî Ad',p.officialName],['Başkent',p.capital],['Nüfus',p.population],['Yüzölçümü',p.area],
+    ['Para Birimi',p.currency],['Diller',p.languages],['Saat Dilimi',p.timezone],
+    ['BM Üyesi',p.unMember],['AB Üyesi',p.euMember],['Komşular',p.neighbors],
+  ];
+  const wxHtml = wx && wx.current ? `
+    <div class="wxrow">
+      <div class="wxnow"><span class="t">${Math.round(wx.current.temp)}°C</span><span class="m">${wxLabel(wx.current.code)}<br>Nem %${wx.current.humidity} · Rüzgâr ${wx.current.wind} km/s</span></div>
+      <div class="wxdays">${wx.daily.map(d=>`<div class="wxday"><div class="wd">${new Date(d.date).toLocaleDateString('tr-TR',{weekday:'short'})}</div><div class="wt">${Math.round(d.max)}° / ${Math.round(d.min)}°</div></div>`).join('')}</div>
+    </div>` : '';
+  $("#profilePanel").innerHTML = `
+    <div class="profhead">
+      <span class="flag">${p.flag}</span>
+      <div><div class="pname">${esc(p.officialName)} (${esc(p.shortName)})</div><div class="psub">Ülke Profili · Lefkoşa yerel hava durumu dahil</div></div>
+      <div class="leader"><span class="lav">👤</span><div><div class="ln">${esc(p.leader.name)}</div><div class="lr">${esc(p.leader.role)}</div></div></div>
+    </div>
+    <div class="factgrid">${facts.map(([l,v])=>`<div class="fact"><div class="fl">${esc(l)}</div><div class="fv">${esc(v)}</div></div>`).join('')}</div>
+    ${wxHtml}
+    <div class="forceov">${esc(p.forceOverview)}</div>
+    <div class="proflinks">${p.links.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)} ↗</a>`).join('')}</div>`;
+}
+
+function renderTiles(stats){
+  if(!stats) return;
+  $("#tiles").innerHTML = `
+    <div class="tile"><span class="ic">📄</span><div><div class="n">${stats.total}</div><div class="l">Bugünkü Haberler</div></div></div>
+    <div class="tile"><span class="ic">📈</span><div><div class="n">${stats.last24hCount}</div><div class="l">Son 24 Saat</div></div></div>
+    <div class="tile"><span class="ic">#</span><div><div class="n" style="font-size:14px;line-height:1.5">${(stats.entities?.orgs?.[0]?.name)||'—'}</div><div class="l">En Çok Geçen Kurum</div></div></div>
+    <div class="tile"><span class="ic">🌐</span><div><div class="n">${stats.sourceDist?.[0]?.pct||0}%</div><div class="l">${stats.sourceDist?.[0]?.key==='rss'?'Haber Siteleri':(stats.sourceDist?.[0]?.key||'')}</div></div></div>`;
+}
+
+function renderTimeline(items){
+  const list=[...items].sort((a,b)=>a.ts-b.ts).slice(-8);
+  if(!list.length){ $("#timeline").innerHTML='<div class="empty">Zaman çizelgesi için yeterli veri yok.</div>'; return; }
+  $("#timeline").innerHTML = list.map((it,i)=>`<div class="tlitem" data-idx="${dashItems.indexOf(it)}">
+      <div class="tdot" style="background:${catColor(it.cat)}"></div>
+      <div class="tt">${fmtHM(it.ts)}</div>
+      <div class="tlab">${esc(catName(it.cat))}</div>
+    </div>`).join("");
+  $("#timeline").querySelectorAll('.tlitem').forEach(b=>b.addEventListener('click',()=>{
+    const idx=+b.dataset.idx; if(dashItems[idx]) openArticle(dashItems[idx]);
+  }));
+}
+
+const GEO_NAMES={lefkosa:'Lefkoşa',limasol:'Limasol',larnaka:'Larnaka',baf:'Baf',magusa:'Mağusa',girne:'Girne'};
+function renderMap(geo){
+  geo = geo||[];
+  const max = Math.max(1, ...geo.map(g=>g.count));
+  $("#mapgrid").innerHTML = geo.map(g=>{
+    const t = g.count/max;
+    const alpha = 0.12 + t*0.55;
+    return `<div class="mapdot" style="border-color:${g.count?'var(--accent)':'var(--line)'}">
+      <div class="glow" style="background:radial-gradient(circle at 50% 30%, rgba(57,135,229,${alpha}), transparent 70%)"></div>
+      <div class="dname">${g.name}</div>
+      <div class="dcount">${g.count}</div>
+    </div>`;
+  }).join("") || '<div class="empty">Konum verisi yok.</div>';
+}
+
+function renderCatChart(breakdown){
+  const el=$("#catChart");
+  const list=(breakdown||[]).filter(b=>b.count>0);
+  if(!list.length){ el.innerHTML='<div class="empty">Veri yok.</div>'; return; }
+  const max=Math.max(...list.map(b=>b.count));
+  el.innerHTML = list.slice(0,8).map(b=>`<button class="barrow" data-k="${b.key}">
+      <span class="bl">${esc(b.name)}</span>
+      <span class="bt-wrap"><span class="bt" style="width:${Math.max(4,(b.count/max)*100)}%;background:${b.color}"></span></span>
+      <span class="bv">${b.count}</span>
+    </button>`).join("");
+  el.querySelectorAll('.barrow').forEach(b=>b.addEventListener('click',()=>{ active=b.dataset.k; searching=false; switchView('haberler'); syncChips(); load(); }));
+}
+
+function renderSrcDonut(dist){
+  dist=dist||[];
+  const total=dist.reduce((a,b)=>a+b.count,0)||1;
+  const names={rss:'Haber Siteleri',telegram:'Telegram',x:'X (Twitter)'};
+  let acc=0;
+  const stops=dist.map((d,i)=>{
+    const start=acc/total*360; acc+=d.count; const end=acc/total*360;
+    return `${SEQ[i]} ${start}deg ${end}deg`;
+  }).join(', ');
+  $("#srcDonut").innerHTML = `
+    <div class="donut" style="background:conic-gradient(${stops||'var(--line-2) 0 360deg'})">
+      <div class="dn"><b>${total}</b><span>toplam</span></div>
+    </div>
+    <div class="legend">${dist.map((d,i)=>`<div class="li"><span class="sw" style="background:${SEQ[i]}"></span><span class="lname">${names[d.key]||d.key}</span><span class="lval">${d.pct}%</span></div>`).join("")||'<span style="color:var(--faint)">Veri yok</span>'}</div>`;
+}
+
+let entTab='people';
+function renderEntities(entities, geo, breakdown){
+  entities=entities||{people:[],orgs:[]};
+  const tabs=[
+    {k:'people',name:'Kişiler'},
+    {k:'orgs',name:'Kurumlar'},
+    {k:'geo',name:'Bölgeler'},
+    {k:'topics',name:'Konular'},
+  ];
+  $("#entTabs").innerHTML = tabs.map(t=>`<button class="tab ${entTab===t.k?'on':''}" data-t="${t.k}">${t.name}</button>`).join("");
+  $("#entTabs").querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{ entTab=b.dataset.t; renderEntities(entities,geo,breakdown); }));
+
+  let rows=[];
+  if(entTab==='people') rows=(entities.people||[]).map(e=>({label:e.name,count:e.count}));
+  else if(entTab==='orgs') rows=(entities.orgs||[]).map(e=>({label:e.name,count:e.count}));
+  else if(entTab==='geo') rows=(geo||[]).filter(g=>g.count>0).map(g=>({label:g.name,count:g.count}));
+  else rows=(breakdown||[]).map(b=>({label:b.name,count:b.count}));
+
+  rows.sort((a,b)=>b.count-a.count);
+  const max=Math.max(1,...rows.map(r=>r.count));
+  $("#entBody").innerHTML = rows.length ? rows.map(r=>`<div class="barrow" style="cursor:default">
+      <span class="bl">${esc(r.label)}</span>
+      <span class="bt-wrap"><span class="bt" style="width:${Math.max(4,(r.count/max)*100)}%;background:var(--seq-400)"></span></span>
+      <span class="bv">${r.count}</span>
+    </div>`).join("") : '<div class="empty">Seçilen filtrelere uygun veri bulunamadı.</div>';
+}
+
+function renderSrcPerf(perf){
+  perf=perf||[];
+  if(!perf.length){ $("#srcPerf").innerHTML='<div class="empty">Veri yok.</div>'; return; }
+  const max=Math.max(...perf.map(p=>p.count));
+  $("#srcPerf").innerHTML = perf.map(p=>`<div class="barrow" style="cursor:default">
+      <span class="bl">${esc(p.source)}</span>
+      <span class="bt-wrap"><span class="bt" style="width:${Math.max(4,(p.count/max)*100)}%;background:var(--seq-400)"></span></span>
+      <span class="bv">${p.count}</span>
+    </div>`).join("");
+}
+
+function renderBell(items){
+  const n = items.filter(isBreaking).length;
+  $("#bellBadge").hidden = n===0;
+  $("#bellBadge").textContent = n;
+}
+
+/* ================= Haberler (tam akış) ================= */
+function renderMeta(count, extra){
+  const now=new Date().toLocaleString('tr-TR');
+  $("#printMeta").textContent = `Üretildi: ${now} · ${count} madde` + (extra?(' · '+extra):'');
+}
+
+async function load(){
+  syncChips();
+  const feed=$("#feed"), st=$("#status");
+  st.className="status"; st.textContent="Yükleniyor…";
+  feed.innerHTML=Array(6).fill('<div class="skel"></div>').join("");
+  try{
+    const url = API_BASE+'/api/feed?cat='+encodeURIComponent(active)+sourcesParam();
+    const r=await fetch(url,{cache:'no-store'});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||'bilinmeyen hata');
+    currentItems=j.items;
+    if(!currentItems.length){ st.textContent="Seçilen filtrelere uygun haber bulunamadı."; feed.innerHTML=""; return; }
+    st.innerHTML = `<b>${currentItems.length}</b> haber · son güncelleme ${fmtHM(Date.parse(j.updatedAt))}`;
+    feed.innerHTML=currentItems.map((n,i)=>newsRow(n,i,{list:'feed'})).join("");
+    renderMeta(currentItems.length, CATS.find(c=>c.k===active)?.name);
+  }catch(e){
+    st.className="status err";
+    st.textContent="Çekilemedi: "+e.message+" — birkaç saniye sonra tekrar dene.";
+    feed.innerHTML="";
+  }
+}
+
+async function runSearch(overrideQ, label){
+  switchView('haberler');
+  const q=(overrideQ!==undefined?overrideQ:$("#q").value.trim()), after=$("#after").value, before=$("#before").value;
+  if(!q && !after && !before){ searching=false; return load(); }
+  searching=true;
+  const feed=$("#feed"), st=$("#status");
+  st.className="status"; st.textContent="Aranıyor…";
+  feed.innerHTML=Array(6).fill('<div class="skel"></div>').join("");
+  try{
+    const params=new URLSearchParams(); if(q)params.set('q',q); if(after)params.set('after',after); if(before)params.set('before',before);
+    const r=await fetch(API_BASE+'/api/search?'+params.toString(),{cache:'no-store'});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||'bilinmeyen hata');
+    currentItems=j.items;
+    if(!currentItems.length){ st.textContent="Seçilen filtrelere uygun haber bulunamadı."; feed.innerHTML=""; return; }
+    st.innerHTML = `<b>${currentItems.length}</b> sonuç` + (label?` · ${esc(label)}`:(q?` · arama: "${esc(q)}"`:'')) + (after||before? ` · ${after||'…'} – ${before||'…'}`:'');
+    feed.innerHTML=currentItems.map((n,i)=>newsRow(n,i,{list:'feed'})).join("");
+    renderMeta(currentItems.length, label||'arama sonucu');
+  }catch(e){
+    st.className="status err"; st.textContent="Arama başarısız: "+e.message; feed.innerHTML="";
+  }
+}
+
+/* ================= Sağ detay paneli ================= */
+function dlUrl(u){ return API_BASE+'/api/download?url='+encodeURIComponent(u); }
+function noteKey(link){ return 'gkry-note:'+link; }
+
+function openDetail(){ document.body.classList.add('detail-open'); $("#detail").classList.add('open'); $("#mbackdrop").classList.add('open'); }
+function closeDetail(){ $("#detail").classList.remove('open'); $("#mbackdrop").classList.remove('open'); }
+$("#mbackdrop").addEventListener('click', closeDetail);
+
+function detailShell(inner){ $("#detail").innerHTML = inner; const cb=$("#dclose"); if(cb) cb.addEventListener('click',closeDetail); }
+
+function similarNews(item){
+  const pool = currentView==='dashboard' ? dashItems : currentItems;
+  return pool.filter(x=>x!==item && x.cat===item.cat).slice(0,4);
+}
+
+function renderDetail(){
+  const j=currentArticle, item=currentArticle?.__item; if(!j) return;
+  const isTr = detailLang==='tr';
+  const title = isTr ? (j.titleTr||j.title) : j.title;
+  const paras = isTr ? (j.paragraphsTr&&j.paragraphsTr.length?j.paragraphsTr:j.paragraphs) : j.paragraphs;
+
+  let media='';
+  if(j.videoEmbed){
+    media = `<div class="dmedia"><iframe src="${esc(j.videoEmbed)}" loading="lazy" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+      <div class="mono" style="font-size:10px;color:var(--faint);margin-top:6px">Video kaynağın platformunda oynatılıyor — indirilemez.</div>`;
+  } else if(j.video){
+    media = `<div class="dmedia"><video controls src="${esc(j.video)}"></video></div><a class="ddl" href="${dlUrl(j.video)}">⬇ Videoyu indir</a>`;
+  } else if(j.image){
+    media = `<div class="dmedia"><img src="${esc(j.image)}" alt="" loading="lazy"></div><a class="ddl" href="${dlUrl(j.image)}">⬇ Fotoğrafı indir</a> <span class="mono" style="font-size:10px;color:var(--faint)">· sağ tık → Farklı Kaydet</span>`;
+  }
+
+  const entities = [...(title.match(/\b[A-ZÇĞİÖŞÜ][a-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜ][a-zçğıöşü]+){0,2}\b/g)||[])]
+    .filter((v,i,a)=>a.indexOf(v)===i).slice(0,6);
+  const sims = item ? similarNews(item) : [];
+
+  const savedNote = item ? (localStorage.getItem(noteKey(item.link))||'') : '';
+
+  detailShell(`
+    <div class="dtop"><span class="dbadge">${esc((j.lang||'?').toUpperCase())} kaynak</span><button class="dclose" id="dclose" aria-label="Kapat">×</button></div>
+    <div class="dlangbar"><div class="dlang">
+      <button class="${isTr?'on':''}" data-lang="tr">Türkçe</button>
+      <button class="${!isTr?'on':''}" data-lang="orig">Orijinal</button>
+    </div></div>
+    <div class="dbody">
+      <h2 class="dtitle">${esc(title||'')}</h2>
+      ${media}
+      <div class="dtext">${paras.map(p=>`<p>${esc(p)}</p>`).join('')||'<p style="color:var(--faint)">Bu haber için metin çıkarılamadı.</p>'}</div>
+
+      ${entities.length?`<div class="dsec"><h5>İlgili Kişiler / Kurumlar</h5>${entities.map(e=>`<span class="entpill" data-ent="${esc(e)}">${esc(e)}</span>`).join('')}</div>`:''}
+
+      ${sims.length?`<div class="dsec"><h5>Benzer Haberler</h5>${sims.map(s=>`<div class="simrow" data-idx="${(item?similarPool(item):[]).indexOf?.(s)}">
+          <div class="st">${esc(s.titleTr||s.title)}</div><div class="sd">${fmtDate(s.ts)} · ${esc(s.source)}</div>
+        </div>`).join('')}</div>`:''}
+
+      <div class="dsec">
+        <h5>Not Ekle</h5>
+        <textarea class="notearea" id="noteBox" placeholder="Bu haberle ilgili özel notunu yaz…">${esc(savedNote)}</textarea>
+        <div class="notesaved" id="noteSaved"></div>
+      </div>
+
+      <button class="relbtn" id="relBtn">İlgili haberleri getir →</button>
+
+      <div class="dfoot"><span>Kaynak:</span><a href="${esc(j.sourceUrl)}" target="_blank" rel="noopener">${esc(j.sourceUrl)} ↗</a></div>
+    </div>`);
+
+  $("#detail").querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>{detailLang=b.dataset.lang;renderDetail();}));
+  $("#detail").querySelectorAll('.simrow').forEach(row=>{
+    const t=row.querySelector('.st').textContent;
+    const match=sims.find(s=>(s.titleTr||s.title)===t);
+    row.addEventListener('click',()=>{ if(match) openArticle(match); });
+  });
+  $("#detail").querySelectorAll('[data-ent]').forEach(p=>p.addEventListener('click',()=>{
+    $("#q").value=p.dataset.ent; runSearch();
+  }));
+  const relBtn=$("#relBtn");
+  if(relBtn) relBtn.addEventListener('click',()=>{ $("#q").value=item?(item.titleTr||item.title).split(' ').slice(0,4).join(' '):''; runSearch(); });
+  const noteBox=$("#noteBox");
+  if(noteBox && item){
+    let t;
+    noteBox.addEventListener('input',()=>{
+      clearTimeout(t);
+      t=setTimeout(()=>{
+        try{ localStorage.setItem(noteKey(item.link), noteBox.value); $("#noteSaved").textContent='✓ kaydedildi (bu tarayıcıda)'; }catch{}
+      },500);
+    });
+  }
+}
+function similarPool(item){ return currentView==='dashboard'?dashItems:currentItems; }
+
+async function openArticle(item){
+  if(!item || !item.link) return;
+  detailLang='tr'; currentArticle=null;
+  openDetail();
+  detailShell(`<div class="dtop"><span class="dbadge">Yükleniyor…</span><button class="dclose" id="dclose" aria-label="Kapat">×</button></div><div class="dstatus">Haberin tam metni getiriliyor…</div>`);
+  try{
+    const r=await fetch(API_BASE+'/api/article?url='+encodeURIComponent(item.link),{cache:'no-store'});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||'içerik alınamadı');
+    currentArticle=j; currentArticle.__item=item;
+    renderDetail();
+  }catch(e){
+    const media = item.image ? `<div class="dmedia"><img src="${esc(item.image)}" alt="" loading="lazy"></div>` : '';
+    detailShell(`
+      <div class="dtop"><span class="dbadge">Tam metin alınamadı</span><button class="dclose" id="dclose" aria-label="Kapat">×</button></div>
+      <div class="dbody">
+        <h2 class="dtitle">${esc(item.titleTr||item.title)}</h2>
+        ${media}
+        <div class="dstatus" style="padding:12px 0 0">${esc(e.message)} — kaynak site tam metni engelliyor olabilir.</div>
+        <div class="dfoot"><span>Kaynak:</span><a href="${esc(item.link)}" target="_blank" rel="noopener">Habere orada git ↗</a></div>
+      </div>`);
+  }
+}
+
+document.addEventListener('click',(e)=>{
+  const row=e.target.closest('.row'); if(!row) return;
+  const idx=+row.dataset.idx; const pool = row.dataset.list==='dash' ? dashItems : currentItems;
+  const item=pool[idx]; if(item) openArticle(item);
+});
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeDetail(); });
+
+/* ================= topbar olayları ================= */
+$("#go").addEventListener('click',()=>runSearch());
+$("#q").addEventListener('keydown',e=>{if(e.key==="Enter")runSearch();});
+$("#clear").addEventListener('click',()=>{$("#q").value="";$("#after").value="";$("#before").value="";searching=false;load();});
+$("#dashClear").addEventListener('click',()=>loadDashboard());
+$("#refreshBtn").addEventListener('click',()=>currentView==='dashboard'?loadDashboard():(searching?runSearch():load()));
+$("#printBtn").addEventListener('click',()=>window.print());
+$("#menuBtn").addEventListener('click',()=>document.body.classList.toggle('rail-open'));
+$("#bellBtn").addEventListener('click',()=>{ switchView('dashboard'); document.getElementById('dashRows').scrollIntoView({behavior:'smooth'}); });
+function toggleTheme(){ const r=document.documentElement,c=r.getAttribute('data-theme'),d=c?c==='dark':true; r.setAttribute('data-theme', d?'light':'dark'); }
+$("#themeBtn").addEventListener('click',toggleTheme);
+$("#themeBtn2").addEventListener('click',toggleTheme);
+document.documentElement.setAttribute('data-theme','dark');
+
+/* ================= Ayarlar: kullanıcı kaynakları ================= */
+const SRC_KEY='gkry-custom-sources';
+function getSources(){ try{ return JSON.parse(localStorage.getItem(SRC_KEY)||'[]'); }catch{ return []; } }
+function saveSources(list){ try{ localStorage.setItem(SRC_KEY, JSON.stringify(list)); }catch{} }
+function sourcesParam(){ const s=getSources(); return s.length? '&sources='+encodeURIComponent(s.join(',')) : ''; }
+
+function renderSrcList(){
+  const list=getSources();
+  $("#srcList").innerHTML = list.length ? list.map((s,i)=>`<div class="srcitem"><span class="su">${esc(s)}</span><button data-i="${i}" aria-label="Kaldır">×</button></div>`).join("")
+    : '<div class="setempty">Henüz eklenmiş kaynak yok.</div>';
+  $("#srcList").querySelectorAll('button[data-i]').forEach(b=>b.addEventListener('click',()=>{
+    const list=getSources(); list.splice(+b.dataset.i,1); saveSources(list); renderSrcList();
+  }));
+}
+function openSettings(){ renderSrcList(); $("#setModal").classList.add('open'); }
+function closeSettings(){ $("#setModal").classList.remove('open'); }
+$("#setClose").addEventListener('click',closeSettings);
+$("#setModal").addEventListener('click',(e)=>{ if(e.target.id==='setModal') closeSettings(); });
+$("#srcAdd").addEventListener('click',()=>{
+  const v=$("#srcInput").value.trim();
+  if(!v) return;
+  const list=getSources();
+  if(!list.includes(v)){ list.push(v); saveSources(list); }
+  $("#srcInput").value=''; renderSrcList();
+  loadDashboard(); if(currentView==='haberler') load();
+});
+$("#srcInput").addEventListener('keydown',e=>{ if(e.key==='Enter') $("#srcAdd").click(); });
+
+/* ================= init ================= */
+buildInav(); buildCatSel(); buildChips();
+switchView('dashboard');
+loadProfile();
+setInterval(()=>{ if(currentView==='dashboard') loadDashboard(); else if(!searching) load(); }, 3*60*1000);
+</script>
+</body>
+</html>
