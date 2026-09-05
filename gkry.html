@@ -54,7 +54,6 @@ button{font-family:inherit}
 .searchbig{flex:1;min-width:200px;display:flex;align-items:center;gap:9px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:9px 14px}
 .searchbig input{flex:1;border:none;background:none;color:var(--ink);font-size:14px;font-family:inherit;outline:none}
 .searchbig input::placeholder{color:var(--faint);opacity:1}
-.searchbig .kbd{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
 .qf{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .dt{font-family:"IBM Plex Mono",monospace;font-size:11px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--muted);color-scheme:dark}
 :root[data-theme="light"] .dt{color-scheme:light}
@@ -441,18 +440,14 @@ body.gate-locked .app{display:none}
       <div class="searchbig">
         <span>🔍</span>
         <input id="q" placeholder="Ülke, konu, kişi, kurum veya kelime arayın…" autocomplete="off">
-        <span class="kbd">⌘K</span>
       </div>
       <div class="qf">
         <input class="dt" id="after" type="date" title="Başlangıç tarihi">
         <input class="dt" id="before" type="date" title="Bitiş tarihi">
-        <select class="sel" id="catSel"></select>
         <button class="gobtn" id="go">Ara</button>
         <button class="gobtn ghost" id="clear">Temizle</button>
       </div>
       <div class="qf">
-        <button class="tbtn" id="printBtn" title="PDF / Yazdır">📄</button>
-        <button class="tbtn" id="themeBtn" title="Tema">◐</button>
         <button class="tbtn" id="refreshBtn" title="Yenile">↻</button>
         <button class="tbtn" id="bellBtn" title="Son dakika">🔔<span class="badge" id="bellBadge" hidden>0</span></button>
       </div>
@@ -465,7 +460,7 @@ body.gate-locked .app{display:none}
       <div class="panel" id="profilePanel"></div>
 
       <div class="panel">
-        <h4><span class="live2"><span class="d"></span>CANLI HABER AKIŞI</span><span class="link" id="dashClear">Filtreleri Temizle</span></h4>
+        <h4><span class="live2"><span class="d"></span>CANLI HABER AKIŞI</span></h4>
         <div id="dashStatus" class="status"></div>
         <div class="rows" id="dashRows"></div>
         <div style="text-align:center;margin-top:10px">
@@ -624,9 +619,6 @@ const NAVS=[
  {k:"haberler",name:"Haberler",ic:"📰"},
  {k:"kaynaklar",name:"Kaynaklar",ic:"🗂"},
  {k:"kategoriler",name:"Kategoriler",ic:"🏷"},
- {k:"harita",name:"Harita",ic:"🗺"},
- {k:"timeline",name:"Timeline",ic:"⏱"},
- {k:"arama",name:"Arama",ic:"🔍"},
  {k:"raporlar",name:"Raporlar",ic:"📄"},
  {k:"ayarlar",name:"Ayarlar",ic:"⚙"},
 ];
@@ -678,11 +670,9 @@ function switchView(v, opts){
   currentView=v;
   $("#inav").querySelectorAll('.itm').forEach(b=>b.setAttribute('aria-current', b.dataset.v===v));
   document.body.classList.remove('rail-open');
-  if(v==='dashboard'||v==='harita'||v==='timeline'){
+  if(v==='dashboard'){
     showOnlyView('view-dashboard');
     if(!dashStats) loadDashboard();
-    if(v==='harita') document.getElementById('mapgrid').scrollIntoView({behavior:'smooth',block:'center'});
-    if(v==='timeline') document.getElementById('timeline').scrollIntoView({behavior:'smooth',block:'center'});
   } else if(v==='haberler'){
     showOnlyView('view-haberler');
     if(!opts.skipLoad && !currentItems.length) load();
@@ -692,9 +682,6 @@ function switchView(v, opts){
   } else if(v==='kaynaklar'){
     showOnlyView('view-kaynaklar');
     if(!dashStats) loadDashboard().then(renderSrcLists); else renderSrcLists();
-  } else if(v==='arama'){
-    showOnlyView('view-haberler');
-    $("#q").focus();
   } else if(v==='raporlar'){
     showOnlyView('view-rapor');
     renderBrief();
@@ -704,11 +691,7 @@ function switchView(v, opts){
 }
 $("#gotoHaberler").addEventListener('click',()=>switchView('haberler'));
 
-/* ================= kategori seçici + çipler ================= */
-function buildCatSel(){
-  $("#catSel").innerHTML = CATS.map(c=>`<option value="${c.k}">${c.ic} ${c.name}</option>`).join("");
-  $("#catSel").addEventListener('change',()=>{ active=$("#catSel").value; searching=false; switchView('haberler'); load(); });
-}
+/* ================= kategori çipleri ================= */
 function buildChips(){
   $("#chiprow").innerHTML = CATS.map(c=>`<button class="chip2" data-k="${c.k}" aria-current="${c.k===active}"><span class="dot" style="background:${catColor(c.k)}"></span>${c.name}</button>`).join("")
     + THEMES.map(t=>`<button class="chip2" data-t="${t.k}">${t.name}</button>`).join("");
@@ -722,7 +705,7 @@ function buildChips(){
     runSearch(t.q, t.name);
   }));
 }
-function syncChips(){ $("#chiprow").querySelectorAll('[data-k]').forEach(b=>b.setAttribute('aria-current', b.dataset.k===active)); $("#catSel").value=active; }
+function syncChips(){ $("#chiprow").querySelectorAll('[data-k]').forEach(b=>b.setAttribute('aria-current', b.dataset.k===active)); }
 
 /* ================= liste satırı ================= */
 function newsRow(n, idx, opts){
@@ -1261,14 +1244,11 @@ document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeDetail(); }
 $("#go").addEventListener('click',()=>runSearch());
 $("#q").addEventListener('keydown',e=>{if(e.key==="Enter")runSearch();});
 $("#clear").addEventListener('click',()=>{$("#q").value="";$("#after").value="";$("#before").value="";searching=false;load();});
-$("#dashClear").addEventListener('click',()=>loadDashboard());
 $("#refreshBtn").addEventListener('click',()=>currentView==='dashboard'?loadDashboard():(searching?runSearch():load()));
-$("#printBtn").addEventListener('click',()=>window.print());
 $("#menuBtn").addEventListener('click',()=>document.body.classList.toggle('rail-open'));
 $("#railBackdrop").addEventListener('click',()=>document.body.classList.remove('rail-open'));
 $("#bellBtn").addEventListener('click',()=>{ switchView('dashboard'); document.getElementById('dashRows').scrollIntoView({behavior:'smooth'}); });
 function toggleTheme(){ const r=document.documentElement,c=r.getAttribute('data-theme'),d=c?c==='dark':true; r.setAttribute('data-theme', d?'light':'dark'); }
-$("#themeBtn").addEventListener('click',toggleTheme);
 $("#themeBtn2").addEventListener('click',toggleTheme);
 document.documentElement.setAttribute('data-theme','dark');
 
@@ -1304,7 +1284,7 @@ $("#srcInput").addEventListener('keydown',e=>{ if(e.key==='Enter') $("#srcAdd").
 let booted=false;
 function boot(){
   if(booted) return; booted=true;
-  buildInav(); buildCatSel(); buildChips();
+  buildInav(); buildChips();
   switchView('dashboard');
   loadProfile();
   setInterval(()=>{ if(currentView==='dashboard') loadDashboard(); else if(!searching) load(); }, 3*60*1000);
