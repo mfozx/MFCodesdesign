@@ -58,7 +58,8 @@ button{font-family:inherit}
 .isb .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(155deg,var(--accent),var(--s1));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;margin-bottom:16px;flex:none;box-shadow:var(--shadow-sm)}
 .isb .inav{display:flex;flex-direction:column;align-items:center;gap:3px;width:100%}
 .itm{display:flex;flex-direction:column;align-items:center;gap:4px;width:64px;padding:9px 2px;border-radius:var(--radius-sm);border:none;background:none;color:var(--faint);cursor:pointer;font-family:inherit;transition:background var(--transition-fast,150ms ease),color var(--transition-fast,150ms ease);position:relative}
-.itm .ic{font-size:17px;line-height:1}
+.itm .ic{width:19px;height:19px;display:flex;align-items:center;justify-content:center}
+.itm .ic svg{width:100%;height:100%}
 .itm .lb{font-size:9.5px;letter-spacing:.02em;font-weight:500}
 .itm:hover{background:var(--hover);color:var(--muted)}
 .itm[aria-current="true"]{background:var(--accent-soft);color:var(--accent-ink);box-shadow:inset 0 0 0 1px var(--accent-soft)}
@@ -200,7 +201,8 @@ button{font-family:inherit}
 .catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
 .catcard{display:flex;align-items:center;gap:12px;background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--cc,var(--line));border-radius:var(--radius-md);padding:13px 14px;cursor:pointer;text-align:left;transition:border-color 150ms ease,transform 150ms ease,box-shadow 150ms ease}
 .catcard:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
-.catcard .cic{font-size:20px;flex:none}
+.catcard .cic{width:22px;height:22px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--cc)}
+.catcard .cic svg{width:100%;height:100%}
 .catcard .cn{font-size:13.5px;font-weight:500;line-height:1.3}
 .catcard .ccnt{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);margin-top:2px}
 .srcrow2{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line-2)}
@@ -237,7 +239,8 @@ button{font-family:inherit}
 .briefit-link a:hover{text-decoration:underline}
 .chip2{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 13px;cursor:pointer;font-size:12px;color:var(--muted);transition:border-color 150ms ease,background 150ms ease,color 150ms ease}
 .chip2:hover{border-color:var(--faint);color:var(--ink)}
-.chip2 .dot{width:8px;height:8px;border-radius:50%}
+.chip2 .cico{width:14px;height:14px;flex:none;display:flex;align-items:center;justify-content:center}
+.chip2 .cico svg{width:100%;height:100%}
 .chip2[aria-current="true"]{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent)}
 .status{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);padding:6px 0 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .status.err{color:var(--crit)}
@@ -622,33 +625,65 @@ async function tryUnlock(pass){
 }
 
 const CATS=[
- {k:"home",name:"Son Dakika",v:"--c-home",ic:"🔴"},
- {k:"siy",name:"Siyasi",v:"--c-siy",ic:"🏛"},
- {k:"eko",name:"Ekonomik",v:"--c-eko",ic:"💰"},
- {k:"enj",name:"Enerji & Hidrokarbon",v:"--c-enj",ic:"⚡"},
- {k:"dip",name:"Dış İlişkiler & Diplomasi",v:"--c-dip",ic:"🤝"},
- {k:"goc",name:"Göç & İltica",v:"--c-goc",ic:"🚤"},
- {k:"adl",name:"Adli & Güvenlik",v:"--c-adl",ic:"⚖"},
- {k:"bio",name:"Biyografik İstihbarat",v:"--c-bio",ic:"🪪"},
- {k:"rmmo",name:"RMMO Gelişmeleri",v:"--c-rmmo",ic:"🛡"},
- {k:"ybn",name:"Yabancı Ülke Askeri",v:"--c-ybn",ic:"✈"},
- {k:"uls",name:"Ulaştırma & Muhabere",v:"--c-uls",ic:"🚢"},
- {k:"sos",name:"Sosyal",v:"--c-sos",ic:"👥"},
- {k:"tek",name:"İlmi & Teknolojik",v:"--c-tek",ic:"🔬"},
- {k:"geo",name:"Coğrafi",v:"--c-geo",ic:"🗺"},
- {k:"dgr",name:"Diğer Faaliyetler",v:"--c-dgr",ic:"•"},
+ {k:"home",name:"Son Dakika",v:"--c-home",ic:"bolt"},
+ {k:"siy",name:"Siyasi",v:"--c-siy",ic:"landmark"},
+ {k:"eko",name:"Ekonomik",v:"--c-eko",ic:"wallet"},
+ {k:"enj",name:"Enerji & Hidrokarbon",v:"--c-enj",ic:"droplet"},
+ {k:"dip",name:"Dış İlişkiler & Diplomasi",v:"--c-dip",ic:"globe"},
+ {k:"goc",name:"Göç & İltica",v:"--c-goc",ic:"boat"},
+ {k:"adl",name:"Adli & Güvenlik",v:"--c-adl",ic:"scale"},
+ {k:"bio",name:"Biyografik İstihbarat",v:"--c-bio",ic:"idcard"},
+ {k:"rmmo",name:"RMMO Gelişmeleri",v:"--c-rmmo",ic:"shield"},
+ {k:"ybn",name:"Yabancı Ülke Askeri",v:"--c-ybn",ic:"plane"},
+ {k:"uls",name:"Ulaştırma & Muhabere",v:"--c-uls",ic:"anchor"},
+ {k:"sos",name:"Sosyal",v:"--c-sos",ic:"users"},
+ {k:"tek",name:"İlmi & Teknolojik",v:"--c-tek",ic:"flask"},
+ {k:"geo",name:"Coğrafi",v:"--c-geo",ic:"map"},
+ {k:"dgr",name:"Diğer Faaliyetler",v:"--c-dgr",ic:"dots"},
 ];
 const SEQ=['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)','var(--s6)','var(--s7)','var(--s8)'];
 const AVSEQ=['var(--av1)','var(--av2)','var(--av3)','var(--av4)','var(--av5)','var(--av6)','var(--av7)','var(--av8)'];
 
 const NAVS=[
- {k:"dashboard",name:"Dashboard",ic:"▦"},
- {k:"haberler",name:"Haberler",ic:"📰"},
- {k:"kaynaklar",name:"Kaynaklar",ic:"🗂"},
- {k:"kategoriler",name:"Kategoriler",ic:"🏷"},
- {k:"raporlar",name:"Raporlar",ic:"📄"},
- {k:"ayarlar",name:"Ayarlar",ic:"⚙"},
+ {k:"dashboard",name:"Dashboard",ic:"grid"},
+ {k:"haberler",name:"Haberler",ic:"newspaper"},
+ {k:"kaynaklar",name:"Kaynaklar",ic:"archive"},
+ {k:"kategoriler",name:"Kategoriler",ic:"tag"},
+ {k:"raporlar",name:"Raporlar",ic:"filetext"},
+ {k:"ayarlar",name:"Ayarlar",ic:"sliders"},
 ];
+
+/* ================= ikon sistemi =================
+   Tek aile: 24x24 çizgi ikonlar (stroke=currentColor, dolgu yok),
+   birkaçında vurgu için dolu nokta/üçgen — Lucide/Feather tarzı, bağımlılıksız. */
+const ICONS={
+ bolt:'<polygon points="13 2 4 14 12 14 11 22 20 10 12 10 13 2"/>',
+ landmark:'<polygon points="12 2 21 8 3 8"/><line x1="4" y1="19" x2="20" y2="19"/><line x1="6" y1="8" x2="6" y2="19"/><line x1="12" y1="8" x2="12" y2="19"/><line x1="18" y1="8" x2="18" y2="19"/>',
+ wallet:'<rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="17" cy="15" r="1.4" fill="currentColor" stroke="none"/>',
+ droplet:'<path d="M12 2.5c3.5 4.7 7 9.2 7 13a7 7 0 0 1-14 0c0-3.8 3.5-8.3 7-13z"/>',
+ globe:'<circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3c2.8 2.4 4.3 5.7 4.3 9s-1.5 6.6-4.3 9"/><path d="M12 3c-2.8 2.4-4.3 5.7-4.3 9s1.5 6.6 4.3 9"/>',
+ boat:'<line x1="7" y1="4" x2="7" y2="15"/><path d="M7 6 15 14H7z" fill="currentColor" stroke="none"/><path d="M4 15h16l-2 4a2 2 0 0 1-1.8 1H7.8A2 2 0 0 1 6 19z"/><line x1="2" y1="20" x2="22" y2="20"/>',
+ scale:'<line x1="12" y1="3" x2="12" y2="21"/><line x1="5" y1="7" x2="19" y2="7"/><path d="M5 7 2 13a3 3 0 0 0 6 0z"/><path d="M19 7l-3 6a3 3 0 0 0 6 0z"/><line x1="8" y1="21" x2="16" y2="21"/>',
+ idcard:'<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M5 16.5c0-1.7 1.3-3 3-3s3 1.3 3 3"/><line x1="14" y1="9.5" x2="19" y2="9.5"/><line x1="14" y1="13" x2="19" y2="13"/>',
+ shield:'<path d="M12 2.5 4.5 5.5v6c0 5 3.2 8.3 7.5 10 4.3-1.7 7.5-5 7.5-10v-6z"/>',
+ plane:'<path d="M21 3 3 10.5l6.8 2.7L21 3z"/><path d="M9.8 13.2 13 21 21 3z"/>',
+ anchor:'<circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="21"/><path d="M5 12a7 7 0 0 0 14 0"/><line x1="4" y1="12" x2="2" y2="12"/><line x1="22" y1="12" x2="20" y2="12"/>',
+ users:'<circle cx="9" cy="8" r="3"/><path d="M3.5 20c0-3.3 2.5-6 5.5-6s5.5 2.7 5.5 6"/><circle cx="17" cy="9" r="2.3"/><path d="M15.5 14.2c2.3.4 4 2.5 4 5.8"/>',
+ flask:'<path d="M9 2.5v6.2L3.6 18a1.8 1.8 0 0 0 1.6 2.7h13.6a1.8 1.8 0 0 0 1.6-2.7L15 8.7V2.5"/><line x1="8" y1="2.5" x2="16" y2="2.5"/><line x1="6.7" y1="14" x2="17.3" y2="14"/>',
+ map:'<polygon points="9 3 3 5.5 3 20.5 9 18 15 20.5 21 18 21 3 15 5.5 9 3"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="5.5" x2="15" y2="20.5"/>',
+ dots:'<circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/>',
+ grid:'<rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/>',
+ newspaper:'<path d="M4 4.5h14a2 2 0 0 1 2 2V18a1.5 1.5 0 0 1-1.5 1.5H6A2 2 0 0 1 4 17.5z"/><path d="M4 4.5V18a1.5 1.5 0 0 0 1.5 1.5"/><line x1="7.5" y1="8.5" x2="16.5" y2="8.5"/><line x1="7.5" y1="12" x2="16.5" y2="12"/><line x1="7.5" y1="15" x2="13" y2="15"/>',
+ archive:'<rect x="2.5" y="4" width="19" height="5" rx="1.2"/><path d="M4 9v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/><line x1="10" y1="13" x2="14" y2="13"/>',
+ tag:'<path d="M12.6 2.5H4.5a2 2 0 0 0-2 2v8.1a2 2 0 0 0 .6 1.4l9.4 9.4a2 2 0 0 0 2.8 0l7.2-7.2a2 2 0 0 0 0-2.8l-9.4-9.4a2 2 0 0 0-1.5-.6z"/><circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none"/>',
+ filetext:'<path d="M6.5 2.5h8l5 5V20a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5.5 20V4A1.5 1.5 0 0 1 6.5 2.5z"/><path d="M14.5 2.5v5h5"/><line x1="8.5" y1="12.5" x2="15.5" y2="12.5"/><line x1="8.5" y1="16" x2="15.5" y2="16"/>',
+ sliders:'<line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="var(--panel)" stroke="currentColor"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="16" cy="12" r="2" fill="var(--panel)" stroke="currentColor"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2" fill="var(--panel)" stroke="currentColor"/>',
+};
+function svgIcon(key){
+  const d = ICONS[key];
+  if(!d) return '';
+  return `<svg class="icosvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+}
 
 const THEMES=[
  {k:"enj-tema",name:"A · Enerji & Doğalgaz Aramaları",
@@ -683,7 +718,7 @@ function isBreaking(it){ return (Date.now()-it.ts) < 30*60*1000; }
 
 /* ================= sidebar ================= */
 function buildInav(){
-  $("#inav").innerHTML = NAVS.map(n=>`<button class="itm" data-v="${n.k}" aria-current="${n.k===currentView}" style="position:relative"><span class="ic">${n.ic}</span><span class="lb">${n.name}</span>${n.k==='raporlar'?'<span class="badge" id="markBadge" hidden>0</span>':''}</button>`).join("");
+  $("#inav").innerHTML = NAVS.map(n=>`<button class="itm" data-v="${n.k}" aria-current="${n.k===currentView}" style="position:relative"><span class="ic">${svgIcon(n.ic)}</span><span class="lb">${n.name}</span>${n.k==='raporlar'?'<span class="badge" id="markBadge" hidden>0</span>':''}</button>`).join("");
   $("#inav").querySelectorAll('.itm').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.v)));
   updateMarkBadge();
 }
@@ -720,7 +755,7 @@ $("#gotoHaberler").addEventListener('click',()=>switchView('haberler'));
 
 /* ================= kategori çipleri ================= */
 function buildChips(){
-  $("#chiprow").innerHTML = CATS.map(c=>`<button class="chip2" data-k="${c.k}" aria-current="${c.k===active}"><span class="dot" style="background:${catColor(c.k)}"></span>${c.name}</button>`).join("")
+  $("#chiprow").innerHTML = CATS.map(c=>`<button class="chip2" data-k="${c.k}" aria-current="${c.k===active}"><span class="cico" style="color:${catColor(c.k)}">${svgIcon(c.ic)}</span>${c.name}</button>`).join("")
     + THEMES.map(t=>`<button class="chip2" data-t="${t.k}">${t.name}</button>`).join("");
   $("#chiprow").querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>{
     active=b.dataset.k; searching=false; $("#q").value=""; $("#after").value=""; $("#before").value="";
@@ -882,7 +917,7 @@ function renderCatChart(breakdown){
 function renderCatGrid(){
   const counts={}; (dashBreakdown||[]).forEach(b=>counts[b.key]=b.count);
   $("#catGrid").innerHTML = CATS.filter(c=>c.k!=='home').map(c=>`<button class="catcard" style="--cc:${catColor(c.k)}" data-k="${c.k}">
-      <span class="cic">${c.ic}</span>
+      <span class="cic">${svgIcon(c.ic)}</span>
       <div><div class="cn">${esc(c.name)}</div><div class="ccnt">${counts[c.k]!==undefined?counts[c.k]+' haber (bugün)':'—'}</div></div>
     </button>`).join("");
   $("#catGrid").querySelectorAll('.catcard').forEach(b=>b.addEventListener('click',()=>{
