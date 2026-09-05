@@ -52,7 +52,7 @@ a{color:inherit}
 button{font-family:inherit}
 
 /* ---------- App shell ---------- */
-.app{display:grid;grid-template-columns:76px minmax(0,1fr) 360px;min-height:100vh}
+.app{display:grid;grid-template-columns:76px minmax(0,1fr) var(--detail-w,360px);min-height:100vh}
 .app.no-detail{grid-template-columns:76px minmax(0,1fr)}
 .isb{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto}
 .isb .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(155deg,var(--accent),var(--s1));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;margin-bottom:16px;flex:none;box-shadow:var(--shadow-sm)}
@@ -250,6 +250,9 @@ button{font-family:inherit}
 
 /* ---------- Detail panel ---------- */
 .detail{background:var(--panel);border-left:1px solid var(--line);height:100vh;position:sticky;top:0;overflow-y:auto;display:flex;flex-direction:column}
+.detail-resizer{position:fixed;right:calc(var(--detail-w,360px) - 4px);top:0;bottom:0;width:8px;cursor:col-resize;z-index:97;touch-action:none}
+.detail-resizer:hover,.detail-resizer.active{background:var(--accent-soft)}
+@media(max-width:1180px){.detail-resizer{display:none}}
 .dtop{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
 .dtop .dbadge{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted)}
 .dclose{border:none;background:none;font-size:19px;line-height:1;cursor:pointer;color:var(--muted);padding:2px 4px}
@@ -450,6 +453,15 @@ body.gate-locked .app{display:none}
         </div>
         <p class="sethint" style="margin:8px 0 0">Açarsan, bu sekme açıkken (arka planda da olsa) 30 dakikadan yeni bir haber geldiğinde tarayıcı bildirimi alırsın. Sekmeyi tamamen kapatırsan bildirim gelmez.</p>
       </div>
+      <div style="margin-top:12px;padding-top:14px;border-top:1px solid var(--line-2)">
+        <span style="font-size:12.5px;color:var(--muted)">Anahtar kelime uyarıları</span>
+        <p class="sethint" style="margin:6px 0 8px">Eklediğin kelime, isim veya cümle geçen YENİ bir haber düşünce (bildirimler açıksa) ayrıca uyarı alırsın.</p>
+        <div class="setrow">
+          <input id="watchInput" placeholder="ör. Christodoulides, doğalgaz, Akrotiri" autocomplete="off">
+          <button class="gobtn" id="watchAdd">Ekle</button>
+        </div>
+        <div class="srclist" id="watchList"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -580,6 +592,7 @@ body.gate-locked .app{display:none}
     </div>
   </div>
 
+  <div class="detail-resizer" id="detailResizer" title="Genişliği ayarlamak için sürükle"></div>
   <aside class="detail" id="detail">
     <div class="dempty" id="detailEmpty"><div class="bigic">📰</div>Bir habere tıklayın, detayı burada görünsün.</div>
   </aside>
@@ -695,7 +708,12 @@ const THEMES=[
 ];
 
 let currentView='dashboard', active='home', searching=false, currentItems=[], dashItems=[], dashStats=null, dashBreakdown=null;
-let currentArticle=null, detailLang='tr', selectedIdx=null;
+// load() ve runSearch() aynı #feed/#status hedefine yazıyor — biri hâlâ uçuştayken
+// diğeri tetiklenirse (ör. Haberler'e girer girmez bir kategori çipine tıklamak),
+// hangisi ÖNCE bittiyse o değil, hangisi SON tetiklendiyse o kazanmalı. Her çağrı
+// kendi jetonunu alır, yanıt gelince hâlâ "en güncel istek" ise DOM'a yazılır.
+let feedReqToken = 0;
+let currentArticle=null, detailLang='orig', selectedIdx=null;
 
 /* ================= yardımcılar ================= */
 function relTime(ms){let s=(Date.now()-ms)/1000;if(s<60)return"az önce";if(s<3600)return Math.floor(s/60)+" dk önce";if(s<86400)return Math.floor(s/3600)+" sa önce";return Math.floor(s/86400)+" gün önce";}
@@ -1086,11 +1104,21 @@ async function toggleNotif(){
 function notifyNewBreaking(items){
   if(!notifEnabled() || typeof Notification==='undefined' || Notification.permission!=='granted') return;
   const seen=new Set(getSeen());
-  const fresh = items.filter(it=>isBreaking(it) && !seen.has(it.link));
-  if(!fresh.length){ return; }
-  fresh.slice(0,4).forEach(it=>{
+  const unseen = items.filter(it=>!seen.has(it.link));
+  const breaking = unseen.filter(isBreaking).slice(0,4);
+  const breakingLinks = new Set(breaking.map(it=>it.link));
+  // anahtar kelime eşleşmesi son dakika olsun olmasın bildirilir — içerik odaklı, zamana bağlı değil
+  const watched = unseen.filter(it=>!breakingLinks.has(it.link) && matchedWatchTerms(it).length).slice(0,4);
+  breaking.forEach(it=>{
     try{
       const n=new Notification('🔴 GKRY Son Dakika', { body: it.titleTr||it.title, tag: it.link });
+      n.onclick=()=>{ window.focus(); openArticle(it); n.close(); };
+    }catch{}
+  });
+  watched.forEach(it=>{
+    try{
+      const terms=matchedWatchTerms(it);
+      const n=new Notification('🔎 GKRY Anahtar Kelime: '+terms.join(', '), { body: it.titleTr||it.title, tag: it.link });
       n.onclick=()=>{ window.focus(); openArticle(it); n.close(); };
     }catch{}
   });
@@ -1106,6 +1134,7 @@ function renderMeta(count, extra){
 
 async function load(){
   syncChips();
+  const myToken = ++feedReqToken;
   const feed=$("#feed"), st=$("#status");
   st.className="status"; st.textContent="Yükleniyor…";
   feed.innerHTML=Array(6).fill('<div class="skel"></div>').join("");
@@ -1113,6 +1142,7 @@ async function load(){
     const url = API_BASE+'/api/feed?cat='+encodeURIComponent(active)+sourcesParam();
     const r=await apiFetch(url,{cache:'no-store'});
     const j=await r.json();
+    if(myToken!==feedReqToken) return; // daha yeni bir istek/arama bu sırada tetiklendi, bu yanıt eskidi
     if(!j.ok) throw new Error(j.error||'bilinmeyen hata');
     currentItems=j.items;
     if(!currentItems.length){ st.textContent="Seçilen filtrelere uygun haber bulunamadı."; feed.innerHTML=""; return; }
@@ -1120,6 +1150,7 @@ async function load(){
     feed.innerHTML=currentItems.map((n,i)=>newsRow(n,i,{list:'feed'})).join("");
     renderMeta(currentItems.length, CATS.find(c=>c.k===active)?.name);
   }catch(e){
+    if(myToken!==feedReqToken) return;
     st.className="status err";
     st.textContent="Çekilemedi: "+e.message+" — birkaç saniye sonra tekrar dene.";
     feed.innerHTML="";
@@ -1131,6 +1162,7 @@ async function runSearch(overrideQ, label){
   const q=(overrideQ!==undefined?overrideQ:$("#q").value.trim()), after=$("#after").value, before=$("#before").value;
   if(!q && !after && !before){ searching=false; return load(); }
   searching=true;
+  const myToken = ++feedReqToken;
   const feed=$("#feed"), st=$("#status");
   st.className="status"; st.textContent="Aranıyor…";
   feed.innerHTML=Array(6).fill('<div class="skel"></div>').join("");
@@ -1138,6 +1170,7 @@ async function runSearch(overrideQ, label){
     const params=new URLSearchParams(); if(q)params.set('q',q); if(after)params.set('after',after); if(before)params.set('before',before);
     const r=await apiFetch(API_BASE+'/api/search?'+params.toString(),{cache:'no-store'});
     const j=await r.json();
+    if(myToken!==feedReqToken) return;
     if(!j.ok) throw new Error(j.error||'bilinmeyen hata');
     currentItems=j.items;
     if(!currentItems.length){ st.textContent="Seçilen filtrelere uygun haber bulunamadı."; feed.innerHTML=""; return; }
@@ -1145,6 +1178,7 @@ async function runSearch(overrideQ, label){
     feed.innerHTML=currentItems.map((n,i)=>newsRow(n,i,{list:'feed'})).join("");
     renderMeta(currentItems.length, label||'arama sonucu');
   }catch(e){
+    if(myToken!==feedReqToken) return;
     st.className="status err"; st.textContent="Arama başarısız: "+e.message; feed.innerHTML="";
   }
 }
@@ -1177,6 +1211,33 @@ function updateMarkBadge(){
 function openDetail(){ document.body.classList.add('detail-open'); $("#detail").classList.add('open'); $("#mbackdrop").classList.add('open'); }
 function closeDetail(){ $("#detail").classList.remove('open'); $("#mbackdrop").classList.remove('open'); }
 $("#mbackdrop").addEventListener('click', closeDetail);
+
+/* ================= detay panel genişliği (sürükle) ================= */
+(function(){
+  const DW_KEY='gkry-detail-w', MIN_W=300, MAX_W=760;
+  const handle=$("#detailResizer");
+  const saved=parseInt(localStorage.getItem(DW_KEY)||'',10);
+  if(saved && saved>=MIN_W && saved<=MAX_W) document.documentElement.style.setProperty('--detail-w', saved+'px');
+  let dragging=false;
+  handle.addEventListener('pointerdown', e=>{
+    if(window.innerWidth<1180) return; // dar ekranda panel ayrı bir katman, sürüklenemez
+    dragging=true; handle.classList.add('active'); handle.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  handle.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const w=Math.min(MAX_W, Math.max(MIN_W, Math.round(window.innerWidth-e.clientX)));
+    document.documentElement.style.setProperty('--detail-w', w+'px');
+  });
+  function stopDrag(){
+    if(!dragging) return;
+    dragging=false; handle.classList.remove('active');
+    const w=getComputedStyle(document.documentElement).getPropertyValue('--detail-w').trim();
+    if(w) try{ localStorage.setItem(DW_KEY, parseInt(w,10)); }catch{}
+  }
+  handle.addEventListener('pointerup', stopDrag);
+  handle.addEventListener('pointercancel', stopDrag);
+})();
 
 function detailShell(inner){ $("#detail").innerHTML = inner; const cb=$("#dclose"); if(cb) cb.addEventListener('click',closeDetail); }
 
@@ -1265,7 +1326,7 @@ function similarPool(item){ return currentView==='dashboard'?dashItems:currentIt
 
 async function openArticle(item){
   if(!item || !item.link) return;
-  detailLang='tr'; currentArticle=null;
+  detailLang='orig'; currentArticle=null;
   openDetail();
   detailShell(`<div class="dtop"><span class="dbadge">Yükleniyor…</span><button class="dclose" id="dclose" aria-label="Kapat">×</button></div><div class="dstatus">Haberin tam metni getiriliyor…</div>`);
   try{
@@ -1328,7 +1389,38 @@ function renderSrcList(){
     const list=getSources(); list.splice(+b.dataset.i,1); saveSources(list); renderSrcList();
   }));
 }
-function openSettings(){ renderSrcList(); updateNotifBtn(); $("#setModal").classList.add('open'); }
+/* ================= anahtar kelime uyarıları ================= */
+const WATCH_KEY='gkry-watch-keywords';
+function getWatch(){ try{ return JSON.parse(localStorage.getItem(WATCH_KEY)||'[]'); }catch{ return []; } }
+function saveWatch(list){ try{ localStorage.setItem(WATCH_KEY, JSON.stringify(list)); }catch{} }
+function foldFe(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i'); }
+function watchWordRe(term){ return new RegExp('\\b'+foldFe(term).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b'); }
+function matchedWatchTerms(item){
+  const list=getWatch(); if(!list.length) return [];
+  const text=foldFe([item.title,item.titleTr,item.description,item.source].filter(Boolean).join(' \u2016 '));
+  return list.filter(w=>watchWordRe(w).test(text));
+}
+function renderWatchList(){
+  const list=getWatch();
+  $("#watchList").innerHTML = list.length ? list.map((w,i)=>`<div class="srcitem"><span class="su">${esc(w)}</span><button data-i="${i}" aria-label="Kaldır">×</button></div>`).join("")
+    : '<div class="setempty">Henüz anahtar kelime eklemedin.</div>';
+  $("#watchList").querySelectorAll('button[data-i]').forEach(b=>b.addEventListener('click',()=>{
+    const list=getWatch(); list.splice(+b.dataset.i,1); saveWatch(list); renderWatchList();
+  }));
+}
+$("#watchAdd").addEventListener('click',async ()=>{
+  const v=$("#watchInput").value.trim();
+  if(!v) return;
+  if(typeof Notification!=='undefined' && Notification.permission!=='granted' && Notification.permission!=='denied'){
+    await Notification.requestPermission().catch(()=>{});
+  }
+  const list=getWatch();
+  if(!list.some(w=>foldFe(w)===foldFe(v))){ list.push(v); saveWatch(list); }
+  $("#watchInput").value=''; renderWatchList();
+});
+$("#watchInput").addEventListener('keydown',e=>{ if(e.key==='Enter') $("#watchAdd").click(); });
+
+function openSettings(){ renderSrcList(); renderWatchList(); updateNotifBtn(); $("#setModal").classList.add('open'); }
 function closeSettings(){ $("#setModal").classList.remove('open'); }
 $("#setClose").addEventListener('click',closeSettings);
 $("#setModal").addEventListener('click',(e)=>{ if(e.target.id==='setModal') closeSettings(); });
