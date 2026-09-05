@@ -53,6 +53,7 @@ button{font-family:inherit}
 .topbar{position:sticky;top:0;z-index:30;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:12px 20px;flex-wrap:wrap}
 .searchbig{flex:1;min-width:200px;display:flex;align-items:center;gap:9px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:9px 14px}
 .searchbig input{flex:1;border:none;background:none;color:var(--ink);font-size:14px;font-family:inherit;outline:none}
+.searchbig input::placeholder{color:var(--faint);opacity:1}
 .searchbig .kbd{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
 .qf{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .dt{font-family:"IBM Plex Mono",monospace;font-size:11px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--muted);color-scheme:dark}
@@ -116,7 +117,7 @@ button{font-family:inherit}
 .row:last-child{border-bottom:none}
 .row:hover{background:var(--hover)}
 .row.on{background:var(--accent-soft)}
-.row .rlogo{width:26px;height:26px;border-radius:6px;background:var(--panel-2);flex:none;object-fit:cover;margin-top:2px}
+.row .rlogo{width:26px;height:26px;border-radius:7px;flex:none;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;letter-spacing:0}
 .row .rbody{min-width:0;flex:1}
 .row .rtitle{font-size:13.5px;font-weight:500;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .row .rsub{font-size:11.5px;color:var(--faint);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -290,7 +291,7 @@ body.gate-locked .app{display:none}
 .gateerr{color:var(--crit);font-size:12px;margin-top:12px;min-height:16px;font-family:"IBM Plex Mono",monospace}
 .mbackdrop{display:none}
 .railbackdrop{display:none}
-.setmodal{position:fixed;inset:0;z-index:98;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;background:rgba(0,0,0,.55)}
+.setmodal{position:fixed;inset:0;z-index:98;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;background:rgba(0,0,0,.55);backdrop-filter:blur(3px)}
 .setmodal.open{display:flex}
 .setbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:520px;width:100%;padding:0}
 .sethead{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
@@ -311,7 +312,7 @@ body.gate-locked .app{display:none}
   .app{grid-template-columns:76px minmax(0,1fr)}
   .detail{position:fixed;right:0;top:0;width:min(420px,100vw);z-index:95;box-shadow:-12px 0 40px rgba(0,0,0,.4);transform:translateX(100%);transition:transform .2s}
   .detail.open{transform:none}
-  .mbackdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90}
+  .mbackdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(2px);z-index:90}
   .mbackdrop.open{display:block}
 }
 @media(max-width:720px){
@@ -320,7 +321,7 @@ body.gate-locked .app{display:none}
   .isb .itm{width:100%;flex-direction:row;justify-content:flex-start;gap:10px;padding:10px 8px}
   .isb .foot{align-items:flex-start;width:100%}
   body.rail-open .isb{transform:none}
-  .railbackdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:95}
+  .railbackdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(2px);z-index:95}
   body.rail-open .railbackdrop{display:block}
   .menu-btn{display:inline-flex!important;position:relative;z-index:97}
 
@@ -359,7 +360,7 @@ body.gate-locked .app{display:none}
   .chip2{padding:5px 10px;font-size:11.5px}
 
   .row{gap:9px;padding:10px 4px}
-  .row .rlogo{width:22px;height:22px}
+  .row .rlogo{width:22px;height:22px;font-size:10px}
   .rtitle{font-size:13px}
 
   .dbody,.mbody{padding:14px}
@@ -650,6 +651,15 @@ function badgeFor(it){ if(it.platform==='telegram') return 'TG'; if(it.platform=
 function catColor(k){ return `var(--c-${k||'dgr'})`; }
 function catName(k){ return (CATS.find(c=>c.k===k)||{}).name || 'Diğer'; }
 function favicon(domain){ return domain ? `https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}` : null; }
+function sourceColor(s){
+  const str = String(s||'?'); let h=0;
+  for(let i=0;i<str.length;i++) h=(h*31+str.charCodeAt(i))>>>0;
+  return SEQ[h%SEQ.length];
+}
+function sourceInitial(s){
+  const c = String(s||'').replace(/^@/,'').trim().charAt(0);
+  return c ? c.toUpperCase() : '?';
+}
 function isBreaking(it){ return (Date.now()-it.ts) < 30*60*1000; }
 
 /* ================= sidebar ================= */
@@ -720,10 +730,9 @@ function newsRow(n, idx, opts){
   const badge=badgeFor(n);
   const shown = n.titleTr || n.title;
   const sub = (n.description || (n.titleTr && n.titleTr!==n.title ? n.title : n.source)) || '';
-  const logo = favicon(n.sourceDomain);
   const breaking = isBreaking(n);
   return `<article class="row ${selectedIdx===idx && opts.list==='dash'?'':''}" data-idx="${idx}" data-list="${opts.list||'feed'}" style="border-left-color:${catColor(n.cat)}">
-    ${logo?`<img class="rlogo" src="${esc(logo)}" alt="" loading="lazy" onerror="this.outerHTML='&lt;span class=&quot;rlogo&quot;&gt;&lt;/span&gt;'">`:'<span class="rlogo"></span>'}
+    <span class="rlogo" style="background:${sourceColor(n.source)}">${esc(sourceInitial(n.source))}</span>
     <div class="rbody">
       <div class="rtitle">${esc(shown)}</div>
       <div class="rsub">${esc(sub)}</div>
@@ -853,7 +862,7 @@ function renderCatChart(breakdown){
   const max=Math.max(...list.map(b=>b.count));
   el.innerHTML = list.slice(0,8).map(b=>`<button class="barrow" data-k="${b.key}">
       <span class="bl">${esc(b.name)}</span>
-      <span class="bt-wrap"><span class="bt" style="width:${Math.max(4,(b.count/max)*100)}%;background:${b.color}"></span></span>
+      <span class="bt-wrap"><span class="bt" style="width:${Math.max(1.5,(b.count/max)*100)}%;background:${b.color}"></span></span>
       <span class="bv">${b.count}</span>
     </button>`).join("");
   el.querySelectorAll('.barrow').forEach(b=>b.addEventListener('click',()=>{ active=b.dataset.k; searching=false; switchView('haberler'); syncChips(); load(); }));
@@ -983,7 +992,7 @@ function renderEntities(entities, geo, breakdown){
   const max=Math.max(1,...rows.map(r=>r.count));
   $("#entBody").innerHTML = rows.length ? rows.map(r=>`<div class="barrow" style="cursor:default">
       <span class="bl">${esc(r.label)}</span>
-      <span class="bt-wrap"><span class="bt" style="width:${Math.max(4,(r.count/max)*100)}%;background:var(--seq-400)"></span></span>
+      <span class="bt-wrap"><span class="bt" style="width:${Math.max(1.5,(r.count/max)*100)}%;background:var(--seq-400)"></span></span>
       <span class="bv">${r.count}</span>
     </div>`).join("") : '<div class="empty">Seçilen filtrelere uygun veri bulunamadı.</div>';
 }
@@ -994,7 +1003,7 @@ function renderSrcPerf(perf){
   const max=Math.max(...perf.map(p=>p.count));
   $("#srcPerf").innerHTML = perf.map(p=>`<div class="barrow" style="cursor:default">
       <span class="bl">${esc(p.source)}</span>
-      <span class="bt-wrap"><span class="bt" style="width:${Math.max(4,(p.count/max)*100)}%;background:var(--seq-400)"></span></span>
+      <span class="bt-wrap"><span class="bt" style="width:${Math.max(1.5,(p.count/max)*100)}%;background:var(--seq-400)"></span></span>
       <span class="bv">${p.count}</span>
     </div>`).join("");
 }
