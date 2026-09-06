@@ -1570,7 +1570,8 @@ async function load(){
     if(!j.ok) throw new Error(j.error||'bilinmeyen hata');
     currentItems=Array.isArray(j.items)?j.items.filter(validItem):[];
     if(!currentItems.length){ st.textContent="Seçilen filtrelere uygun haber bulunamadı."; feed.innerHTML=""; return; }
-    st.innerHTML = `<b>${currentItems.length}</b> haber · son güncelleme ${fmtHM(Date.parse(j.updatedAt))}`;
+    st.innerHTML = `<b>${currentItems.length}</b> haber · son güncelleme ${fmtHM(Date.parse(j.updatedAt))}`
+      + (j.translationDegraded ? ' · <span style="color:var(--muted)">⚠ bazı başlıklar Türkçeye çevrilemedi</span>' : '');
     feed.innerHTML=currentItems.map((n,i)=>newsRow(n,i,{list:'feed'})).join("");
     renderMeta(currentItems.length, CATS.find(c=>c.k===active)?.name);
   }catch(e){
@@ -1710,6 +1711,7 @@ function renderDetail(){
       <button class="${!isTr?'on':''}" data-lang="orig">Orijinal</button>
     </div></div>
     <div class="dbody">
+      ${isTr && j.translationStatus==='failed' ? '<p role="status" style="padding:10px;border:1px solid var(--line);color:var(--muted)">Bu haberin çevirisi tam olarak alınamadı. Çevrilemeyen bölümler orijinal dilinde gösteriliyor.</p>' : ''}
       <h2 class="dtitle">${esc(title||'')}</h2>
       ${media}
       <div class="dtext">${paras.map(p=>`<p>${esc(p)}</p>`).join('')||'<p style="color:var(--faint)">Bu haber için metin çıkarılamadı.</p>'}</div>
