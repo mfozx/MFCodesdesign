@@ -82,6 +82,15 @@ button{font-family:inherit}
 .tbtn{border:1px solid var(--line);background:var(--panel-2);color:var(--muted);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;font-size:13px;position:relative;transition:border-color 150ms ease,color 150ms ease,background 150ms ease}
 .tbtn:hover{border-color:var(--accent);color:var(--accent-ink);background:var(--hover)}
 .tbtn .badge{position:absolute;top:-5px;right:-5px;background:var(--breaking);color:#fff;font-size:9px;font-family:"IBM Plex Mono",monospace;border-radius:999px;padding:1px 5px;min-width:15px;text-align:center;box-shadow:0 0 0 2px var(--panel)}
+.bell-wrap{position:relative}
+.bell-dd{position:absolute;top:calc(100% + 8px);right:0;width:340px;max-height:420px;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);box-shadow:var(--shadow-md);z-index:99;padding:6px}
+.bell-dd .bdhead{font-size:11px;color:var(--faint);padding:8px 10px 4px;text-transform:uppercase;letter-spacing:.04em}
+.bell-dd .bditem{display:block;width:100%;text-align:left;border:none;background:none;color:var(--ink);cursor:pointer;padding:9px 10px;border-radius:var(--radius-sm);font-family:inherit}
+.bell-dd .bditem:hover{background:var(--hover)}
+.bell-dd .bdtitle{font-size:12.5px;font-weight:500;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.bell-dd .bdmeta{font-size:10.5px;color:var(--faint);margin-top:3px}
+.bell-dd .bdempty{padding:16px 10px;text-align:center;color:var(--faint);font-size:12.5px}
+@media(max-width:720px){.bell-dd{position:fixed;top:auto;bottom:0;left:0;right:0;width:auto;max-height:60vh;border-radius:var(--radius-md) var(--radius-md) 0 0}}
 .gobtn{border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:var(--radius-sm);padding:8px 14px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;transition:filter 150ms ease,transform 150ms ease}
 .gobtn:hover{filter:brightness(1.08)}
 .gobtn:active{transform:translateY(1px)}
@@ -490,7 +499,10 @@ body.gate-locked .app{display:none}
       </div>
       <div class="qf">
         <button class="tbtn" id="refreshBtn" title="Yenile">↻</button>
-        <button class="tbtn" id="bellBtn" title="Son dakika">🔔<span class="badge" id="bellBadge" hidden>0</span></button>
+        <div class="bell-wrap">
+          <button class="tbtn" id="bellBtn" title="Bildirimler">🔔<span class="badge" id="bellBadge" hidden>0</span></button>
+          <div class="bell-dd" id="bellDD" hidden></div>
+        </div>
       </div>
     </div>
 
@@ -828,7 +840,7 @@ async function loadDashboard(){
     renderSrcDonut(j.stats.sourceDist);
     renderEntities(j.stats.entities, j.stats.geo, j.breakdown);
     renderSrcPerf(j.stats.sourcePerf);
-    renderBell(dashItems);
+    renderBell();
     notifyNewBreaking(dashItems);
     $("#updNote").textContent = 'Güncellendi\n'+fmtHM(Date.parse(j.updatedAt));
   }catch(e){
@@ -1071,11 +1083,48 @@ function renderSrcPerf(perf){
     </div>`).join("");
 }
 
-function renderBell(items){
-  const n = items.filter(isBreaking).length;
+/* ================= zil (bekleyen bildirimler) ================= */
+const BELL_KEY='gkry-bell-pending';
+function getBellPending(){ try{ return JSON.parse(localStorage.getItem(BELL_KEY)||'[]'); }catch{ return []; } }
+function saveBellPending(list){ try{ localStorage.setItem(BELL_KEY, JSON.stringify(list.slice(-40))); }catch{} }
+function addBellPending(item, reason){
+  const list=getBellPending();
+  if(list.some(x=>x.link===item.link)) return;
+  list.push({link:item.link,title:item.title,titleTr:item.titleTr,source:item.source,ts:item.ts,cat:item.cat,image:item.image||null,reason});
+  saveBellPending(list);
+}
+function removeBellPending(link){ saveBellPending(getBellPending().filter(x=>x.link!==link)); }
+function renderBell(){
+  const n=getBellPending().length;
   $("#bellBadge").hidden = n===0;
   $("#bellBadge").textContent = n;
 }
+function renderBellDropdown(){
+  const list=getBellPending().slice().reverse();
+  const dd=$("#bellDD");
+  if(!list.length){ dd.innerHTML='<div class="bdempty">Bekleyen bildirim yok.</div>'; return; }
+  dd.innerHTML = `<div class="bdhead">${list.length} bekleyen bildirim</div>` + list.map(it=>`
+    <button class="bditem" data-link="${esc(it.link)}">
+      <div class="bdtitle">${esc(it.titleTr||it.title)}</div>
+      <div class="bdmeta">${esc(it.reason)} · ${esc(it.source||'')} · ${relTime(it.ts)}</div>
+    </button>`).join("");
+  dd.querySelectorAll('.bditem').forEach(b=>b.addEventListener('click',()=>{
+    const it=list.find(x=>x.link===b.dataset.link);
+    removeBellPending(b.dataset.link);
+    renderBell(); renderBellDropdown();
+    $("#bellDD").hidden=true;
+    if(it) openArticle(it);
+  }));
+}
+function toggleBellDropdown(){
+  const dd=$("#bellDD");
+  if(dd.hidden){ renderBellDropdown(); dd.hidden=false; }
+  else dd.hidden=true;
+}
+document.addEventListener('click', e=>{
+  const dd=$("#bellDD"), wrap=e.target.closest('.bell-wrap');
+  if(!dd.hidden && !wrap) dd.hidden=true;
+});
 
 /* ================= Son dakika bildirimi ================= */
 const NOTIF_KEY='gkry-notif-enabled', SEEN_KEY='gkry-notif-seen';
@@ -1110,19 +1159,23 @@ function notifyNewBreaking(items){
   // anahtar kelime eşleşmesi son dakika olsun olmasın bildirilir — içerik odaklı, zamana bağlı değil
   const watched = unseen.filter(it=>!breakingLinks.has(it.link) && matchedWatchTerms(it).length).slice(0,4);
   breaking.forEach(it=>{
+    addBellPending(it, 'Son Dakika');
     try{
-      const n=new Notification('🔴 GKRY Son Dakika', { body: it.titleTr||it.title, tag: it.link });
-      n.onclick=()=>{ window.focus(); openArticle(it); n.close(); };
+      // başlık = haberin kendisi (neyle ilgili olduğu ilk bakışta belli olsun), gövde = neden geldiği
+      const n=new Notification((it.titleTr||it.title).slice(0,120), { body: '🔴 GKRY Son Dakika', tag: it.link });
+      n.onclick=()=>{ window.focus(); removeBellPending(it.link); renderBell(); openArticle(it); n.close(); };
     }catch{}
   });
   watched.forEach(it=>{
+    const terms=matchedWatchTerms(it);
+    addBellPending(it, 'Anahtar kelime: '+terms.join(', '));
     try{
-      const terms=matchedWatchTerms(it);
-      const n=new Notification('🔎 GKRY Anahtar Kelime: '+terms.join(', '), { body: it.titleTr||it.title, tag: it.link });
-      n.onclick=()=>{ window.focus(); openArticle(it); n.close(); };
+      const n=new Notification((it.titleTr||it.title).slice(0,120), { body: '🔎 Anahtar kelime: '+terms.join(', '), tag: it.link });
+      n.onclick=()=>{ window.focus(); removeBellPending(it.link); renderBell(); openArticle(it); n.close(); };
     }catch{}
   });
   addSeen(items.map(i=>i.link));
+  renderBell();
 }
 $("#notifBtn")?.addEventListener('click',toggleNotif);
 
@@ -1370,7 +1423,7 @@ $("#clear").addEventListener('click',()=>{$("#q").value="";$("#after").value="";
 $("#refreshBtn").addEventListener('click',()=>currentView==='dashboard'?loadDashboard():(searching?runSearch():load()));
 $("#menuBtn").addEventListener('click',()=>document.body.classList.toggle('rail-open'));
 $("#railBackdrop").addEventListener('click',()=>document.body.classList.remove('rail-open'));
-$("#bellBtn").addEventListener('click',()=>{ switchView('dashboard'); document.getElementById('dashRows').scrollIntoView({behavior:'smooth'}); });
+$("#bellBtn").addEventListener('click',(e)=>{ e.stopPropagation(); toggleBellDropdown(); });
 function toggleTheme(){ const r=document.documentElement,c=r.getAttribute('data-theme'),d=c?c==='dark':true; r.setAttribute('data-theme', d?'light':'dark'); }
 $("#themeBtn2").addEventListener('click',toggleTheme);
 document.documentElement.setAttribute('data-theme','dark');
@@ -1439,6 +1492,7 @@ let booted=false;
 function boot(){
   if(booted) return; booted=true;
   buildInav(); buildChips();
+  renderBell();
   switchView('dashboard');
   loadProfile();
   setInterval(()=>{ if(currentView==='dashboard') loadDashboard(); else if(!searching) load(); }, 3*60*1000);
