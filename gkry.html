@@ -1777,6 +1777,7 @@ async function openArticle(item){
     if(!j.ok) throw new Error(j.error||'içerik alınamadı');
     if(requestId!==articleLoadSeq) return;
     currentArticle=j; currentArticle.__item=item;
+    if(j.translationDebug) console.warn('[GKRY çeviri hatası]', j.translationDebug);
     renderDetail();
   }catch(e){
     if(requestId!==articleLoadSeq) return;
