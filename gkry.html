@@ -412,6 +412,68 @@ body.gate-locked .app{display:none}
   .mapgrid{grid-template-columns:1fr 1fr}
 }
 .menu-btn{display:none;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);width:36px;height:36px;border-radius:9px;cursor:pointer;font-size:16px;flex:none}
+
+/* Refined dashboard surfaces and responsive interaction layers. */
+:root{--bg:#081426;--panel:#102139;--panel-2:#162b46;--hover:#203c5e;--ink:#f5f8ff;--muted:#becce0;--faint:#96aac5;--accent:#2865bc;--accent-ink:#afd1ff;--line:rgba(174,203,244,.16);--radius-md:12px;--radius-lg:18px}
+:root[data-theme="light"]{--bg:#f3f6fb;--panel:#fff;--panel-2:#edf2f9;--hover:#e4edf9;--ink:#102139;--muted:#40536e;--faint:#596c86;--accent:#2359a3;--accent-ink:#1d529b;--line:#d5dfec}
+body{font-size:15px;line-height:1.6}
+button,input,select,textarea{-webkit-tap-highlight-color:transparent}
+input,.tile>div,.fact,.panel,.catcard{min-width:0}
+button{touch-action:manipulation}
+.app{min-height:100dvh}
+.isb,.detail{height:100dvh;overscroll-behavior:contain}
+.isb .lb{font-size:10.5px}
+.topbar{padding:16px 24px;gap:12px;box-shadow:0 6px 24px rgba(0,0,0,.08)}
+.searchbig{min-height:46px}.searchbig input{width:100%;min-width:0}
+.tbtn,.gobtn,.dt,.sel{min-height:42px}
+.view{padding:26px 24px 64px}
+.panel{padding:22px;margin-bottom:20px}
+.panel h4{font-size:12px;letter-spacing:.06em;margin-bottom:18px}
+.tile{padding:20px;align-items:flex-start}.tile .n{font-size:27px}.tile .l{font-size:11px;letter-spacing:.025em}
+.rows{gap:5px}.row{padding:16px 12px;gap:12px;border-radius:12px}
+.row .rtitle{font-size:15px;line-height:1.55;font-weight:600;overflow-wrap:anywhere}
+.row .rsub{font-size:12.5px;margin-top:5px}.row .rmeta{gap:8px;margin-top:9px}
+.row .rlogo{width:32px;height:32px}.rsrc,.rtime{font-size:11px;overflow-wrap:anywhere}
+.row:focus-visible{background:var(--hover)}
+.dbody{padding:24px}.dtitle{font-size:22px;line-height:1.4;margin-bottom:20px;overflow-wrap:anywhere}
+.dtext{margin-top:20px}.dtext p{font-size:15px;line-height:1.85;overflow-wrap:anywhere}
+.dclose,.markbtn{min-width:40px;min-height:40px}.dlang button{min-height:40px;font-size:13px}
+.dfoot{flex-wrap:wrap;overflow-wrap:anywhere}.notearea{font-size:14px;min-height:110px}.notesaved{height:auto;min-height:18px}
+.fact .fl{font-size:11px}.fact .fv{font-size:14px;overflow-wrap:anywhere}.profhead .pname{font-size:20px}
+.chip2{min-height:40px}.catcard{padding:20px}
+.donut .dn{z-index:1}
+.view.active{animation:view-in .22s ease-out}
+@keyframes view-in{from{opacity:.5;transform:translateY(5px)}to{opacity:1;transform:none}}
+body:has(.setmodal.open){overflow:hidden}
+@media(min-width:1181px){.app{grid-template-columns:76px minmax(0,1fr) min(var(--detail-w,360px),45vw)}.detail-resizer{right:calc(min(var(--detail-w,360px),45vw) - 4px)}}
+@media(max-width:1180px){body.detail-open{overflow:hidden}.detail{visibility:hidden;width:min(520px,100vw)}.detail.open{visibility:visible}.detail:not(.open){pointer-events:none}}
+@media(max-width:720px){
+  .app,.app.no-detail{grid-template-columns:minmax(0,1fr)}
+  .topbar{position:relative;padding:12px;gap:10px;backdrop-filter:none}
+  .topbar .searchbig{order:0;flex-basis:calc(100% - 58px);margin-left:54px;padding:10px}
+  .topbar>.qf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .topbar>.qf:last-child{display:flex;justify-content:flex-end}
+  .qf .dt{width:100%;font-size:13px}.searchbig input{font-size:16px}
+  .menu-btn{position:fixed;top:13px;left:12px;width:44px;height:44px;z-index:97;align-items:center;justify-content:center;font-size:23px;box-shadow:var(--shadow-md)}
+  body.gate-locked .menu-btn{display:none!important}
+  body.rail-open{overflow:hidden}
+  .isb{width:min(290px,calc(100vw - 56px));padding:70px 14px 24px;height:100dvh;visibility:hidden}
+  body.rail-open .isb{visibility:visible}
+  .isb .logo{display:none}.isb .itm{padding:13px 12px;min-height:48px;gap:14px}.isb .itm .lb{font-size:14px}
+  .isb .live{font-size:12px}.isb .upd{font-size:11px}
+  .view{padding:18px 12px 40px}.panel{padding:16px;margin-bottom:14px;border-radius:14px}
+  .tiles{gap:10px}.tile{padding:14px;gap:10px;flex-direction:column}.tile .n{font-size:24px}.tile .l{font-size:11px}.tile .ic{width:32px;height:32px;font-size:15px}
+  .row{padding:15px 6px;gap:9px}.row .rtitle{font-size:15px;-webkit-line-clamp:unset;display:block}.row .rlogo{width:26px;height:26px}
+  .row .rsub{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .row .markbtn{min-width:32px;padding:4px}.row .rmeta{gap:6px}
+  .chiprow{flex-wrap:nowrap;overflow-x:auto;padding:3px 2px 12px;scrollbar-width:thin}.chip2{flex:none;font-size:13px;min-height:44px}
+  .dtop{padding-top:max(12px,env(safe-area-inset-top))}.dbody{padding:20px 16px;padding-bottom:max(24px,env(safe-area-inset-bottom))}
+  .dtitle{font-size:23px}.dtext p{font-size:16px}.notearea,.setrow input,#gatePass{font-size:16px}
+  .bell-dd{z-index:80;max-height:65dvh;padding-bottom:max(12px,env(safe-area-inset-bottom))}
+  .setmodal{padding:16px;overscroll-behavior:contain}.setbox{width:100%}.setbody{padding:16px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -436,6 +498,7 @@ body.gate-locked .app{display:none}
 </div>
 <div class="mbackdrop" id="mbackdrop"></div>
 <div class="railbackdrop" id="railBackdrop"></div>
+<button class="menu-btn" id="menuBtn" aria-label="Menüyü aç" aria-controls="isb" aria-expanded="false">☰</button>
 <div class="setmodal" id="setModal">
   <div class="setbox">
     <div class="sethead"><h3>⚙ Ayarlar — Kaynak Ekle</h3><button class="dclose" id="setClose" aria-label="Kapat">×</button></div>
@@ -486,14 +549,14 @@ body.gate-locked .app{display:none}
 
   <div class="main">
     <div class="topbar">
-      <button class="menu-btn" id="menuBtn" aria-label="Menü">☰</button>
+
       <div class="searchbig">
         <span>🔍</span>
-        <input id="q" placeholder="Ülke, konu, kişi, kurum veya kelime arayın…" autocomplete="off">
+        <input aria-label="Haber ara" id="q" placeholder="Ülke, konu, kişi, kurum veya kelime arayın…" autocomplete="off">
       </div>
       <div class="qf">
-        <input class="dt" id="after" type="date" title="Başlangıç tarihi">
-        <input class="dt" id="before" type="date" title="Bitiş tarihi">
+        <input class="dt" id="after" aria-label="Başlangıç tarihi" type="date" title="Başlangıç tarihi">
+        <input class="dt" id="before" aria-label="Bitiş tarihi" type="date" title="Bitiş tarihi">
         <button class="gobtn" id="go">Ara</button>
         <button class="gobtn ghost" id="clear">Temizle</button>
       </div>
@@ -618,10 +681,17 @@ const API_BASE = (location.protocol==='file:'||location.hostname==='localhost'||
   : 'https://gkry-intel.mfpl12.workers.dev';
 
 /* ================= Giriş kapısı ================= */
+function storageRead(key){ try{ return localStorage.getItem(key)||''; }catch{ return ''; } }
+function storedArray(key, valid){
+  try{ const value=JSON.parse(storageRead(key)||'[]'); return Array.isArray(value)?value.filter(valid):[]; }catch{ return []; }
+}
+const validText=v=>typeof v==='string' && v.trim().length>0;
+const validItem=v=>v && typeof v==='object' && validText(v.link);
 const AUTH_KEY='gkry-auth-key';
-function getAuthKey(){ try{ return localStorage.getItem(AUTH_KEY)||''; }catch{ return ''; } }
-function setAuthKey(v){ try{ localStorage.setItem(AUTH_KEY, v); }catch{} }
-function clearAuthKey(){ try{ localStorage.removeItem(AUTH_KEY); }catch{} }
+let sessionAuth=storageRead(AUTH_KEY);
+function getAuthKey(){ return sessionAuth; }
+function setAuthKey(v){ sessionAuth=v; try{ localStorage.setItem(AUTH_KEY, v); }catch{} }
+function clearAuthKey(){ sessionAuth=''; try{ localStorage.removeItem(AUTH_KEY); }catch{} }
 
 async function apiFetch(url, opts){
   opts = opts || {};
@@ -644,6 +714,7 @@ async function tryUnlock(pass){
   try{
     const r = await fetch(API_BASE+'/api/profile',{headers:{'x-gkry-auth':pass},cache:'no-store'});
     if(r.status===401){ clearAuthKey(); $("#gateErr").textContent='Şifre yanlış.'; return false; }
+    if(!r.ok) throw new Error('Sunucu yanıtı: '+r.status);
     hideGate(); boot();
     return true;
   }catch(e){ $("#gateErr").textContent='Bağlanılamadı: '+e.message; return false; }
@@ -744,7 +815,7 @@ function sourceInitial(s){
   const c = String(s||'').replace(/^@/,'').trim().charAt(0);
   return c ? c.toUpperCase() : '?';
 }
-function isBreaking(it){ return (Date.now()-it.ts) < 30*60*1000; }
+function isBreaking(it){ const age=Date.now()-it.ts; return age>=0 && age<30*60*1000; }
 
 /* ================= sidebar ================= */
 function buildInav(){
@@ -761,7 +832,7 @@ function switchView(v, opts){
   opts = opts || {};
   currentView=v;
   $("#inav").querySelectorAll('.itm').forEach(b=>b.setAttribute('aria-current', b.dataset.v===v));
-  document.body.classList.remove('rail-open');
+  setRail(false);
   if(v==='dashboard'){
     showOnlyView('view-dashboard');
     if(!dashStats) loadDashboard();
@@ -806,7 +877,7 @@ function newsRow(n, idx, opts){
   const shown = n.titleTr || n.title;
   const sub = (n.description || (n.titleTr && n.titleTr!==n.title ? n.title : n.source)) || '';
   const breaking = isBreaking(n);
-  return `<article class="row ${selectedIdx===idx && opts.list==='dash'?'':''}" data-idx="${idx}" data-list="${opts.list||'feed'}" style="border-left-color:${catColor(n.cat)}">
+  return `<article class="row ${selectedIdx===idx && opts.list==='dash'?'':''}" tabindex="0" aria-label="${esc(shown || 'Haberi aç')}" data-idx="${idx}" data-list="${opts.list||'feed'}" style="border-left-color:${catColor(n.cat)}">
     <span class="rlogo" style="background:${sourceColor(n.source)}">${esc(sourceInitial(n.source))}</span>
     <div class="rbody">
       <div class="rtitle">${esc(shown)}</div>
@@ -823,14 +894,19 @@ function newsRow(n, idx, opts){
 }
 
 /* ================= Dashboard ================= */
+let dashboardLoadSeq=0;
 async function loadDashboard(){
+  const requestId=++dashboardLoadSeq;
+  $('#dashStatus').className='status';
   $("#dashStatus").textContent='Yükleniyor…';
   $("#dashRows").innerHTML=Array(5).fill('<div class="skel"></div>').join("");
   try{
     const r=await apiFetch(API_BASE+'/api/feed?cat=home'+sourcesParam(),{cache:'no-store'});
     const j=await r.json();
     if(!j.ok) throw new Error(j.error||'bilinmeyen hata');
-    dashItems=j.items; dashStats=j.stats||{}; dashBreakdown=j.breakdown||[];
+    if(requestId!==dashboardLoadSeq) return;
+    dashItems=Array.isArray(j.items)?j.items.filter(validItem):[]; dashStats=j.stats||{}; dashBreakdown=Array.isArray(j.breakdown)?j.breakdown:[];
+    j.stats=dashStats; j.breakdown=dashBreakdown;
     renderTiles(j.stats);
     $("#dashStatus").textContent = `${dashItems.length} haber · son güncelleme ${fmtHM(Date.parse(j.updatedAt))}`;
     $("#dashRows").innerHTML = dashItems.slice(0,10).map((n,i)=>newsRow(n,i,{list:'dash'})).join("") || `<div class="empty">Seçilen filtrelere uygun haber bulunamadı.</div>`;
@@ -844,6 +920,7 @@ async function loadDashboard(){
     notifyNewBreaking(dashItems);
     $("#updNote").textContent = 'Güncellendi\n'+fmtHM(Date.parse(j.updatedAt));
   }catch(e){
+    if(requestId!==dashboardLoadSeq) return;
     $("#dashStatus").className='status err';
     $("#dashStatus").textContent='Çekilemedi: '+e.message;
     $("#dashRows").innerHTML='';
@@ -1085,7 +1162,7 @@ function renderSrcPerf(perf){
 
 /* ================= zil (bekleyen bildirimler) ================= */
 const BELL_KEY='gkry-bell-pending';
-function getBellPending(){ try{ return JSON.parse(localStorage.getItem(BELL_KEY)||'[]'); }catch{ return []; } }
+function getBellPending(){ return storedArray(BELL_KEY, validItem); }
 function saveBellPending(list){ try{ localStorage.setItem(BELL_KEY, JSON.stringify(list.slice(-40))); }catch{} }
 function addBellPending(item, reason){
   const list=getBellPending();
@@ -1129,7 +1206,7 @@ document.addEventListener('click', e=>{
 /* ================= Son dakika bildirimi ================= */
 const NOTIF_KEY='gkry-notif-enabled', SEEN_KEY='gkry-notif-seen';
 function notifEnabled(){ try{ return localStorage.getItem(NOTIF_KEY)==='1'; }catch{ return false; } }
-function getSeen(){ try{ return JSON.parse(localStorage.getItem(SEEN_KEY)||'[]'); }catch{ return []; } }
+function getSeen(){ return storedArray(SEEN_KEY, validText); }
 function addSeen(links){
   const cur=new Set(getSeen());
   links.forEach(l=>cur.add(l));
@@ -1197,7 +1274,7 @@ async function load(){
     const j=await r.json();
     if(myToken!==feedReqToken) return; // daha yeni bir istek/arama bu sırada tetiklendi, bu yanıt eskidi
     if(!j.ok) throw new Error(j.error||'bilinmeyen hata');
-    currentItems=j.items;
+    currentItems=Array.isArray(j.items)?j.items.filter(validItem):[];
     if(!currentItems.length){ st.textContent="Seçilen filtrelere uygun haber bulunamadı."; feed.innerHTML=""; return; }
     st.innerHTML = `<b>${currentItems.length}</b> haber · son güncelleme ${fmtHM(Date.parse(j.updatedAt))}`;
     feed.innerHTML=currentItems.map((n,i)=>newsRow(n,i,{list:'feed'})).join("");
@@ -1225,7 +1302,7 @@ async function runSearch(overrideQ, label){
     const j=await r.json();
     if(myToken!==feedReqToken) return;
     if(!j.ok) throw new Error(j.error||'bilinmeyen hata');
-    currentItems=j.items;
+    currentItems=Array.isArray(j.items)?j.items.filter(validItem):[];
     if(!currentItems.length){ st.textContent="Seçilen filtrelere uygun haber bulunamadı."; feed.innerHTML=""; return; }
     st.innerHTML = `<b>${currentItems.length}</b> sonuç` + (label?` · ${esc(label)}`:(q?` · arama: "${esc(q)}"`:'')) + (after||before? ` · ${after||'…'} – ${before||'…'}`:'');
     feed.innerHTML=currentItems.map((n,i)=>newsRow(n,i,{list:'feed'})).join("");
@@ -1237,12 +1314,13 @@ async function runSearch(overrideQ, label){
 }
 
 /* ================= Sağ detay paneli ================= */
-function dlUrl(u){ return API_BASE+'/api/download?url='+encodeURIComponent(u); }
+let articleLoadSeq=0;
+let flushNote=()=>{};
 function noteKey(link){ return 'gkry-note:'+link; }
 
 /* ================= İşaretleme (brifing için) ================= */
 const MARK_KEY='gkry-marked-items';
-function getMarked(){ try{ return JSON.parse(localStorage.getItem(MARK_KEY)||'[]'); }catch{ return []; } }
+function getMarked(){ return storedArray(MARK_KEY, validItem); }
 function saveMarked(list){ try{ localStorage.setItem(MARK_KEY, JSON.stringify(list)); }catch{} }
 function isMarked(link){ return getMarked().some(m=>m.link===link); }
 function toggleMark(item){
@@ -1261,15 +1339,15 @@ function updateMarkBadge(){
   b.hidden = n===0; b.textContent=n;
 }
 
-function openDetail(){ document.body.classList.add('detail-open'); $("#detail").classList.add('open'); $("#mbackdrop").classList.add('open'); }
-function closeDetail(){ $("#detail").classList.remove('open'); $("#mbackdrop").classList.remove('open'); }
+function openDetail(){ setRail(false); document.body.classList.add('detail-open'); $("#detail").classList.add('open'); $("#mbackdrop").classList.add('open'); }
+function closeDetail(){ flushNote(); ++articleLoadSeq; document.body.classList.remove('detail-open'); $("#detail").classList.remove('open'); $("#mbackdrop").classList.remove('open'); }
 $("#mbackdrop").addEventListener('click', closeDetail);
 
 /* ================= detay panel genişliği (sürükle) ================= */
 (function(){
   const DW_KEY='gkry-detail-w', MIN_W=300, MAX_W=760;
   const handle=$("#detailResizer");
-  const saved=parseInt(localStorage.getItem(DW_KEY)||'',10);
+  const saved=parseInt(storageRead(DW_KEY),10);
   if(saved && saved>=MIN_W && saved<=MAX_W) document.documentElement.style.setProperty('--detail-w', saved+'px');
   let dragging=false;
   handle.addEventListener('pointerdown', e=>{
@@ -1292,7 +1370,7 @@ $("#mbackdrop").addEventListener('click', closeDetail);
   handle.addEventListener('pointercancel', stopDrag);
 })();
 
-function detailShell(inner){ $("#detail").innerHTML = inner; const cb=$("#dclose"); if(cb) cb.addEventListener('click',closeDetail); }
+function detailShell(inner){ flushNote(); flushNote=()=>{}; $("#detail").innerHTML = inner; const cb=$("#dclose"); if(cb) cb.addEventListener('click',closeDetail); }
 
 function similarNews(item){
   const pool = currentView==='dashboard' ? dashItems : currentItems;
@@ -1302,8 +1380,11 @@ function similarNews(item){
 function renderDetail(){
   const j=currentArticle, item=currentArticle?.__item; if(!j) return;
   const isTr = detailLang==='tr';
-  const title = isTr ? (j.titleTr||j.title) : j.title;
-  const paras = isTr ? (j.paragraphsTr&&j.paragraphsTr.length?j.paragraphsTr:j.paragraphs) : j.paragraphs;
+  const title = String((isTr ? (j.titleTr||j.title) : j.title) || item?.title || 'Başlıksız haber');
+  const original=Array.isArray(j.paragraphs)?j.paragraphs.filter(validText):[];
+  const translated=Array.isArray(j.paragraphsTr)?j.paragraphsTr.filter(validText):[];
+  const paras=isTr && translated.length?translated:original;
+  flushNote();
 
   let media='';
   if(j.videoEmbed){
@@ -1319,10 +1400,10 @@ function renderDetail(){
     .filter((v,i,a)=>a.indexOf(v)===i).slice(0,6);
   const sims = item ? similarNews(item) : [];
 
-  const savedNote = item ? (localStorage.getItem(noteKey(item.link))||'') : '';
+  const savedNote = item ? readNote(item.link) : '';
 
   detailShell(`
-    <div class="dtop"><span class="dbadge">${esc((j.lang||'?').toUpperCase())} kaynak</span>
+    <div class="dtop"><span class="dbadge">${esc(String(j.lang||'?').toUpperCase())} kaynak</span>
       ${item?`<button class="markbtn ${isMarked(item.link)?'on':''}" id="dMarkBtn" style="font-size:20px" title="Brifinge ekle/çıkar">★</button>`:''}
       <button class="dclose" id="dclose" aria-label="Kapat">×</button></div>
     <div class="dlangbar"><div class="dlang">
@@ -1363,15 +1444,21 @@ function renderDetail(){
     $("#q").value=p.dataset.ent; runSearch();
   }));
   const relBtn=$("#relBtn");
-  if(relBtn) relBtn.addEventListener('click',()=>{ $("#q").value=item?(item.titleTr||item.title).split(' ').slice(0,4).join(' '):''; runSearch(); });
+  if(relBtn) relBtn.addEventListener('click',()=>{ $("#q").value=item?String(item.titleTr||item.title||'').split(' ').slice(0,4).join(' '):''; runSearch(); });
   const noteBox=$("#noteBox");
   if(noteBox && item){
-    let t;
+    let timer, dirty=false;
+    const indicator=$("#noteSaved");
+    const save=()=>{
+      clearTimeout(timer);
+      if(!dirty) return;
+      try{ localStorage.setItem(noteKey(item.link), noteBox.value); dirty=false; indicator.textContent='✓ kaydedildi (bu tarayıcıda)'; }
+      catch{ indicator.textContent='Kaydedilemedi: tarayıcı depolaması kapalı veya dolu.'; }
+    };
+    flushNote=save;
     noteBox.addEventListener('input',()=>{
-      clearTimeout(t);
-      t=setTimeout(()=>{
-        try{ localStorage.setItem(noteKey(item.link), noteBox.value); $("#noteSaved").textContent='✓ kaydedildi (bu tarayıcıda)'; }catch{}
-      },500);
+      dirty=true; clearTimeout(timer); indicator.textContent='Kaydediliyor…';
+      timer=setTimeout(save,500);
     });
   }
 }
@@ -1379,6 +1466,7 @@ function similarPool(item){ return currentView==='dashboard'?dashItems:currentIt
 
 async function openArticle(item){
   if(!item || !item.link) return;
+  const requestId=++articleLoadSeq;
   detailLang='orig'; currentArticle=null;
   openDetail();
   detailShell(`<div class="dtop"><span class="dbadge">Yükleniyor…</span><button class="dclose" id="dclose" aria-label="Kapat">×</button></div><div class="dstatus">Haberin tam metni getiriliyor…</div>`);
@@ -1386,9 +1474,11 @@ async function openArticle(item){
     const r=await apiFetch(API_BASE+'/api/article?url='+encodeURIComponent(item.link),{cache:'no-store'});
     const j=await r.json();
     if(!j.ok) throw new Error(j.error||'içerik alınamadı');
+    if(requestId!==articleLoadSeq) return;
     currentArticle=j; currentArticle.__item=item;
     renderDetail();
   }catch(e){
+    if(requestId!==articleLoadSeq) return;
     const media = item.image ? `<div class="dmedia"><img src="${esc(item.image)}" alt="" loading="lazy"></div>` : '';
     detailShell(`
       <div class="dtop"><span class="dbadge">Tam metin alınamadı</span><button class="dclose" id="dclose" aria-label="Kapat">×</button></div>
@@ -1401,6 +1491,7 @@ async function openArticle(item){
   }
 }
 
+document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ') && e.target.matches('.row')){ e.preventDefault(); e.target.click(); } });
 document.addEventListener('click',(e)=>{
   const markBtn=e.target.closest('.markbtn');
   if(markBtn){
@@ -1414,15 +1505,34 @@ document.addEventListener('click',(e)=>{
   const idx=+row.dataset.idx; const pool = row.dataset.list==='dash' ? dashItems : currentItems;
   const item=pool[idx]; if(item) openArticle(item);
 });
-document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeDetail(); });
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ if($('#setModal').classList.contains('open')) closeSettings(); else if(document.body.classList.contains('rail-open')){ setRail(false); $('#menuBtn').focus(); }else closeDetail(); $('#bellDD').hidden=true; } });
 
 /* ================= topbar olayları ================= */
 $("#go").addEventListener('click',()=>runSearch());
 $("#q").addEventListener('keydown',e=>{if(e.key==="Enter")runSearch();});
 $("#clear").addEventListener('click',()=>{$("#q").value="";$("#after").value="";$("#before").value="";searching=false;load();});
 $("#refreshBtn").addEventListener('click',()=>currentView==='dashboard'?loadDashboard():(searching?runSearch():load()));
-$("#menuBtn").addEventListener('click',()=>document.body.classList.toggle('rail-open'));
-$("#railBackdrop").addEventListener('click',()=>document.body.classList.remove('rail-open'));
+function setRail(open){
+  document.body.classList.toggle('rail-open',open);
+  $('#menuBtn').setAttribute('aria-expanded',String(open));
+  $('#menuBtn').setAttribute('aria-label',open?'Menüyü kapat':'Menüyü aç');
+  $('#menuBtn').textContent=open?'×':'☰';
+  if(window.innerWidth<=720) $('#isb').inert=!open;
+  $('.main').inert=open;
+  if(open) $('#isb').querySelector('button')?.focus();
+}
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Tab'||!document.body.classList.contains('rail-open')) return;
+  const controls=[$('#menuBtn'),...$('#isb').querySelectorAll('button,a[href]')].filter(el=>!el.disabled);
+  const index=controls.indexOf(document.activeElement);
+  e.preventDefault(); controls[(index+(e.shiftKey?-1:1)+controls.length)%controls.length].focus();
+});
+$('#menuBtn').addEventListener('click',()=>setRail(!document.body.classList.contains('rail-open')));
+window.addEventListener('resize',()=>{ if(window.innerWidth>720){ setRail(false); $('#isb').inert=false; }else $('#isb').inert=!document.body.classList.contains('rail-open'); });
+setRail(false);
+window.addEventListener('pagehide',()=>flushNote());
+
+$("#railBackdrop").addEventListener('click',()=>setRail(false));
 $("#bellBtn").addEventListener('click',(e)=>{ e.stopPropagation(); toggleBellDropdown(); });
 function toggleTheme(){ const r=document.documentElement,c=r.getAttribute('data-theme'),d=c?c==='dark':true; r.setAttribute('data-theme', d?'light':'dark'); }
 $("#themeBtn2").addEventListener('click',toggleTheme);
@@ -1430,7 +1540,7 @@ document.documentElement.setAttribute('data-theme','dark');
 
 /* ================= Ayarlar: kullanıcı kaynakları ================= */
 const SRC_KEY='gkry-custom-sources';
-function getSources(){ try{ return JSON.parse(localStorage.getItem(SRC_KEY)||'[]'); }catch{ return []; } }
+function getSources(){ return storedArray(SRC_KEY, validText); }
 function saveSources(list){ try{ localStorage.setItem(SRC_KEY, JSON.stringify(list)); }catch{} }
 function sourcesParam(){ const s=getSources(); return s.length? '&sources='+encodeURIComponent(s.join(',')) : ''; }
 
@@ -1444,7 +1554,7 @@ function renderSrcList(){
 }
 /* ================= anahtar kelime uyarıları ================= */
 const WATCH_KEY='gkry-watch-keywords';
-function getWatch(){ try{ return JSON.parse(localStorage.getItem(WATCH_KEY)||'[]'); }catch{ return []; } }
+function getWatch(){ return storedArray(WATCH_KEY, validText); }
 function saveWatch(list){ try{ localStorage.setItem(WATCH_KEY, JSON.stringify(list)); }catch{} }
 function foldFe(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i'); }
 function watchWordRe(term){ return new RegExp('\\b'+foldFe(term).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b'); }
