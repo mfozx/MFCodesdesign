@@ -728,11 +728,15 @@ body:has(.setmodal.open){overflow:hidden}
         <div class="empty">Henüz işaretlenmiş haber yok. Herhangi bir haberin sağındaki ★ ikonuna tıklayarak brifinge ekleyebilirsin.</div>
       </div>
       <div id="briefWrap" hidden>
-        <div class="panel brief-toolbar" style="display:flex;align-items:center;gap:10px">
+        <div class="panel brief-toolbar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <button class="gobtn" id="briefAiBtn">🤖 Yapay Zeka Brifingi Oluştur</button>
+          <button class="gobtn ghost" id="briefTabBtn" hidden></button>
           <button class="gobtn" id="briefPrintBtn">🖨 PDF / Yazdır</button>
           <button class="gobtn ghost" id="briefClearBtn">Tümünü Kaldır</button>
           <span style="margin-left:auto;font-size:12px;color:var(--muted)" id="briefCountLabel"></span>
         </div>
+        <div id="aiBriefStatus"></div>
+        <div class="brief" id="aiBriefDoc" hidden></div>
         <div class="brief" id="briefDoc">
           <div class="briefcover">
             <div class="briefeyebrow">AÇIK KAYNAK (OSINT) — ANALİST SEÇKİSİ</div>
@@ -745,6 +749,46 @@ body:has(.setmodal.open){overflow:hidden}
     </div>
   </div>
 
+  <div class="setmodal" id="briefModal">
+    <div class="setbox">
+      <div class="sethead"><h3>🤖 Yapay Zeka Brifingi</h3><button class="dclose" id="briefModalClose" aria-label="Kapat">×</button></div>
+      <div class="setbody">
+        <p class="sethint">
+          İşaretlediğin <b id="briefModalCount">0</b> haber yapay zekâya gönderilip tematik olarak
+          gruplandırılacak, kaynaklar karşılaştırılacak ve kaynak referanslı (K1, K2…) bir analiz
+          dokümanı oluşturulacak. Bu bir istek-yanıt işlemidir, sunucuda hiçbir şey kalıcı saklanmaz.
+        </p>
+        <div class="setrow" style="flex-direction:column;align-items:stretch;gap:10px">
+          <label style="font-size:12.5px;color:var(--muted)">Brifing başlığı
+            <input id="briefTitleInput" placeholder="ör. Karadeniz Enerji Gelişmeleri" autocomplete="off" style="width:100%;margin-top:4px">
+          </label>
+          <div style="display:flex;gap:10px">
+            <label style="flex:1;font-size:12.5px;color:var(--muted)">Başlangıç
+              <input class="dt" id="briefAfterInput" type="date" style="width:100%;margin-top:4px">
+            </label>
+            <label style="flex:1;font-size:12.5px;color:var(--muted)">Bitiş
+              <input class="dt" id="briefBeforeInput" type="date" style="width:100%;margin-top:4px">
+            </label>
+          </div>
+          <label style="font-size:12.5px;color:var(--muted)">Analiz derinliği
+            <select id="briefDepthInput" class="sel" style="width:100%;margin-top:4px">
+              <option value="normal">Normal</option>
+              <option value="detayli">Detaylı</option>
+            </select>
+          </label>
+          <div>
+            <span style="font-size:12.5px;color:var(--muted)">Dahil edilecek bölümler</span>
+            <div id="briefSectionChecks" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px">
+          <button class="gobtn" id="briefGenerateBtn" style="flex:1">Brifingi Oluştur</button>
+        </div>
+        <div id="briefModalErr" class="status err" style="display:none;margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="detail-resizer" id="detailResizer" title="Genişliği ayarlamak için sürükle"></div>
   <aside class="detail" id="detail">
     <div class="dempty" id="detailEmpty"><div class="bigic">📰</div>Bir habere tıklayın, detayı burada görünsün.</div>
@@ -752,7 +796,7 @@ body:has(.setmodal.open){overflow:hidden}
 </div>
 <script>
 const $=s=>document.querySelector(s);
-const esc=s=>String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 
 const API_BASE = (location.protocol==='file:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')
   ? 'http://127.0.0.1:8787'
@@ -869,6 +913,7 @@ const THEMES=[
 ];
 
 let currentView='dashboard', active='home', searching=false, currentItems=[], dashItems=[], dashStats=null, dashBreakdown=null;
+let lastSearch=null;
 // load() ve runSearch() aynı #feed/#status hedefine yazıyor — biri hâlâ uçuştayken
 // diğeri tetiklenirse (ör. Haberler'e girer girmez bir kategori çipine tıklamak),
 // hangisi ÖNCE bittiyse o değil, hangisi SON tetiklendiyse o kazanmalı. Her çağrı
@@ -926,6 +971,7 @@ function switchView(v, opts){
   } else if(v==='raporlar'){
     showOnlyView('view-rapor');
     renderBrief();
+    renderBriefTabs();
   } else if(v==='ayarlar'){
     openSettings();
   }
@@ -1045,15 +1091,15 @@ function renderProfile(p, wx){
     <div class="factgrid">${facts.map(([l,v])=>`<div class="fact"><div class="fl">${esc(l)}</div><div class="fv">${esc(v)}</div></div>`).join('')}</div>
     ${wxHtml}
     <div class="forceov">${esc(p.forceOverview)}</div>
-    <div class="proflinks">${p.links.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)} ↗</a>`).join('')}</div>`;
+    <div class="proflinks">${p.links.map(l=>`<a href="${esc(safeLink(l.url))}" target="_blank" rel="noopener">${esc(l.name)} ↗</a>`).join('')}</div>`;
 }
 
 function renderTiles(stats){
   if(!stats) return;
   $("#tiles").innerHTML = `
-    <div class="tile"><span class="ic">📄</span><div><div class="n">${stats.total}</div><div class="l">Bugünkü Haberler</div></div></div>
+    <div class="tile"><span class="ic">📄</span><div><div class="n">${esc(stats.todayCount ?? 0)}</div><div class="l">Bugünkü Haberler</div></div></div>
     <div class="tile"><span class="ic">📈</span><div><div class="n">${stats.last24hCount}</div><div class="l">Son 24 Saat</div></div></div>
-    <div class="tile"><span class="ic">#</span><div><div class="n" style="font-size:14px;line-height:1.5">${(stats.entities?.orgs?.[0]?.name)||'—'}</div><div class="l">En Çok Geçen Kurum</div></div></div>
+    <div class="tile"><span class="ic">#</span><div><div class="n" style="font-size:14px;line-height:1.5">${esc(stats.entities?.orgs?.[0]?.name||'—')}</div><div class="l">En Çok Geçen Kurum</div></div></div>
     <div class="tile"><span class="ic">🌐</span><div><div class="n">${stats.sourceDist?.[0]?.pct||0}%</div><div class="l">${stats.sourceDist?.[0]?.key==='rss'?'Haber Siteleri':(stats.sourceDist?.[0]?.key||'')}</div></div></div>`;
 }
 
@@ -1171,7 +1217,7 @@ function renderBrief(){
           ${showOrig?`<div class="briefit-orig">${esc(m.title)}</div>`:''}
           <div class="briefit-meta">${esc(m.source)} · ${esc(fmtDate(m.ts))}</div>
           ${noteTxt?`<div class="briefit-note"><b>Analist Notu:</b> ${esc(noteTxt)}</div>`:''}
-          <div class="briefit-link"><a href="${esc(m.link)}" target="_blank" rel="noopener">${esc(m.link)}</a></div>
+          <div class="briefit-link"><a href="${esc(safeLink(m.link))}" target="_blank" rel="noopener">${esc(m.link)}</a></div>
         </div>`;
       }).join('')}
     </div>`;
@@ -1181,7 +1227,177 @@ $("#briefPrintBtn")?.addEventListener('click',()=>window.print());
 $("#briefClearBtn")?.addEventListener('click',()=>{
   if(!confirm('Tüm işaretli haberler brifingden kaldırılsın mı?')) return;
   saveMarked([]); updateMarkBadge(); renderBrief();
+  ++briefRequestSeq; aiBrief=null; renderBriefTabs();
   document.querySelectorAll('.markbtn.on').forEach(b=>b.classList.remove('on'));
+});
+
+/* ================= AI Brifingi ================= */
+const BRIEF_SECTIONS = [
+  {k:'executiveSummary', name:'Yönetici Özeti'},
+  {k:'keyDevelopments', name:'Öne Çıkan Gelişmeler'},
+  {k:'themes', name:'Tematik Analiz'},
+  {k:'timeline', name:'Kronoloji'},
+  {k:'assessments', name:'Değerlendirme'},
+  {k:'watchlist', name:'Takip Edilecek Konular'},
+  {k:'sources', name:'Kaynaklar'},
+];
+let aiBrief=null, briefTab='raw', briefRequestSeq=0;
+
+function renderBriefTabs(){
+  const tabBtn=$("#briefTabBtn");
+  if(!aiBrief){ tabBtn.hidden=true; $("#aiBriefDoc").hidden=true; $("#briefDoc").hidden=false; return; }
+  tabBtn.hidden=false;
+  tabBtn.textContent = briefTab==='ai' ? '🗒 Ham Listeyi Göster' : '🤖 AI Brifingini Göster';
+  $("#aiBriefDoc").hidden = briefTab!=='ai';
+  $("#briefDoc").hidden = briefTab==='ai';
+}
+$("#briefTabBtn").addEventListener('click',()=>{ briefTab = briefTab==='ai'?'raw':'ai'; renderBriefTabs(); });
+
+function openBriefModal(){
+  const marked=getMarked();
+  if(!marked.length) return;
+  $("#briefModalCount").textContent=marked.length;
+  $("#briefTitleInput").value = aiBrief?.metadata?.title || '';
+  const dates=marked.map(m=>m.ts).filter(t=>Number.isFinite(t) && Number.isFinite(new Date(t).getTime())).sort((a,b)=>a-b);
+  $("#briefAfterInput").value=""; $("#briefBeforeInput").value="";
+  if(dates.length){
+    $("#briefAfterInput").value = new Date(dates[0]).toISOString().slice(0,10);
+    $("#briefBeforeInput").value = new Date(dates[dates.length-1]).toISOString().slice(0,10);
+  }
+  if(!$("#briefSectionChecks").children.length){
+    $("#briefSectionChecks").innerHTML = BRIEF_SECTIONS.map(s=>`
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink);background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:5px 11px;cursor:pointer">
+        <input type="checkbox" value="${s.k}" checked style="margin:0">${esc(s.name)}
+      </label>`).join('');
+  }
+  $("#briefModalErr").style.display='none';
+  $("#briefModal").classList.add('open');
+}
+function closeBriefModal(){ $("#briefModal").classList.remove('open'); }
+$("#briefAiBtn").addEventListener('click',openBriefModal);
+$("#briefModalClose").addEventListener('click',closeBriefModal);
+$("#briefModal").addEventListener('click',(e)=>{ if(e.target.id==='briefModal') closeBriefModal(); });
+
+async function generateAiBrief(){
+  const marked=getMarked();
+  const title=$("#briefTitleInput").value.trim() || 'GKRY İstihbarat Brifingi';
+  const after=$("#briefAfterInput").value, before=$("#briefBeforeInput").value;
+  const depth=$("#briefDepthInput").value;
+  const sections=[...$("#briefSectionChecks").querySelectorAll('input:checked')].map(i=>i.value);
+  const btn=$("#briefGenerateBtn");
+  if(btn.disabled) return;
+  const requestId=++briefRequestSeq;
+  btn.disabled=true; btn.textContent='Oluşturuluyor… (bu biraz sürebilir)';
+  $("#briefModalErr").style.display='none';
+  try{
+    if(after && before && after>before) throw new Error('Başlangıç tarihi bitişten sonra olamaz.');
+    const selected=marked.filter(m=>(!after && !before) || (Number.isFinite(m.ts) && (!after || m.ts>=Date.parse(after)) && (!before || m.ts<Date.parse(before)+86400000)));
+    if(!selected.length) throw new Error('Seçilen tarih aralığında işaretli haber yok.');
+    if(selected.length>25) throw new Error('Tek seferde en fazla 25 haber seçilebilir.');
+    const r = await apiFetch(API_BASE+'/api/briefing', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({
+        title,
+        items: selected.map(m=>({link:m.link,title:m.title,titleTr:m.titleTr,source:m.source,ts:m.ts,cat:m.cat,lang:m.lang})),
+        depth,
+        sections,
+      }),
+    });
+    const j = await r.json();
+    if(requestId!==briefRequestSeq) return;
+    if(!r.ok || j.ok===false) throw new Error(j.error || `Sunucu hatası (${r.status})`);
+    aiBrief = j;
+    briefTab='ai';
+    renderAiBrief(aiBrief);
+    renderBriefTabs();
+    closeBriefModal();
+  }catch(e){
+    if(requestId!==briefRequestSeq) return;
+    $("#briefModalErr").textContent = 'Brifing oluşturulamadı: '+e.message;
+    $("#briefModalErr").style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='Brifingi Oluştur';
+  }
+}
+$("#briefGenerateBtn").addEventListener('click',generateAiBrief);
+
+function sevLabel(s){ return ({KRITIK:'🔴 Kritik',YUKSEK:'🟠 Yüksek',ORTA:'🟡 Orta',DUSUK:'⚪ Düşük'})[s]||s; }
+function withRefs(text){
+  return esc(text||'').replace(/\[K(\d+)\]/g, (m,n)=>`<a href="#kref-K${n}" class="briefref" data-ref="K${n}">[K${n}]</a>`);
+}
+function briefRefs(row){ return withRefs((Array.isArray(row.refs)?row.refs:[]).filter(r=>/^K\d+$/.test(r)).map(r=>'['+r+']').join(' ')); }
+function safeLink(value){ try{ const u=new URL(value); return /^https?:$/.test(u.protocol)?u.href:'#'; }catch{ return '#'; } }
+function renderAiBrief(b){
+  b=b||{};
+  const rows=k=>(Array.isArray(b[k])?b[k]:[]).filter(v=>v && typeof v==='object');
+  const md=b.metadata||{};
+  let html = `<div class="briefcover">
+    <div class="briefeyebrow">AÇIK KAYNAK (OSINT) — YAPAY ZEKÂ ANALİZİ</div>
+    <h1>${esc(md.title||'GKRY İstihbarat Brifingi')}</h1>
+    <div class="briefmeta">
+      <div>Üretildi: ${esc(md.createdAt ? new Date(md.createdAt).toLocaleString('tr-TR') : new Date().toLocaleString('tr-TR'))}</div>
+      <div>Seçilen haber: ${esc(md.selectedCount ?? '—')}</div>
+      <div>Kullanılan haber: ${esc(md.usedCount ?? '—')}${md.partialCount?` (${esc(md.partialCount)} kısmi çeviri)`:''}</div>
+      <div>Derinlik: ${esc(md.depth||'normal')}</div>
+    </div>
+  </div>`;
+
+  if(b.executiveSummary){
+    html += `<div class="briefsec"><div class="briefsech">Yönetici Özeti</div><div class="briefitem">${withRefs(b.executiveSummary)}</div></div>`;
+  }
+  if(Array.isArray(b.keyDevelopments) && b.keyDevelopments.length){
+    html += `<div class="briefsec"><div class="briefsech">Öne Çıkan Gelişmeler</div>` + rows("keyDevelopments").map(d=>`
+      <div class="briefitem">
+        <div class="briefit-title">${esc(sevLabel(d.importance))} — ${esc(d.title)}</div>
+        <div style="margin-top:4px">${withRefs(d.description)}</div><div class="briefit-meta">Kanıt durumu: ${esc(d.evidenceStatus)} ${briefRefs(d)}</div>
+        ${d.importanceReason?`<div class="briefit-meta">Gerekçe: ${withRefs(d.importanceReason)}</div>`:''}
+      </div>`).join('') + `</div>`;
+  }
+  if(Array.isArray(b.themes) && b.themes.length){
+    html += rows("themes").map(t=>`
+      <div class="briefsec">
+        <div class="briefsech"><span class="briefsq" style="background:var(--accent)"></span>${esc(t.name||"Tema")}</div>
+        ${t.developments?`<div class="briefitem"><b>Önemli gelişmeler:</b> ${withRefs(t.developments)}</div>`:''}
+        ${t.commonPoints?`<div class="briefitem"><b>Ortak noktalar:</b> ${withRefs(t.commonPoints)}</div>`:''}
+        ${t.sourceDifferences?`<div class="briefitem"><b>Kaynaklar arası farklılıklar:</b> ${withRefs(t.sourceDifferences)}</div>`:''}
+        ${t.assessment?`<div class="briefitem briefit-note"><b>Değerlendirme:</b> ${withRefs(t.assessment)}</div>`:''}
+        ${t.possibleEffects?`<div class="briefitem"><b>Olası etkiler:</b> ${withRefs(t.possibleEffects)}</div>`:''}
+        <div class="briefitem">${briefRefs(t)}</div>
+        ${t.watchPoints?`<div class="briefitem"><b>Takip edilmesi gerekenler:</b> ${withRefs(t.watchPoints)}</div>`:''}
+      </div>`).join('');
+  }
+  if(Array.isArray(b.timeline) && b.timeline.length){
+    html += `<div class="briefsec"><div class="briefsech">Kronoloji</div>` + rows("timeline").map(e=>`
+      <div class="briefitem"><div class="briefit-meta">${esc(e.timeLabel || (e.time?fmtDate(Date.parse(e.time)):''))}</div>${withRefs(e.description)} ${briefRefs(e)}</div>`).join('') + `</div>`;
+  }
+  if(Array.isArray(b.assessments) && b.assessments.length){
+    html += `<div class="briefsec"><div class="briefsech">Genel Değerlendirme</div>` + rows("assessments").map(a=>`
+      <div class="briefitem briefit-note">${withRefs(a.text)}<div>Dayanak: ${withRefs(a.basis)}</div><div>Varsayımlar: ${withRefs(a.assumptions)}</div>${briefRefs(a)}${a.uncertainty?`<div class="briefit-meta">Belirsizlik: ${withRefs(a.uncertainty)}</div>`:''}</div>`).join('') + `</div>`;
+  }
+  if(Array.isArray(b.watchlist) && b.watchlist.length){
+    html += `<div class="briefsec"><div class="briefsech">Takip Edilmesi Gereken Konular</div>` + rows("watchlist").map(w=>`
+      <div class="briefitem"><div class="briefit-title">${esc(w.item)}</div><div style="margin-top:3px">${esc(w.why||'')}</div>${w.openQuestion?`<div class="briefit-meta">Açık soru: ${esc(w.openQuestion)}</div>`:''}</div>`).join('') + `</div>`;
+  }
+  if(Array.isArray(b.sources) && b.sources.length){
+    const showSources=!Array.isArray(md.sections)||md.sections.includes('sources');
+    html += `<div class="briefsec"><div class="briefsech">Kaynaklar</div>` + rows("sources").map(s=>`
+      ${!showSources&&s.contentStatus!=='failed'?'<details><summary>'+esc(s.ref)+' — Kaynağı göster</summary>':''}
+      <div class="briefitem" id="kref-${esc(s.ref)}">
+        <div class="briefit-title">[${esc(s.ref)}] ${esc(s.title)}</div>
+        ${s.originalTitle && s.originalTitle!==s.title?`<div class="briefit-orig">${esc(s.originalTitle)}</div>`:''}
+        <div class="briefit-meta">${esc(s.source)} · ${s.publishedAt?esc(fmtDate(Date.parse(s.publishedAt))):'—'} · ${esc(s.originalLanguage||'?')}${s.contentStatus&&s.contentStatus!=='ok'?` · ⚠ ${esc(s.contentStatus)}`:''}</div>
+        <div class="briefit-link"><a href="${esc(safeLink(s.url))}" target="_blank" rel="noopener">${esc(s.url)}</a></div>
+      </div>${!showSources&&s.contentStatus!=='failed'?'</details>':''}`).join('') + `</div>`;
+  }
+  $("#aiBriefDoc").innerHTML = html;
+  $("#aiBriefDoc").hidden=false;
+}
+$("#aiBriefDoc").addEventListener('click', e=>{
+  const ref=e.target.closest('.briefref'); if(!ref) return;
+  e.preventDefault();
+  const target=document.getElementById('kref-'+ref.dataset.ref);
+  if(target){ const folded=target.closest('details'); if(folded) folded.open=true; target.scrollIntoView({behavior:'smooth',block:'center'}); target.style.outline='2px solid var(--accent)'; setTimeout(()=>target.style.outline='',1200); }
 });
 
 function renderSrcDonut(dist){
@@ -1370,6 +1586,8 @@ async function runSearch(overrideQ, label){
   const q=(overrideQ!==undefined?overrideQ:$("#q").value.trim()), after=$("#after").value, before=$("#before").value;
   if(!q && !after && !before){ searching=false; return load(); }
   searching=true;
+  // Tematik sorgu #q alanında görünmez; yenilemede aynı sorguyu koru.
+  lastSearch={q,label};
   const myToken = ++feedReqToken;
   const feed=$("#feed"), st=$("#status");
   st.className="status"; st.textContent="Aranıyor…";
@@ -1459,9 +1677,12 @@ function renderDetail(){
   const j=currentArticle, item=currentArticle?.__item; if(!j) return;
   const isTr = detailLang==='tr';
   const title = String((isTr ? (j.titleTr||j.title) : j.title) || item?.title || 'Başlıksız haber');
-  const original=Array.isArray(j.paragraphs)?j.paragraphs.filter(validText):[];
-  const translated=Array.isArray(j.paragraphsTr)?j.paragraphsTr.filter(validText):[];
-  const paras=isTr && translated.length?translated:original;
+  const original=Array.isArray(j.paragraphs)?j.paragraphs:[];
+  const translated=Array.isArray(j.paragraphsTr)?j.paragraphsTr:[];
+  // İndeksleri filtrelemeden eşleştir: eksik çeviri özgün paragrafı düşürmesin.
+  const paras=(isTr && original.length
+    ? original.map((p,i)=>validText(translated[i])?translated[i]:p)
+    : (isTr && translated.length?translated:original)).filter(validText);
   flushNote();
 
   let media='';
@@ -1507,7 +1728,7 @@ function renderDetail(){
 
       <button class="relbtn" id="relBtn">İlgili haberleri getir →</button>
 
-      <div class="dfoot"><span>Kaynak:</span><a href="${esc(j.sourceUrl)}" target="_blank" rel="noopener">${esc(j.sourceUrl)} ↗</a></div>
+      <div class="dfoot"><span>Kaynak:</span><a href="${esc(safeLink(j.sourceUrl))}" target="_blank" rel="noopener">${esc(j.sourceUrl)} ↗</a></div>
     </div>`);
 
   $("#detail").querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>{detailLang=b.dataset.lang;renderDetail();}));
@@ -1564,7 +1785,7 @@ async function openArticle(item){
         <h2 class="dtitle">${esc(item.titleTr||item.title)}</h2>
         ${media}
         <div class="dstatus" style="padding:12px 0 0">${esc(e.message)} — kaynak site tam metni engelliyor olabilir.</div>
-        <div class="dfoot"><span>Kaynak:</span><a href="${esc(item.link)}" target="_blank" rel="noopener">Habere orada git ↗</a></div>
+        <div class="dfoot"><span>Kaynak:</span><a href="${esc(safeLink(item.link))}" target="_blank" rel="noopener">Habere orada git ↗</a></div>
       </div>`);
   }
 }
@@ -1583,13 +1804,13 @@ document.addEventListener('click',(e)=>{
   const idx=+row.dataset.idx; const pool = row.dataset.list==='dash' ? dashItems : currentItems;
   const item=pool[idx]; if(item) openArticle(item);
 });
-document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ if($('#setModal').classList.contains('open')) closeSettings(); else if(document.body.classList.contains('rail-open')){ setRail(false); $('#menuBtn').focus(); }else closeDetail(); $('#bellDD').hidden=true; } });
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ if($('#briefModal').classList.contains('open')) closeBriefModal(); else if($('#setModal').classList.contains('open')) closeSettings(); else if(document.body.classList.contains('rail-open')){ setRail(false); $('#menuBtn').focus(); }else closeDetail(); $('#bellDD').hidden=true; } });
 
 /* ================= topbar olayları ================= */
 $("#go").addEventListener('click',()=>runSearch());
 $("#q").addEventListener('keydown',e=>{if(e.key==="Enter")runSearch();});
 $("#clear").addEventListener('click',()=>{$("#q").value="";$("#after").value="";$("#before").value="";searching=false;load();});
-$("#refreshBtn").addEventListener('click',()=>currentView==='dashboard'?loadDashboard():(searching?runSearch():load()));
+$("#refreshBtn").addEventListener('click',()=>currentView==='dashboard'?loadDashboard():(searching?runSearch(lastSearch?.q,lastSearch?.label):load()));
 function setRail(open){
   document.body.classList.toggle('rail-open',open);
   $('#menuBtn').setAttribute('aria-expanded',String(open));
@@ -1635,7 +1856,7 @@ const WATCH_KEY='gkry-watch-keywords';
 function getWatch(){ return storedArray(WATCH_KEY, validText); }
 function saveWatch(list){ try{ localStorage.setItem(WATCH_KEY, JSON.stringify(list)); }catch{} }
 function foldFe(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i'); }
-function watchWordRe(term){ return new RegExp('\\b'+foldFe(term).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b'); }
+function watchWordRe(term){ return new RegExp('(?:^|[^\\p{L}\\p{N}\\p{M}_])'+foldFe(term).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^\\p{L}\\p{N}\\p{M}_])','u'); }
 function matchedWatchTerms(item){
   const list=getWatch(); if(!list.length) return [];
   const text=foldFe([item.title,item.titleTr,item.description,item.source].filter(Boolean).join(' \u2016 '));
