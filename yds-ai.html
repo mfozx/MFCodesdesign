@@ -1,0 +1,587 @@
+---
+layout: null
+title: YDS-AI
+permalink: /projects/yds-ai/
+---
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="YDS-AI — öğretmen gibi yönlendiren, ücretsiz YDS hazırlık sistemi.">
+<meta property="og:title" content="YDS-AI | MFCodes">
+<meta property="og:description" content="Zayıf konunu bulan, hatanın kökenine inen, kelimeleri unutmadan tekrar ettiren ücretsiz YDS hazırlığı.">
+<meta property="og:url" content="https://mfcodes.org/projects/yds-ai/">
+<meta property="og:type" content="website">
+<title>YDS-AI | MFCodes</title>
+<link rel="icon" href="/assets/images/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--surface:#ffffff;--surface-2:#eef2f8;--ink:#10203a;--muted:#55627a;--line:#dfe5ee;
+  --accent:#1f5fbf;--accent-ink:#ffffff;--accent-soft:#e5eefb;
+  --good:#167a4a;--good-soft:#e3f4ea;--bad:#b3261e;--bad-soft:#fbe9e7;--warn:#8a5a00;--warn-soft:#fbf1dc;
+  --r-subject:#1f5fbf;--r-verb:#b6501e;--r-complement:#55627a;--r-conjunction:#6b46c1;--r-relative:#0d7a56;
+  --radius:16px;--radius-in:10px;--shadow:0 1px 2px rgba(16,32,58,.05),0 8px 24px -12px rgba(16,32,58,.18);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0a1830;--surface:#0f2143;--surface-2:#14294f;--ink:#ffffff;--muted:#b4c2dc;--line:rgba(255,255,255,.11);
+  --accent:#6da7ec;--accent-ink:#0a1830;--accent-soft:rgba(109,167,236,.16);
+  --good:#4ade80;--good-soft:rgba(74,222,128,.12);--bad:#f0726f;--bad-soft:rgba(240,114,111,.13);--warn:#e0a336;--warn-soft:rgba(224,163,54,.13);
+  --r-subject:#6da7ec;--r-verb:#f29b6b;--r-complement:#b4c2dc;--r-conjunction:#b7a6f5;--r-relative:#4fd1a0;
+  --shadow:none;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased;min-height:100dvh;display:flex;flex-direction:column}
+main{flex:1}
+a{color:var(--accent)}
+button{font:inherit;cursor:pointer}
+p,li{text-wrap:pretty}h1,h2{text-wrap:balance}
+.skip{position:absolute;left:-999px;top:8px;background:var(--accent);color:var(--accent-ink);padding:8px 12px;border-radius:8px;z-index:10}
+.skip:focus{left:16px}
+footer{border-top:1px solid var(--line);padding:20px 0 28px;font-size:14px;color:var(--muted)}
+footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
+footer a{color:var(--muted)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+.narrow{max-width:760px}
+header{border-bottom:1px solid var(--line);background:var(--surface)}
+header .wrap{display:flex;align-items:center;gap:12px;height:60px}
+.brand{font-weight:700;font-size:18px;letter-spacing:-.01em;color:var(--ink);text-decoration:none}
+.brand span{color:var(--accent)}
+.chip{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+nav{margin-left:auto;display:flex;gap:4px}
+nav button,.link{background:none;border:0;color:var(--muted);padding:8px 10px;border-radius:8px;font-weight:500;transition:background .2s,color .2s}
+nav button:hover,.link:hover{background:var(--surface-2);color:var(--ink)}
+nav button[aria-current=page]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent);border-radius:0}
+main{padding:32px 0 72px}
+h1{font-size:30px;line-height:1.15;letter-spacing:-.025em;font-weight:700;margin:0 0 8px}
+h2{font-size:16px;font-weight:600;letter-spacing:-.005em;margin:0 0 14px}
+.sub{color:var(--muted);margin:0 0 28px;max-width:62ch}
+.card{background:var(--surface);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.card>.actions:last-child,.card>form:last-child{margin-top:auto}
+.today{background:var(--surface);border-radius:var(--radius);padding:26px;border-left:4px solid var(--accent);box-shadow:var(--shadow)}
+.today h2{font-size:22px;letter-spacing:-.015em;margin-bottom:8px}
+.skeleton{height:120px;border-radius:var(--radius);background:linear-gradient(90deg,var(--surface) 0%,var(--surface-2) 50%,var(--surface) 100%);background-size:200% 100%;animation:sk 1.2s ease-in-out infinite}
+@keyframes sk{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.skeleton{animation:none}*{transition:none!important}}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.span2{grid-column:1/-1}
+@media (max-width:760px){.grid{grid-template-columns:1fr}.span2{grid-column:auto}}
+label{display:block;font-weight:500;font-size:14px;margin:14px 0 6px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
+.btn{border:0;border-radius:var(--radius-in);padding:11px 18px;font-weight:600;background:var(--accent);color:var(--accent-ink);transition:filter .2s,transform .12s,background .2s}
+.btn:hover:not(:disabled){filter:brightness(1.08)}
+.btn:active:not(:disabled){transform:translateY(1px) scale(.99)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:var(--surface-2);color:var(--ink)}
+.btn.danger{background:var(--bad-soft);color:var(--bad)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.err{color:var(--bad);font-size:14px;min-height:20px;margin-top:10px}
+.muted{color:var(--muted)}.small{font-size:14px}
+.tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:10px;margin-bottom:8px}
+.tabs button{flex:1;border:0;background:none;padding:8px;border-radius:8px;font-weight:600;color:var(--muted)}
+.tabs button[aria-selected=true]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.big{font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{text-align:left;padding:7px 4px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:500}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.bar.low i{background:repeating-linear-gradient(45deg,var(--muted) 0 4px,transparent 4px 8px);opacity:.5}
+.list{list-style:none;margin:0;padding:0}.list li{padding:9px 0;border-bottom:1px solid var(--line)}.list li:last-child{border:0}
+.empty{color:var(--muted);font-size:14px;padding:6px 0}
+.banner{background:var(--accent-soft);color:var(--ink);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:15px}
+.banner b{color:var(--accent)}
+.progress{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-bottom:8px}
+.track{height:4px;background:var(--surface-2);border-radius:99px;margin-bottom:20px}.track i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+.passage{font-family:"Source Serif 4",Georgia,serif;font-size:18px;line-height:1.7;background:var(--surface);box-shadow:var(--shadow);border-radius:var(--radius);padding:22px 24px;margin-bottom:20px;max-width:68ch}
+.stem{font-family:"Source Serif 4",Georgia,serif;font-size:19px;line-height:1.6;margin:0 0 16px}
+.sent{border-bottom:2px dotted var(--accent);cursor:pointer}
+.sent:hover{background:var(--accent-soft)}
+.analysis{margin:10px 0 0;padding:12px;border-radius:10px;background:var(--surface-2);font-family:Inter,sans-serif;font-size:15px;line-height:1.9}
+.part{padding:1px 4px;border-radius:4px;border-bottom:2px solid}
+.role{white-space:nowrap;font-size:12px;font-weight:600;font-style:italic;margin-right:4px}
+.p-subject{border-color:var(--r-subject)}.p-subject .role{color:var(--r-subject)}
+.p-verb{border-color:var(--r-verb)}.p-verb .role{color:var(--r-verb)}
+.p-complement{border-color:var(--r-complement)}.p-complement .role{color:var(--r-complement)}
+.p-conjunction{border-color:var(--r-conjunction)}.p-conjunction .role{color:var(--r-conjunction)}
+.p-relative_clause{border-color:var(--r-relative)}.p-relative_clause .role{color:var(--r-relative)}
+.tr{font-style:italic;color:var(--muted);margin-top:8px;line-height:1.5}
+.opts{display:grid;gap:10px}
+.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:var(--radius-in);padding:12px 14px;color:var(--ink);transition:border-color .2s,background .2s,transform .12s}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:active:not(:disabled){transform:scale(.995)}
+.opt:disabled{cursor:default}
+.key{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;background:var(--surface-2)}
+.opt .why{display:block;font-size:14px;color:var(--muted);margin-top:4px}
+.opt.right{border-color:var(--good);background:var(--good-soft)}.opt.right .key{background:var(--good);color:#fff}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}.opt.wrong .key{background:var(--bad);color:#fff}
+.opt.picked{border-color:var(--accent)}
+.feedback{margin-top:16px}
+.verdict{font-weight:700;font-size:18px;margin:0 0 6px}.verdict.ok{color:var(--good)}.verdict.no{color:var(--bad)}
+.trap{display:inline-block;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:600;padding:3px 10px;border-radius:99px;margin-bottom:10px}
+.words{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.word{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 12px;font-size:14px;color:var(--ink);transition:border-color .2s}
+.word:hover{border-color:var(--accent)}
+.word b{font-weight:600}.word.added{border-color:var(--good);color:var(--good)}
+.flash{text-align:center;padding:36px 20px}
+.flash .lemma{font-family:"Source Serif 4",Georgia,serif;font-size:36px;font-weight:600;margin:6px 0 18px}
+.flash .sense{font-size:20px;margin-bottom:18px}
+.grades{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:480px){.grades{grid-template-columns:repeat(2,1fr)}h1{font-size:24px}.passage{font-size:17px;padding:16px}}
+[hidden]{display:none!important}
+.hero{display:grid;gap:4px;margin-bottom:24px}
+.kpi{display:flex;align-items:baseline;gap:8px}
+.note{font-size:13px;color:var(--muted);margin-top:10px}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">İçeriğe geç</a>
+<header>
+  <div class="wrap">
+    <a class="brand" href="/projects/yds-ai/">YDS<span>·</span>AI</a><span class="chip">Beta</span>
+    <nav id="nav" hidden>
+      <button data-go="dash">Panel</button>
+      <button data-go="vocab">Kelime</button>
+      <button id="logout">Çıkış</button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <!-- giriş / kayıt -->
+  <section id="v-auth" class="wrap narrow" hidden>
+    <div class="hero">
+      <h1>Seni öğretmen gibi yönlendiren YDS hazırlığı</h1>
+      <p class="sub">Neyi neden çalışacağını sistem söyler: zayıf konunu bulur, hatanın kökenine iner, kelimeleri unutmadan önce tekrar ettirir. Ücretsiz.</p>
+    </div>
+    <div class="card">
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-mode="register">Kayıt ol</button>
+        <button role="tab" aria-selected="false" data-mode="login">Giriş yap</button>
+      </div>
+      <form id="auth-form">
+        <label for="email">E-posta</label>
+        <input id="email" type="email" autocomplete="email" required>
+        <label for="password">Şifre</label>
+        <input id="password" type="password" autocomplete="new-password" minlength="8" required>
+        <div class="err" id="auth-err"></div>
+        <div class="actions"><button class="btn" id="auth-btn">Kayıt ol</button></div>
+        <p class="note">Yalnızca e-postan ve çalışma kayıtların tutulur. Hiçbir kişisel bilgin yapay zekâya gönderilmez. Hesabını istediğin an tüm verinle birlikte silebilirsin.</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- tanışma -->
+  <section id="v-onboard" class="wrap narrow" hidden>
+    <h1>Seni tanıyalım</h1>
+    <p class="sub">Bir dakikalık birkaç soru. Hepsini sonradan değiştirebilirsin.</p>
+    <form id="onboard-form" class="card">
+      <label for="o-lang">Hangi dil?</label>
+      <select id="o-lang"><option value="en">İngilizce</option><option value="es" disabled>İspanyolca (yakında)</option></select>
+      <div class="row">
+        <div><label for="o-target">Hedef puanın</label><input id="o-target" type="number" min="0" max="100" step="5" value="60" required></div>
+        <div><label for="o-date">Sınav tarihin (biliyorsan)</label><input id="o-date" type="date"></div>
+      </div>
+      <p class="muted small" id="o-need"></p>
+      <label for="o-weekly">Haftada ne kadar ayırabilirsin?</label>
+      <select id="o-weekly">
+        <option value="60">1 saat</option><option value="150" selected>2,5 saat</option>
+        <option value="300">5 saat</option><option value="450">7,5 saat</option><option value="600">10 saat ve üstü</option>
+      </select>
+      <div class="row">
+        <div><label for="o-session">Oturum uzunluğu</label>
+          <select id="o-session"><option value="short">Kısa (5 soruluk bloklar)</option><option value="long">Uzun (10 soruluk bloklar)</option></select></div>
+        <div><label for="o-explain">Açıklamalar ne zaman gelsin?</label>
+          <select id="o-explain"><option value="instant">Her sorudan hemen sonra</option><option value="end">Blok bitince topluca</option></select></div>
+      </div>
+      <label><input type="checkbox" id="o-had" style="width:auto;margin-right:6px">Daha önce YDS'ye girdim</label>
+      <div class="row" id="o-prev" hidden>
+        <div><label for="o-year">Yıl</label><input id="o-year" type="number" min="2000" max="2100"></div>
+        <div><label for="o-score">Puan</label><input id="o-score" type="number" min="0" max="100" step="0.25"></div>
+      </div>
+      <div class="err" id="onboard-err"></div>
+      <div class="actions"><button class="btn">Kaydet ve başla</button></div>
+    </form>
+  </section>
+
+  <!-- panel -->
+  <section id="v-dash" class="wrap" hidden>
+    <h1 id="d-title">Panel</h1>
+    <p class="sub" id="d-sub"></p>
+    <div class="grid">
+      <div class="today span2" id="d-today"></div>
+      <div class="card" id="d-goal"></div>
+      <div class="card" id="d-weak"></div>
+      <div class="card" id="d-traps"></div>
+      <div class="card" id="d-timing"></div>
+      <div class="card" id="d-vocab"></div>
+      <div class="card" id="d-real"></div>
+      <div class="card span2" id="d-account"></div>
+    </div>
+  </section>
+
+  <!-- çalışma -->
+  <section id="v-study" class="wrap narrow" hidden></section>
+
+  <!-- kelime turu -->
+  <section id="v-vocab" class="wrap narrow" hidden></section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="/">← mfcodes.org</a>
+    <span>Sorular özgündür; ÖSYM sorusu veya telifli metin kullanılmaz. Verin yapay zekâya gönderilmez.</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const API = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://127.0.0.1:8787' : 'https://yds-ai.mfpl12.workers.dev';
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const store = {
+    get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+    set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} },
+  };
+  let token = store.get('yds-token');
+  let me = null;
+  let warmupDone = false;
+
+  async function api(method, path, body) {
+    const res = await fetch(API + path, {
+      method,
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401 && token) { setToken(null); show('auth'); }
+    if (!res.ok) throw new Error(data.error || 'Bağlantı hatası');
+    return data;
+  }
+  function setToken(t) { token = t; store.set('yds-token', t); }
+
+  function show(view) {
+    for (const v of ['auth', 'onboard', 'dash', 'study', 'vocab']) $('#v-' + v).hidden = v !== view;
+    $('#nav').hidden = view === 'auth';
+    document.querySelectorAll('[data-go]').forEach((b) => (b.dataset.go === view ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current')));
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- giriş ----------
+  let authMode = 'register';
+  for (const b of document.querySelectorAll('[data-mode]')) {
+    b.onclick = () => {
+      authMode = b.dataset.mode;
+      document.querySelectorAll('[data-mode]').forEach((x) => x.setAttribute('aria-selected', x === b));
+      $('#auth-btn').textContent = authMode === 'register' ? 'Kayıt ol' : 'Giriş yap';
+      $('#password').autocomplete = authMode === 'register' ? 'new-password' : 'current-password';
+      $('#auth-err').textContent = '';
+    };
+  }
+  $('#auth-form').onsubmit = async (e) => {
+    e.preventDefault();
+    $('#auth-err').textContent = '';
+    $('#auth-btn').disabled = true;
+    try {
+      const r = await api('POST', authMode === 'register' ? '/api/register' : '/api/login', { email: $('#email').value, password: $('#password').value });
+      setToken(r.token);
+      await boot();
+    } catch (err) { $('#auth-err').textContent = err.message; }
+    $('#auth-btn').disabled = false;
+  };
+
+  // ---------- tanışma ----------
+  const needText = () => {
+    const t = Number($('#o-target').value);
+    $('#o-need').textContent = t >= 0 && t <= 100 ? `${t} puan için 80 sorudan en az ${Math.ceil(t / 1.25 - 1e-9)} doğru gerekiyor (her doğru 1,25 puan, yanlış götürmez).` : '';
+  };
+  $('#o-target').oninput = needText;
+  $('#o-had').onchange = () => { $('#o-prev').hidden = !$('#o-had').checked; };
+  $('#onboard-form').onsubmit = async (e) => {
+    e.preventDefault();
+    $('#onboard-err').textContent = '';
+    try {
+      await api('PUT', '/api/profile', {
+        lang: $('#o-lang').value, target_score: Number($('#o-target').value), exam_date: $('#o-date').value || null,
+        weekly_minutes: Number($('#o-weekly').value), session_pref: $('#o-session').value, explain_pref: $('#o-explain').value,
+      });
+      if ($('#o-had').checked && $('#o-year').value && $('#o-score').value) {
+        await api('POST', '/api/real-score', { exam: 'YDS', year: Number($('#o-year').value), score: Number($('#o-score').value) });
+      }
+      await boot();
+    } catch (err) { $('#onboard-err').textContent = err.message; }
+  };
+  function openOnboard() {
+    const p = me?.profile ?? {};
+    if (p.target_score != null) $('#o-target').value = p.target_score;
+    if (p.exam_date) $('#o-date').value = p.exam_date;
+    if (p.weekly_minutes) $('#o-weekly').value = p.weekly_minutes;
+    if (p.session_pref) $('#o-session').value = p.session_pref;
+    if (p.explain_pref) $('#o-explain').value = p.explain_pref;
+    needText();
+    show('onboard');
+  }
+
+  // ---------- panel ----------
+  async function renderDash() {
+    show('dash');
+    document.querySelectorAll('#v-dash .grid > div').forEach((c) => (c.innerHTML = '<div class="skeleton"></div>'));
+    const [m, rep] = await Promise.all([api('GET', '/api/me'), api('GET', '/api/report')]);
+    me = m;
+    const p = me.profile;
+    const days = p.exam_date ? Math.ceil((new Date(p.exam_date) - new Date()) / 864e5) : null;
+    $('#d-title').textContent = 'Merhaba';
+    $('#d-sub').textContent = `Hedef ${p.target_score} puan` + (days != null && days >= 0 ? ` · sınava ${days} gün` : '') + ` · şimdiye kadar ${rep.answered} cevap`;
+
+    const block = p.session_pref === 'long' ? 10 : 5;
+    const perSession = p.session_pref === 'long' ? 30 : 15;
+    $('#d-today').innerHTML = `
+      <h2>Bugünkü çalışma</h2>
+      <p class="muted">Haftada ${p.weekly_minutes} dakika ayırdın: yaklaşık ${Math.max(1, Math.round(p.weekly_minutes / perSession))} oturum × ${perSession} dk. Her oturumda ${block} soruluk bloklar çözersin; ne çalışacağına sistem karar verir ve nedenini söyler.</p>
+      <div class="actions"><button class="btn" id="start">Çalışmaya başla</button>${me.dueWords ? `<button class="btn ghost" id="start-vocab">${me.dueWords} kelime tekrarı bekliyor</button>` : ''}</div>`;
+    $('#start').onclick = () => startStudy();
+    if ($('#start-vocab')) $('#start-vocab').onclick = startVocab;
+
+    const plan = rep.plan;
+    $('#d-goal').innerHTML = `
+      <h2>Hedef puan hesabı</h2>
+      <div class="kpi"><span class="big">${plan.required}</span><span class="muted">/ 80 doğru gerekiyor</span></div>
+      <table style="margin-top:14px"><thead><tr><th>Bölüm</th><th class="num">Şu an</th><th class="num">Hedef</th></tr></thead><tbody>
+      ${plan.perSection.map((r) => `<tr><td>${esc(r.label)}</td><td class="num">${r.measured ? r.currentCorrect : '<span class="muted">veri yok</span>'}</td><td class="num">${r.targetCorrect} / ${r.count}</td></tr>`).join('')}
+      </tbody></table>
+      <p class="note">"Şu an" yalnızca en az 5 cevabın olan bölümlerde hesaplanır. Ölçülmemiş bölümler 0 sayılır; tahmin uydurmuyoruz.</p>`;
+
+    $('#d-weak').innerHTML = `<h2>Zayıf konu haritası</h2>` + (rep.weak.length ? `<ul class="list">${rep.weak.map((w) => `
+      <li><div class="row" style="justify-content:space-between"><span>${esc(w.label)}</span><span class="small muted" style="flex:none">${w.enoughData ? `%${Math.round(w.accuracy * 100)}` : 'veri az'} · ${w.n} soru</span></div>
+      <div class="bar ${w.enoughData ? '' : 'low'}"><i style="width:${w.enoughData ? Math.round(w.accuracy * 100) : 100}%"></i></div></li>`).join('')}</ul>
+      <p class="note">Bir konu hakkında yorum için en az 5 cevap gerekir.</p>` : `<p class="empty">Soru çözdükçe burada güçlü ve zayıf konuların görünecek.</p>`);
+
+    $('#d-traps').innerHTML = `<h2>Düştüğün tuzaklar</h2>` + (rep.traps.length ? `<ul class="list">${rep.traps.map((t) => `
+      <li><div class="row" style="justify-content:space-between"><span>${esc(t.label)}</span><span class="small muted" style="flex:none">${t.count} kez · ${t.confidence}</span></div></li>`).join('')}</ul>
+      <p class="note">"Olası": henüz az örnek var, bir eğilim olabilir. "Tekrarlıyor": en az 3 kez.</p>` : `<p class="empty">Yanlış cevaplarında hangi çeldiriciye düştüğün burada birikecek.</p>`);
+
+    $('#d-timing').innerHTML = `<h2>Süre</h2>` + (rep.timing.length ? `<table><thead><tr><th>Bölüm</th><th class="num">Ortanca</th><th class="num">Hedef</th></tr></thead><tbody>
+      ${rep.timing.map((t) => `<tr><td>${esc(t.label)}${t.slow ? ' <span class="trap" style="margin:0">yavaş</span>' : ''}</td><td class="num">${t.medianSec} sn</td><td class="num">${t.targetSec} sn</td></tr>`).join('')}
+      </tbody></table><p class="note">Hedef süreler 180 dakikaya sığacak şekilde belirlendi; ÖSYM'nin resmi değeri değildir.</p>` : `<p class="empty">Soru başına ne kadar süre harcadığın burada görünecek.</p>`);
+
+    $('#d-vocab').innerHTML = `<h2>Kelime defteri</h2>
+      <div class="kpi"><span class="big">${me.dueWords}</span><span class="muted">kelime tekrar bekliyor</span></div>
+      <p class="note">Sorulardan sonra bilmediğin kelimeleri deftere ekle. Unutmak üzereyken tekrar karşına çıkar.</p>
+      <div class="actions"><button class="btn ghost" id="go-vocab" ${me.dueWords ? '' : 'disabled'}>Kelime turu</button></div>`;
+    $('#go-vocab').onclick = startVocab;
+
+    $('#d-real').innerHTML = `<h2>Gerçek sınav puanların</h2>
+      ${me.realScores.length ? `<ul class="list">${me.realScores.map((s) => `<li>${esc(s.exam)} ${s.year}${s.session ? ' ' + esc(s.session) : ''} · <b>${s.score}</b></li>`).join('')}</ul>` : '<p class="empty">Henüz puan girmedin.</p>'}
+      <form id="real-form"><div class="row">
+        <div><label for="r-exam">Sınav</label><select id="r-exam"><option>YDS</option><option>e-YDS</option><option>YÖKDİL</option></select></div>
+        <div><label for="r-year">Yıl</label><input id="r-year" type="number" min="2000" max="2100" required></div>
+        <div><label for="r-score">Puan</label><input id="r-score" type="number" min="0" max="100" step="0.25" required></div>
+      </div><div class="err" id="r-err"></div><button class="btn ghost">Ekle</button></form>
+      <p class="note">Sınava girdikten sonra puanını eklersen, sistemin tahminlerini gerçek sonuçlarla kalibre etmemize yardım edersin.</p>`;
+    $('#real-form').onsubmit = async (e) => {
+      e.preventDefault();
+      try { await api('POST', '/api/real-score', { exam: $('#r-exam').value, year: Number($('#r-year').value), score: Number($('#r-score').value) }); renderDash(); }
+      catch (err) { $('#r-err').textContent = err.message; }
+    };
+
+    $('#d-account').innerHTML = `<h2>Hesap</h2><p class="muted small">${esc(me.email)}</p>
+      <div class="actions"><button class="btn ghost" id="edit-profile">Hedef ve tercihleri değiştir</button><button class="btn danger" id="del">Hesabımı sil</button></div>`;
+    $('#edit-profile').onclick = openOnboard;
+    $('#del').onclick = async (e) => {
+      const b = e.currentTarget;
+      if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = 'Emin misin? Tüm verin silinir. Tekrar bas.'; return; }
+      await api('DELETE', '/api/me'); setToken(null); show('auth');
+    };
+  }
+
+  // ---------- çalışma ----------
+  const ROLE_TR = { subject: 'özne', verb: 'yüklem', complement: 'tümleç', conjunction: 'bağlaç', relative_clause: 'sıfat cümleciği' };
+
+  async function startStudy() {
+    show('study');
+    const box = $('#v-study');
+    box.innerHTML = '<div class="skeleton" style="height:56px;margin-bottom:16px"></div><div class="skeleton" style="height:280px"></div>';
+    let data;
+    try { data = await api('GET', '/api/next' + (warmupDone ? '' : '?warmup=1')); }
+    catch (err) { box.innerHTML = `<div class="card"><p class="err">${esc(err.message)}</p></div>`; return; }
+    if (data.exhausted) {
+      box.innerHTML = `<div class="card"><h2>Şimdilik tüm soruları çözdün</h2><p class="muted">Soru havuzu beta aşamasında büyüyor. Bu arada kelime defterini tekrar edebilirsin.</p><div class="actions"><button class="btn" id="b-dash">Panele dön</button></div></div>`;
+      $('#b-dash').onclick = renderDash;
+      return;
+    }
+    if (data.step.phase === 'brief') return renderBrief(data);
+    warmupDone = true;
+    runBlock(data);
+  }
+
+  function renderBrief({ step, brief }) {
+    const box = $('#v-study');
+    box.innerHTML = `
+      <div class="banner"><b>${esc(step.skillLabel)}</b> · ${esc(step.reason)}</div>
+      <div class="card">
+        <h1 style="font-size:22px">${esc(brief.title)}</h1>
+        <ul>${brief.points.map((x) => `<li style="margin:6px 0">${esc(x)}</li>`).join('')}</ul>
+        <div class="analysis"><b>Örnek:</b> ${esc(brief.example.text)}<div class="tr">${esc(brief.example.note)}</div></div>
+        <div class="actions"><button class="btn" id="b-go">Anladım, sorulara geç</button><button class="btn ghost" id="b-skip">Bunu biliyorum, atla</button></div>
+      </div>`;
+    const go = async () => { await api('POST', '/api/brief-seen', { skill: step.skill }); startStudy(); };
+    $('#b-go').onclick = go;
+    $('#b-skip').onclick = go;
+  }
+
+  function runBlock({ step, items, explainAtEnd }) {
+    const state = { i: 0, results: [] };
+    const box = $('#v-study');
+
+    const renderQuestion = () => {
+      const it = items[state.i];
+      let hinted = false;
+      const t0 = performance.now();
+      const sentMap = new Map((it.sentences || []).map((s) => [s.text, s]));
+      let passageHtml = '';
+      if (it.passage) {
+        let html = esc(it.passage);
+        for (const s of sentMap.keys()) html = html.replace(esc(s), `<span class="sent" tabindex="0" role="button" data-s="${esc(s)}" title="Cümleyi çözümle">${esc(s)}</span>`);
+        passageHtml = `<div class="passage">${html}${sentMap.size ? '<div class="note">Altı noktalı cümleye dokunarak yapısını görebilirsin (ipucu sayılır).</div>' : ''}<div id="analysis"></div></div>`;
+      }
+      box.innerHTML = `
+        ${state.i === 0 ? `<div class="banner"><b>${esc(step.skillLabel)}</b> · ${esc(step.reason)}</div>` : ''}
+        <div class="progress"><span>Soru ${state.i + 1} / ${items.length}</span><span>${esc(step.skillLabel)}</span></div>
+        <div class="track"><i style="width:${(state.i / items.length) * 100}%"></i></div>
+        ${passageHtml}
+        <p class="stem">${esc(it.stem)}</p>
+        <div class="opts">${it.options.map((o) => `<button class="opt" data-k="${o.key}"><span class="key">${o.key}</span><span class="txt">${esc(o.text)}</span></button>`).join('')}</div>
+        <div id="fb"></div>`;
+
+      box.querySelectorAll('.sent').forEach((el) => {
+        const open = () => {
+          hinted = true;
+          const s = sentMap.get(el.dataset.s);
+          $('#analysis').innerHTML = `<div class="analysis">${s.parts.map((p) => `<span class="part p-${esc(p.role)}"><span class="role">${esc(ROLE_TR[p.role] || p.role)}</span>${esc(p.text)}</span>`).join(' ')}
+            ${s.parts.filter((p) => p.note).map((p) => `<div class="tr">${esc(p.note)}</div>`).join('')}<div class="tr">${esc(s.tr)}</div></div>`;
+        };
+        el.onclick = open;
+        el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } };
+      });
+
+      box.querySelectorAll('.opt').forEach((b) => {
+        b.onclick = async () => {
+          box.querySelectorAll('.opt').forEach((x) => (x.disabled = true));
+          b.classList.add('picked');
+          let r;
+          try { r = await api('POST', '/api/answer', { itemId: it.id, chosen: b.dataset.k, ms: Math.round(performance.now() - t0), hinted }); }
+          catch (err) { $('#fb').innerHTML = `<p class="err">${esc(err.message)}</p>`; box.querySelectorAll('.opt').forEach((x) => (x.disabled = false)); return; }
+          state.results.push({ it, chosen: b.dataset.k, r });
+          if (explainAtEnd) {
+            $('#fb').innerHTML = `<div class="actions"><button class="btn" id="nx">${state.i + 1 < items.length ? 'Sonraki soru' : 'Bloğu bitir'}</button></div>`;
+          } else {
+            paintOptions(box, r, b.dataset.k);
+            $('#fb').innerHTML = feedbackHtml(it, r) + `<div class="actions"><button class="btn" id="nx">${state.i + 1 < items.length ? 'Sonraki soru' : 'Bloğu bitir'}</button></div>`;
+            wireFeedback($('#fb'), it);
+          }
+          $('#nx').onclick = () => { state.i++; state.i < items.length ? renderQuestion() : renderSummary(); };
+          $('#nx').focus();
+        };
+      });
+    };
+
+    const renderSummary = () => {
+      const ok = state.results.filter((x) => x.r.correct).length;
+      box.innerHTML = `
+        <div class="card"><h1 style="font-size:22px">Blok bitti: ${ok} / ${state.results.length} doğru</h1>
+        <p class="muted">${esc(step.skillLabel)} · Sıradaki adıma sistem senin cevaplarına göre karar verecek.</p>
+        <div class="actions"><button class="btn" id="s-next">Devam et</button><button class="btn ghost" id="s-dash">Panele dön</button></div></div>
+        ${explainAtEnd ? state.results.map((x, i) => `<div class="card" style="margin-top:16px" data-i="${i}"><p class="small muted">Soru ${i + 1}</p><p class="stem">${esc(x.it.stem)}</p><div class="opts">${x.r.options.map((o) => `<div class="opt" data-k="${o.key}"><span class="key">${o.key}</span><span class="txt">${esc(o.text)}</span></div>`).join('')}</div>${feedbackHtml(x.it, x.r)}</div>`).join('') : ''}`;
+      if (explainAtEnd) state.results.forEach((x, i) => { const c = box.querySelector(`[data-i="${i}"]`); paintOptions(c, x.r, x.chosen); wireFeedback(c, x.it); });
+      $('#s-next').onclick = startStudy;
+      $('#s-dash').onclick = renderDash;
+    };
+
+    renderQuestion();
+  }
+
+  function paintOptions(root, r, chosen) {
+    root.querySelectorAll('.opt').forEach((el) => {
+      const o = r.options.find((x) => x.key === el.dataset.k);
+      if (o.key === r.answer) el.classList.add('right');
+      else if (o.key === chosen) el.classList.add('wrong');
+      if (o.why) el.querySelector('.txt').insertAdjacentHTML('beforeend', `<span class="why">${o.trapLabel ? `<b>${esc(o.trapLabel)}:</b> ` : ''}${esc(o.why)}</span>`);
+    });
+  }
+
+  function feedbackHtml(it, r) {
+    return `<div class="feedback card">
+      <p class="verdict ${r.correct ? 'ok' : 'no'}">${r.correct ? 'Doğru' : `Yanlış, doğru cevap ${r.answer}`}</p>
+      ${r.trapLabel ? `<span class="trap">Olası tuzak: ${esc(r.trapLabel)}</span>` : ''}
+      <p style="margin:0">${esc(r.explanation)}</p>
+      ${r.words.length ? `<div class="words">${r.words.map((w) => `<button class="word" data-lemma="${esc(w.lemma)}"><b>${esc(w.lemma)}</b> · ${esc(w.sense)} <span>+ deftere ekle</span></button>`).join('')}</div>` : ''}
+      <div style="margin-top:14px"><button class="link small" data-flag>Bu soruda hata mı var?</button>
+        <div data-flagbox hidden><textarea rows="2" placeholder="Sorun ne? (ör. iki şık da doğru olabilir)"></textarea><div class="actions"><button class="btn ghost" data-send>Gönder</button></div></div></div>
+    </div>`;
+  }
+
+  function wireFeedback(root, it) {
+    root.querySelectorAll('.word').forEach((w) => {
+      w.onclick = async () => {
+        if (w.classList.contains('added')) return;
+        try { await api('POST', '/api/vocab', { itemId: it.id, lemma: w.dataset.lemma }); w.classList.add('added'); w.querySelector('span').textContent = '✓ eklendi'; }
+        catch (err) { w.querySelector('span').textContent = err.message; }
+      };
+    });
+    const f = root.querySelector('[data-flag]');
+    if (!f) return;
+    f.onclick = () => { root.querySelector('[data-flagbox]').hidden = false; };
+    root.querySelector('[data-send]').onclick = async () => {
+      const t = root.querySelector('textarea');
+      try { await api('POST', '/api/flag', { itemId: it.id, reason: t.value }); root.querySelector('[data-flagbox]').innerHTML = '<p class="small muted">Teşekkürler, inceleyeceğiz.</p>'; }
+      catch (err) { t.placeholder = err.message; }
+    };
+  }
+
+  // ---------- kelime turu ----------
+  async function startVocab() {
+    show('vocab');
+    const box = $('#v-vocab');
+    const { words } = await api('GET', '/api/vocab/due');
+    let i = 0;
+    const done = () => {
+      box.innerHTML = `<div class="card flash"><h2>Tur bitti</h2><p class="muted">Kelimeler hatırlama gücüne göre yeniden planlandı.</p><div class="actions" style="justify-content:center"><button class="btn" id="v-dash">Panele dön</button></div></div>`;
+      $('#v-dash').onclick = renderDash;
+    };
+    const card = () => {
+      if (i >= words.length) return done();
+      const w = words[i];
+      box.innerHTML = `<div class="progress"><span>Kelime ${i + 1} / ${words.length}</span></div>
+        <div class="card flash"><p class="muted small">Anlamını hatırlamaya çalış, sonra göster.</p><div class="lemma">${esc(w.lemma)}</div>
+        <div id="back" hidden><div class="sense">${esc(w.sense)}</div><p class="muted small">Ne kadar iyi hatırladın?</p>
+          <div class="grades"><button class="btn danger" data-g="again">Hatırlamadım</button><button class="btn ghost" data-g="hard">Zorlandım</button><button class="btn ghost" data-g="good">Hatırladım</button><button class="btn" data-g="easy">Çok kolay</button></div></div>
+        <div class="actions" style="justify-content:center" id="front"><button class="btn" id="reveal">Anlamını göster</button></div></div>`;
+      $('#reveal').onclick = () => { $('#front').hidden = true; $('#back').hidden = false; };
+      box.querySelectorAll('[data-g]').forEach((b) => {
+        b.onclick = async () => { await api('POST', '/api/vocab/review', { lemma: w.lemma, sense: w.sense, grade: b.dataset.g }); i++; card(); };
+      });
+    };
+    words.length ? card() : done();
+  }
+
+  // ---------- başlangıç ----------
+  document.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => (b.dataset.go === 'vocab' ? startVocab() : renderDash())));
+  $('#logout').onclick = async () => { try { await api('POST', '/api/logout'); } catch {} setToken(null); show('auth'); };
+
+  async function boot() {
+    if (!token) return show('auth');
+    try { me = await api('GET', '/api/me'); }
+    catch { return show('auth'); }
+    if (me.profile.target_score == null) return openOnboard();
+    renderDash();
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
