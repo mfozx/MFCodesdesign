@@ -8,234 +8,423 @@ permalink: /projects/yds-ai/
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="YDS-AI — öğretmen gibi yönlendiren, ücretsiz YDS hazırlık sistemi.">
+<meta name="description" content="YDS-AI: neyi neden çalışacağını söyleyen ücretsiz YDS hazırlığı. Zayıf konu, çeldirici analizi, mini deneme ve aralıklı kelime tekrarı.">
 <meta property="og:title" content="YDS-AI | MFCodes">
 <meta property="og:description" content="Zayıf konunu bulan, hatanın kökenine inen, kelimeleri unutmadan tekrar ettiren ücretsiz YDS hazırlığı.">
 <meta property="og:url" content="https://mfcodes.org/projects/yds-ai/">
 <meta property="og:type" content="website">
+<meta name="theme-color" content="#F6F7F5">
 <title>YDS-AI | MFCodes</title>
-<link rel="icon" href="/assets/images/logo.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23F6F7F5'/%3E%3Cellipse cx='16' cy='16' rx='10' ry='7' fill='none' stroke='%23C9506A' stroke-width='2'/%3E%3Cellipse cx='16' cy='16' rx='6.5' ry='4' fill='%2324262B'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
 <style>
+/* Kavram: ÖSYM optik cevap kâğıdı. Yapı (çizgi, etiket, baloncuk kenarı) form pembesiyle basılır,
+   kullanıcının izi (dolu baloncuk, ana buton, metin) kurşun grafitidir. Doğru yeşil, yanlış öğretmen kırmızısı. */
 :root{
-  --bg:#f5f7fb;--surface:#ffffff;--surface-2:#eef2f8;--ink:#10203a;--muted:#55627a;--line:#dfe5ee;
-  --accent:#1f5fbf;--accent-ink:#ffffff;--accent-soft:#e5eefb;
-  --good:#167a4a;--good-soft:#e3f4ea;--bad:#b3261e;--bad-soft:#fbe9e7;--warn:#8a5a00;--warn-soft:#fbf1dc;
-  --r-subject:#1f5fbf;--r-verb:#b6501e;--r-complement:#55627a;--r-conjunction:#6b46c1;--r-relative:#0d7a56;
-  --radius:16px;--radius-in:10px;--shadow:0 1px 2px rgba(16,32,58,.05),0 8px 24px -12px rgba(16,32,58,.18);
-}
-@media (prefers-color-scheme:dark){:root{
-  --bg:#0a1830;--surface:#0f2143;--surface-2:#14294f;--ink:#ffffff;--muted:#b4c2dc;--line:rgba(255,255,255,.11);
-  --accent:#6da7ec;--accent-ink:#0a1830;--accent-soft:rgba(109,167,236,.16);
-  --good:#4ade80;--good-soft:rgba(74,222,128,.12);--bad:#f0726f;--bad-soft:rgba(240,114,111,.13);--warn:#e0a336;--warn-soft:rgba(224,163,54,.13);
-  --r-subject:#6da7ec;--r-verb:#f29b6b;--r-complement:#b4c2dc;--r-conjunction:#b7a6f5;--r-relative:#4fd1a0;
+  --paper:#F6F7F5;--sheet:#FFFFFF;--tint:#FBEFF1;--ink:#24262B;--ink-2:#5B5F68;--ink-3:#686D76;
+  --form:#C9506A;--form-text:#B43F59;--form-line:#EBC3CC;--form-soft:#F7E3E7;
+  --lead:#24262B;--lead-ink:#FFFFFF;
+  --good:#1F7A52;--good-soft:#E4F2EA;--bad:#B42330;--bad-soft:#FBE6E7;--warn:#8A5300;--warn-soft:#FBEFD9;
+  --r-subject:#2F5FA8;--r-verb:#B4531F;--r-complement:#5B5F68;--r-conjunction:#7B4BB8;--r-relative:#1F7A52;--r-adverbial:#9C6A00;
   --shadow:none;
+  --r-sheet:4px;--r-in:4px;
+  --display:"Bricolage Grotesque",system-ui,sans-serif;--ui:"IBM Plex Sans",system-ui,sans-serif;
+  --label:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;--read:Literata,Georgia,serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --paper:#16171A;--sheet:#1E2024;--tint:#2A1F23;--ink:#ECEDEF;--ink-2:#B3B6BD;--ink-3:#9A9EA6;
+  --form:#E68BA0;--form-text:#EE9DB0;--form-line:#4A3138;--form-soft:#33242A;
+  --lead:#ECEDEF;--lead-ink:#16171A;
+  --good:#5CC994;--good-soft:rgba(92,201,148,.12);--bad:#F07A80;--bad-soft:rgba(240,122,128,.13);--warn:#E3B05A;--warn-soft:rgba(227,176,90,.13);
+  --r-subject:#8DB4F0;--r-verb:#F2A273;--r-complement:#B3B6BD;--r-conjunction:#C3A6F2;--r-relative:#5CC994;--r-adverbial:#E3B05A;
+  --shadow:none;color-scheme:dark;
 }}
+:root[data-theme=dark]{
+  --paper:#16171A;--sheet:#1E2024;--tint:#2A1F23;--ink:#ECEDEF;--ink-2:#B3B6BD;--ink-3:#9A9EA6;
+  --form:#E68BA0;--form-text:#EE9DB0;--form-line:#4A3138;--form-soft:#33242A;--lead:#ECEDEF;--lead-ink:#16171A;
+  --good:#5CC994;--good-soft:rgba(92,201,148,.12);--bad:#F07A80;--bad-soft:rgba(240,122,128,.13);--warn:#E3B05A;--warn-soft:rgba(227,176,90,.13);
+  --shadow:none;color-scheme:dark;
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased;min-height:100dvh;display:flex;flex-direction:column}
-main{flex:1}
-a{color:var(--accent)}
-button{font:inherit;cursor:pointer}
-p,li{text-wrap:pretty}h1,h2{text-wrap:balance}
-.skip{position:absolute;left:-999px;top:8px;background:var(--accent);color:var(--accent-ink);padding:8px 12px;border-radius:8px;z-index:10}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--ui);-webkit-font-smoothing:antialiased;min-height:100dvh;display:flex;flex-direction:column}
+main{flex:1;padding:28px 0 80px}
+a{color:inherit}
+button{font:inherit;cursor:pointer;color:inherit}
+p,li{text-wrap:pretty}h1,h2,h3{text-wrap:balance}
+[hidden]{display:none!important}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+.narrow{max-width:780px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--lead);color:var(--lead-ink);padding:8px 12px;border-radius:6px;z-index:30}
 .skip:focus{left:16px}
-footer{border-top:1px solid var(--line);padding:20px 0 28px;font-size:14px;color:var(--muted)}
-footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
-footer a{color:var(--muted)}
-.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
-.narrow{max-width:760px}
-header{border-bottom:1px solid var(--line);background:var(--surface)}
-header .wrap{display:flex;align-items:center;gap:12px;height:60px}
-.brand{font-weight:700;font-size:18px;letter-spacing:-.01em;color:var(--ink);text-decoration:none}
-.brand span{color:var(--accent)}
-.chip{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
-nav{margin-left:auto;display:flex;gap:4px}
-nav button,.link{background:none;border:0;color:var(--muted);padding:8px 10px;border-radius:8px;font-weight:500;transition:background .2s,color .2s}
-nav button:hover,.link:hover{background:var(--surface-2);color:var(--ink)}
-nav button[aria-current=page]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent);border-radius:0}
-main{padding:32px 0 72px}
-h1{font-size:30px;line-height:1.15;letter-spacing:-.025em;font-weight:700;margin:0 0 8px}
-h2{font-size:16px;font-weight:600;letter-spacing:-.005em;margin:0 0 14px}
-.sub{color:var(--muted);margin:0 0 28px;max-width:62ch}
-.card{background:var(--surface);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);display:flex;flex-direction:column}
-.card>.actions:last-child,.card>form:last-child{margin-top:auto}
-.today{background:var(--surface);border-radius:var(--radius);padding:26px;border-left:4px solid var(--accent);box-shadow:var(--shadow)}
-.today h2{font-size:22px;letter-spacing:-.015em;margin-bottom:8px}
-.skeleton{height:120px;border-radius:var(--radius);background:linear-gradient(90deg,var(--surface) 0%,var(--surface-2) 50%,var(--surface) 100%);background-size:200% 100%;animation:sk 1.2s ease-in-out infinite}
-@keyframes sk{to{background-position:-200% 0}}
-@media (prefers-reduced-motion:reduce){.skeleton{animation:none}*{transition:none!important}}
-.grid{display:grid;gap:16px;grid-template-columns:repeat(2,minmax(0,1fr))}
-.span2{grid-column:1/-1}
-@media (max-width:760px){.grid{grid-template-columns:1fr}.span2{grid-column:auto}}
+:focus-visible{outline:2px solid var(--form);outline-offset:2px}
+
+/* üst bar */
+header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--form-line)}
+header .wrap{display:flex;align-items:center;gap:14px;height:58px}
+.brand{display:flex;align-items:center;gap:9px;font:700 19px/1 var(--display);letter-spacing:-.02em;text-decoration:none}
+.brand svg{flex:none}
+.brand small{font:600 11px/1 var(--label);letter-spacing:.12em;color:var(--form);text-transform:uppercase;margin-left:2px}
+nav{margin-left:auto;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav button{background:none;border:0;padding:8px 10px;border-radius:6px;font-weight:500;font-size:15px;color:var(--ink-2);white-space:nowrap;transition:color .2s,background .2s}
+nav button:hover{color:var(--ink);background:var(--form-soft)}
+nav button[aria-current=page]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--form);border-radius:0}
+nav .count{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--form);color:#fff;font:600 11px/1 var(--label)}
+@media (max-width:640px){header{position:static}header .wrap{height:auto;flex-wrap:wrap;padding-top:10px;gap:4px}nav{margin:0 -10px;width:calc(100% + 20px);padding-bottom:4px;flex-wrap:wrap;overflow:visible}nav button{padding:7px 9px;font-size:14.5px}}
+
+/* tipografi */
+h1{font:700 clamp(30px,4.6vw,46px)/1.04 var(--display);letter-spacing:-.035em;margin:0 0 12px}
+h2{font:600 21px/1.25 var(--ui);letter-spacing:-.015em;margin:0 0 10px}
+h3{font:600 16px/1.3 var(--ui);margin:0 0 8px}
+.lede{font-size:18px;color:var(--ink-2);max-width:56ch;margin:0 0 22px}
+.label{font:600 12px/1.2 var(--label);letter-spacing:.12em;text-transform:uppercase;color:var(--form-text)}
+.muted{color:var(--ink-2)}.faint{color:var(--ink-3)}.small{font-size:14px}
+.num{font-variant-numeric:tabular-nums}
+.note{font-size:13.5px;color:var(--ink-3);margin:12px 0 0;max-width:68ch}
+
+/* kâğıt yüzeyleri: kart değil, form alanı. Üstte alan etiketi, pembe çerçeve. */
+.sheet{background:var(--sheet);border:1px solid var(--form-line);border-radius:var(--r-sheet);box-shadow:var(--shadow)}
+.field{padding:18px 20px 20px;display:flex;flex-direction:column;min-width:0}
+.field>.label{display:flex;align-items:center;gap:8px;margin:0 0 12px}
+.field>.label::after{content:"";flex:1;height:1px;background:var(--form-line)}
+
+
+/* butonlar: ana eylem kurşun grafit */
+.btn{border:1.5px solid var(--lead);border-radius:var(--r-in);padding:10px 18px;font-weight:600;background:var(--lead);color:var(--lead-ink);transition:transform .12s,background .2s,box-shadow .2s;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.btn:hover:not(:disabled){box-shadow:0 3px 0 -1px var(--form)}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink-3)}
+.btn.ghost:hover:not(:disabled){border-color:var(--ink);box-shadow:none;background:var(--form-soft)}
+.btn.danger{background:transparent;border-color:var(--bad);color:var(--bad)}
+.btn.danger:hover:not(:disabled){background:var(--bad-soft);box-shadow:none}
+.link{background:none;border:0;padding:4px 0;color:var(--ink-2);text-decoration:underline;text-decoration-color:var(--form-line);text-underline-offset:3px}
+.link:hover{color:var(--ink);text-decoration-color:var(--form)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
+kbd{font:500 12px/1 var(--label);border:1px solid var(--ink-3);border-bottom-width:2px;border-radius:4px;padding:2px 5px;color:var(--ink-2)}
+
+/* formlar */
 label{display:block;font-weight:500;font-size:14px;margin:14px 0 6px}
-input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
-.btn{border:0;border-radius:var(--radius-in);padding:11px 18px;font-weight:600;background:var(--accent);color:var(--accent-ink);transition:filter .2s,transform .12s,background .2s}
-.btn:hover:not(:disabled){filter:brightness(1.08)}
-.btn:active:not(:disabled){transform:translateY(1px) scale(.99)}
-.btn:disabled{opacity:.5;cursor:default}
-.btn.ghost{background:var(--surface-2);color:var(--ink)}
-.btn.danger{background:var(--bad-soft);color:var(--bad)}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--sheet);border:1px solid var(--ink-3);border-radius:var(--r-in);padding:10px 12px;transition:border-color .2s}
+input:hover,select:hover,textarea:hover{border-color:var(--ink-2)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--form);outline-offset:0;border-color:var(--form)}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--lead);margin:0 8px 0 0;vertical-align:-3px}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1;min-width:150px}
 .err{color:var(--bad);font-size:14px;min-height:20px;margin-top:10px}
-.muted{color:var(--muted)}.small{font-size:14px}
-.tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:10px;margin-bottom:8px}
-.tabs button{flex:1;border:0;background:none;padding:8px;border-radius:8px;font-weight:600;color:var(--muted)}
-.tabs button[aria-selected=true]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
-.big{font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1}
-table{width:100%;border-collapse:collapse;font-size:14px}
-td,th{text-align:left;padding:7px 4px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:500}
-td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
-.bar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:4px}
-.bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
-.bar.low i{background:repeating-linear-gradient(45deg,var(--muted) 0 4px,transparent 4px 8px);opacity:.5}
-.list{list-style:none;margin:0;padding:0}.list li{padding:9px 0;border-bottom:1px solid var(--line)}.list li:last-child{border:0}
-.empty{color:var(--muted);font-size:14px;padding:6px 0}
-.banner{background:var(--accent-soft);color:var(--ink);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:15px}
-.banner b{color:var(--accent)}
-.progress{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-bottom:8px}
-.track{height:4px;background:var(--surface-2);border-radius:99px;margin-bottom:20px}.track i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
-.passage{font-family:"Source Serif 4",Georgia,serif;font-size:18px;line-height:1.7;background:var(--surface);box-shadow:var(--shadow);border-radius:var(--radius);padding:22px 24px;margin-bottom:20px;max-width:68ch}
-.stem{font-family:"Source Serif 4",Georgia,serif;font-size:19px;line-height:1.6;margin:0 0 16px}
-.sent{border-bottom:2px dotted var(--accent);cursor:pointer}
-.sent:hover{background:var(--accent-soft)}
-.analysis{margin:10px 0 0;padding:12px;border-radius:10px;background:var(--surface-2);font-family:Inter,sans-serif;font-size:15px;line-height:1.9}
-.part{padding:1px 4px;border-radius:4px;border-bottom:2px solid}
-.role{white-space:nowrap;font-size:12px;font-weight:600;font-style:italic;margin-right:4px}
+.tabs{display:flex;gap:18px;border-bottom:1px solid var(--form-line);margin:-4px 0 6px}
+.tabs button{border:0;background:none;padding:10px 0;font-weight:600;color:var(--ink-3);box-shadow:inset 0 -2px 0 transparent;transition:color .2s,box-shadow .2s}
+.tabs button[aria-selected=true]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--form)}
+
+/* baloncuk: optik formun hücresi */
+.bub{--s:28px;flex:none;width:var(--s);height:calc(var(--s)*.78);border-radius:50%;border:1.5px solid var(--form);display:grid;place-items:center;font:600 13px/1 var(--label);color:var(--form);background:radial-gradient(circle,var(--lead) 0 0,transparent 0);transition:background .18s ease-out,color .18s,border-color .18s}
+.bub.fill{background:var(--lead);color:var(--lead-ink);border-color:var(--lead)}
+.bub.good{background:var(--good);border-color:var(--good);color:#fff}
+.bub.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}html{scroll-behavior:auto}}
+
+/* şıklar */
+.opts{display:grid;gap:8px}
+.opt{display:flex;gap:14px;align-items:flex-start;text-align:left;width:100%;background:var(--sheet);border:1px solid var(--form-line);border-radius:var(--r-in);padding:12px 14px;transition:border-color .15s,background .15s}
+.opt .bub{margin-top:1px}
+.opt:hover:not(:disabled):not(.static){border-color:var(--ink-2)}
+.opt:hover:not(:disabled):not(.static) .bub{background:radial-gradient(circle,var(--form-soft) 0 70%,transparent 71%)}
+.opt:disabled,.opt.static{cursor:default}
+.opt .txt{flex:1;font-family:var(--read);font-size:17px;line-height:1.5}
+.opt .why{display:block;font:14px/1.5 var(--ui);color:var(--ink-2);margin-top:4px}
+.opt.picked{border-color:var(--ink-2)}.opt.picked .bub{background:var(--lead);color:var(--lead-ink);border-color:var(--lead)}
+.opt.right{border-color:var(--good);background:var(--good-soft)}.opt.right .bub{background:var(--good);border-color:var(--good);color:#fff}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}.opt.wrong .bub{background:var(--bad);border-color:var(--bad);color:#fff}
+
+/* soru kitapçığı */
+.qhead{display:flex;align-items:baseline;gap:14px;margin:0 0 14px}
+.qno{font:700 40px/1 var(--display);letter-spacing:-.04em;color:var(--form-text);font-variant-numeric:tabular-nums}
+.qmeta{display:flex;flex-direction:column;gap:2px}
+.passage{font:18px/1.75 var(--read);padding:22px 24px;margin:0 0 18px;max-width:70ch;background:var(--sheet);border:1px solid var(--form-line);border-left:3px solid var(--form);border-radius:4px var(--r-sheet) var(--r-sheet) 4px}
+.passage p{margin:0}
+.stem{font:19px/1.6 var(--read);margin:0 0 16px;max-width:68ch}
+.sent{background:linear-gradient(transparent 62%,var(--form-soft) 62%);cursor:pointer;border-radius:2px}
+.sent:hover{background:var(--form-soft)}
+.sent:focus-visible{background:var(--form-soft);outline:2px solid var(--form);outline-offset:1px}
+.analysis{margin:14px 0 0;padding:14px;border-radius:var(--r-in);background:var(--paper);font:15px/2 var(--ui)}
+.part{padding:1px 3px;border-bottom:2px solid}
+.role{white-space:nowrap;font:600 11px/1 var(--label);letter-spacing:.06em;text-transform:uppercase;margin-right:5px}
 .p-subject{border-color:var(--r-subject)}.p-subject .role{color:var(--r-subject)}
 .p-verb{border-color:var(--r-verb)}.p-verb .role{color:var(--r-verb)}
 .p-complement{border-color:var(--r-complement)}.p-complement .role{color:var(--r-complement)}
 .p-conjunction{border-color:var(--r-conjunction)}.p-conjunction .role{color:var(--r-conjunction)}
 .p-relative_clause{border-color:var(--r-relative)}.p-relative_clause .role{color:var(--r-relative)}
-.tr{font-style:italic;color:var(--muted);margin-top:8px;line-height:1.5}
-.opts{display:grid;gap:10px}
-.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:var(--radius-in);padding:12px 14px;color:var(--ink);transition:border-color .2s,background .2s,transform .12s}
-.opt:hover:not(:disabled){border-color:var(--accent)}
-.opt:active:not(:disabled){transform:scale(.995)}
-.opt:disabled{cursor:default}
-.key{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;background:var(--surface-2)}
-.opt .why{display:block;font-size:14px;color:var(--muted);margin-top:4px}
-.opt.right{border-color:var(--good);background:var(--good-soft)}.opt.right .key{background:var(--good);color:#fff}
-.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}.opt.wrong .key{background:var(--bad);color:#fff}
-.opt.picked{border-color:var(--accent)}
-.feedback{margin-top:16px}
-.verdict{font-weight:700;font-size:18px;margin:0 0 6px}.verdict.ok{color:var(--good)}.verdict.no{color:var(--bad)}
-.trap{display:inline-block;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:600;padding:3px 10px;border-radius:99px;margin-bottom:10px}
-.words{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.word{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 12px;font-size:14px;color:var(--ink);transition:border-color .2s}
-.word:hover{border-color:var(--accent)}
-.word b{font-weight:600}.word.added{border-color:var(--good);color:var(--good)}
-.flash{text-align:center;padding:36px 20px}
-.flash .lemma{font-family:"Source Serif 4",Georgia,serif;font-size:36px;font-weight:600;margin:6px 0 18px}
-.flash .sense{font-size:20px;margin-bottom:18px}
+.p-adverbial_clause{border-color:var(--r-adverbial)}.p-adverbial_clause .role{color:var(--r-adverbial)}
+.tr{font-style:italic;color:var(--ink-2);margin-top:8px;line-height:1.55}
+.strip{display:flex;gap:6px;margin:0 0 22px}
+.strip i{flex:1;height:4px;border-radius:2px;background:var(--form-line)}
+.strip i.done{background:var(--lead)}.strip i.ok{background:var(--good)}.strip i.no{background:var(--bad)}.strip i.now{background:var(--form)}
+.coach{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;margin:0 0 20px;border-radius:var(--r-in);background:var(--tint);font-size:15px}
+.coach b{font-weight:600}
+
+/* geri bildirim: öğretmen kalemi */
+.mark{margin-top:16px;padding:16px 18px;border-left:3px solid var(--good);background:var(--sheet);border-radius:0 var(--r-in) var(--r-in) 0;border-top:1px solid var(--form-line);border-right:1px solid var(--form-line);border-bottom:1px solid var(--form-line)}
+.mark.no{border-left-color:var(--bad)}
+.verdict{display:flex;align-items:center;gap:8px;font:700 18px/1.2 var(--display);margin:0 0 6px;color:var(--good)}
+.mark.no .verdict{color:var(--bad)}
+.trap{display:inline-block;background:var(--warn-soft);color:var(--warn);font:600 12.5px/1.3 var(--label);letter-spacing:.03em;padding:4px 9px;border-radius:4px;margin:2px 0 10px}
+.words{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.word{border:1px dashed var(--ink-3);background:transparent;border-radius:6px;padding:5px 10px;font-size:14px;text-align:left;transition:border-color .2s,background .2s}
+.word:hover{border-color:var(--ink);background:var(--paper)}
+.word b{font-weight:600}.word span{color:var(--ink-3)}
+.word.added{border-style:solid;border-color:var(--good);color:var(--good)}.word.added span{color:var(--good)}
+
+/* giriş sayfası */
+.landing{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:40px;align-items:start}
+@media (max-width:880px){.landing{grid-template-columns:1fr;gap:28px}}
+.facts{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0 0 26px;padding:0;list-style:none;font:500 14px/1.4 var(--label);letter-spacing:.02em;color:var(--ink-2)}
+.facts li::before{content:"";display:inline-block;width:9px;height:7px;border-radius:50%;background:var(--lead);margin-right:7px;vertical-align:1px}
+.demo{padding:20px 22px 22px}
+.demo .stem{font-size:18px}
+.how{margin:34px 0 0;display:grid;gap:0}
+.how div{display:grid;grid-template-columns:120px 1fr;gap:16px;padding:14px 0;border-top:1px solid var(--form-line)}
+.how div:last-child{border-bottom:1px solid var(--form-line)}
+@media (max-width:520px){.how div{grid-template-columns:1fr;gap:4px}}
+.authbox{padding:22px 22px 18px;position:sticky;top:78px}
+.codebox{font:600 clamp(20px,4vw,26px)/1.2 var(--label);letter-spacing:.08em;text-align:center;padding:18px 12px;border:1.5px dashed var(--form);border-radius:var(--r-in);background:var(--tint);user-select:all;word-break:break-all}
+
+/* panel */
+.dash-top{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;margin-bottom:16px}
+@media (max-width:820px){.dash-top{grid-template-columns:1fr}}
+.today{padding:22px 24px 24px}
+.today .why{font-size:16px;color:var(--ink-2);margin:0 0 4px;max-width:58ch}
+.ledger{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--form-line)}
+.ledger div{padding:14px 16px;border-bottom:1px solid var(--form-line)}
+.ledger div:nth-child(odd){border-right:1px solid var(--form-line)}
+.ledger div:nth-last-child(-n+2){border-bottom:0}
+.ledger b{display:block;font:700 30px/1.05 var(--display);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ledger span{font-size:13.5px;color:var(--ink-2)}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px;align-items:start}
+@media (max-width:820px){.cols{grid-template-columns:1fr}}
+
+/* imza: 80 baloncuklu cevap kâğıdı */
+.omr{padding:20px 22px 22px}
+.omr-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px;margin-bottom:14px}
+.omr-head .big{font:700 52px/0.9 var(--display);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.omr-rows{display:grid;gap:7px}
+.omr-row{display:grid;grid-template-columns:150px 1fr 70px;align-items:center;gap:12px}
+.omr-row .lbl{font:500 13.5px/1.2 var(--label);color:var(--ink-2)}
+.omr-row .val{font:500 13px/1 var(--label);color:var(--ink-3);text-align:right;font-variant-numeric:tabular-nums}
+.cells{display:flex;flex-wrap:wrap;gap:4px}
+.cells i{width:15px;height:11px;border-radius:50%;border:1.3px solid var(--form-line)}
+.cells i.t{border-color:var(--form)}
+.cells i.c{background:var(--lead);border-color:var(--lead)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:15px;height:11px;border-radius:50%;border:1.3px solid var(--form-line);display:inline-block}
+.legend i.t{border-color:var(--form)}.legend i.c{background:var(--lead);border-color:var(--lead)}
+@media (max-width:560px){.omr-row{grid-template-columns:1fr auto}.omr-row .cells{grid-column:1/-1;order:3}}
+
+.list{list-style:none;margin:0;padding:0}
+.list li{padding:10px 0;border-bottom:1px dashed var(--form-line)}
+.list li:last-child{border:0}
+.list .top{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.meter{height:6px;border-radius:3px;background:var(--form-soft);overflow:hidden;margin-top:6px}
+.meter i{display:block;height:100%;background:var(--lead)}
+.meter.low i{background:repeating-linear-gradient(90deg,var(--ink-3) 0 3px,transparent 3px 7px);opacity:.6}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+td,th{text-align:left;padding:8px 4px;border-bottom:1px dashed var(--form-line)}
+th{font:600 11.5px/1.2 var(--label);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+.tag{display:inline-block;font:600 11px/1.3 var(--label);letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--warn-soft);color:var(--warn);margin-left:6px}
+.empty{color:var(--ink-2);font-size:15px;margin:0}
+.skeleton{height:110px;border-radius:var(--r-in);background:linear-gradient(90deg,var(--paper),var(--form-soft),var(--paper));background-size:200% 100%;animation:sk 1.3s ease-in-out infinite}
+@keyframes sk{to{background-position:-200% 0}}
+
+/* mini deneme */
+.exambar{position:sticky;top:58px;z-index:10;background:var(--paper);border-bottom:1px solid var(--form-line);margin:-28px 0 22px;padding:10px 0}
+@media (max-width:640px){.exambar{top:0}}
+.exambar .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.clock{font:600 18px/1 var(--label);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.clock.over{color:var(--bad)}
+.navgrid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px;padding:14px;margin:0 0 18px}
+@media (max-width:520px){.navgrid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.navgrid button{position:relative;border:1.5px solid var(--form);color:var(--form-text);background:var(--sheet);border-radius:50%;aspect-ratio:1.3;font:600 13px/1 var(--label);color:var(--form);transition:background .15s}
+.navgrid button.a{background:var(--lead);border-color:var(--lead);color:var(--lead-ink)}
+.navgrid button.cur{outline:2px solid var(--ink);outline-offset:2px}
+.navgrid button.f::after{content:"";position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:var(--warn);border:2px solid var(--sheet)}
+.flagbtn[aria-pressed=true]{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.result-hero{display:flex;flex-wrap:wrap;gap:12px 32px;align-items:flex-end;padding:22px 24px}
+.result-hero .big{font:700 64px/0.9 var(--display);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+details.rev{border-top:1px solid var(--form-line)}
+details.rev summary{display:flex;gap:12px;align-items:center;padding:12px 2px;cursor:pointer;list-style:none}
+details.rev summary::-webkit-details-marker{display:none}
+details.rev summary .s{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--read)}
+details.rev summary::after{content:"+";font:600 18px/1 var(--label);color:var(--form)}
+details.rev[open] summary::after{content:"–"}
+details.rev .body{padding:4px 0 18px}
+
+/* kelime: dizin kartı */
+.index{max-width:560px;margin:0 auto;padding:28px 28px 26px;background:var(--sheet);border-radius:6px;box-shadow:var(--shadow);border:1px solid var(--form-line)}
+.index .lemma{font:600 38px/1.1 var(--read);letter-spacing:-.01em;margin:0 -28px 22px;padding:0 28px 16px;border-bottom:1.5px solid var(--form)}
+.index .pos{font:600 12px/1 var(--label);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-left:8px;vertical-align:middle}
+.index .sense{font-size:21px;font-weight:500;margin:0 0 10px}
+.index .ex{font:italic 17px/2 var(--read);color:var(--ink-2);margin:0 0 18px}
+.index .ex mark{background:none;color:var(--ink);font-style:normal;font-weight:600}
 .grades{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-@media (max-width:480px){.grades{grid-template-columns:repeat(2,1fr)}h1{font-size:24px}.passage{font-size:17px;padding:16px}}
-[hidden]{display:none!important}
-.hero{display:grid;gap:4px;margin-bottom:24px}
-.kpi{display:flex;align-items:baseline;gap:8px}
-.note{font-size:13px;color:var(--muted);margin-top:10px}
+.grades .btn{justify-content:center;flex-direction:column;gap:2px;padding:9px 6px}
+.grades .btn small{font-weight:400;font-size:12px;opacity:.75}
+@media (max-width:480px){.grades{grid-template-columns:repeat(2,1fr)}.passage{font-size:17px;padding:16px}.index{padding:24px 18px}}
+
+footer{border-top:1px solid var(--form-line);padding:20px 0 30px;font-size:14px;color:var(--ink-2)}
+footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-between}
+footer a{text-decoration-color:var(--form-line);text-underline-offset:3px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--lead);color:var(--lead-ink);padding:10px 16px;border-radius:var(--r-in);font-size:14.5px;z-index:40;box-shadow:0 8px 24px -10px rgba(0,0,0,.4)}
 </style>
 </head>
 <body>
 <a class="skip" href="#main">İçeriğe geç</a>
 <header>
   <div class="wrap">
-    <a class="brand" href="/projects/yds-ai/">YDS<span>·</span>AI</a><span class="chip">Beta</span>
-    <nav id="nav" hidden>
-      <button data-go="dash">Panel</button>
-      <button data-go="vocab">Kelime</button>
+    <a class="brand" href="/projects/yds-ai/" aria-label="YDS-AI ana sayfa">
+      <svg width="26" height="20" viewBox="0 0 26 20" aria-hidden="true"><ellipse cx="13" cy="10" rx="11.5" ry="8.5" fill="none" stroke="var(--form)" stroke-width="1.8"/><ellipse cx="13" cy="10" rx="7.5" ry="5" fill="var(--lead)"/></svg>
+      YDS-AI <small>beta</small>
+    </a>
+    <nav id="nav" aria-label="Bölümler" hidden>
+      <button data-go="dash">Bugün</button>
+      <button data-go="measure">Mini deneme</button>
+      <button data-go="mistakes">Hata defteri</button>
+      <button data-go="vocab">Kelime<span class="count" id="nav-due" hidden></span></button>
+      <button data-go="account">Hesap</button>
       <button id="logout">Çıkış</button>
     </nav>
   </div>
 </header>
 
-<main id="main">
-  <!-- giriş / kayıt -->
-  <section id="v-auth" class="wrap narrow" hidden>
-    <div class="hero">
-      <h1>Seni öğretmen gibi yönlendiren YDS hazırlığı</h1>
-      <p class="sub">Neyi neden çalışacağını sistem söyler: zayıf konunu bulur, hatanın kökenine iner, kelimeleri unutmadan önce tekrar ettirir. Ücretsiz.</p>
-    </div>
-    <div class="card">
-      <div class="tabs" role="tablist">
-        <button role="tab" aria-selected="true" data-mode="register">Kayıt ol</button>
-        <button role="tab" aria-selected="false" data-mode="login">Giriş yap</button>
+<main id="main" tabindex="-1">
+  <!-- giriş: tez = gerçek bir soru -->
+  <section id="v-auth" class="wrap" hidden>
+    <div class="landing">
+      <div>
+        <p class="label">Ücretsiz YDS hazırlığı</p>
+        <h1>Neyi, neden çalışacağını sana söyleyen YDS hazırlığı</h1>
+        <p class="lede">Her test tek bir konuya odaklanır. Yanlış yaptığında hangi çeldiriciye düştüğünü gösterir; aynı hatayı tekrarlarsan seni önkoşul konuya geri götürür. Kelimeleri de unutmak üzereyken tekrar ettirir.</p>
+        <ul class="facts"><li>120 özgün soru</li><li>15 konu</li><li>180 çekirdek kelime</li><li>20 soruluk mini deneme</li></ul>
+
+        <div class="sheet demo" id="demo" aria-labelledby="demo-label">
+          <div class="qhead"><span class="qno">1</span><div class="qmeta"><span class="label" id="demo-label">Kayıt olmadan dene</span><span class="small muted">Kelime · bağlama uygun sözcük</span></div></div>
+          <p class="stem">The new medicine has very few side effects, which makes it especially ---- for older patients.</p>
+          <div class="opts" id="demo-opts"></div>
+          <div id="demo-fb"></div>
+        </div>
+
+        <div class="how">
+          <div><span class="label">Öğretmen döngüsü</span><span class="muted">Önce kısa konu anlatımı, sonra 5 ya da 10 soruluk test. Sıradaki konuya cevaplarına bakarak sistem karar verir ve nedenini yazar.</span></div>
+          <div><span class="label">Çeldirici analizi</span><span class="muted">Her yanlış şıkkın neden yanlış olduğu yazılıdır. Hangi tuzağa sık düştüğün panelde birikir.</span></div>
+          <div><span class="label">Dürüst ölçüm</span><span class="muted">Az veriyle puan tahmini yapmayız. Bir konu hakkında konuşmak için en az 5 cevap bekleriz.</span></div>
+        </div>
       </div>
-      <form id="auth-form">
-        <label for="email">E-posta</label>
-        <input id="email" type="email" autocomplete="email" required>
-        <label for="password">Şifre</label>
-        <input id="password" type="password" autocomplete="new-password" minlength="8" required>
-        <div class="err" id="auth-err"></div>
-        <div class="actions"><button class="btn" id="auth-btn">Kayıt ol</button></div>
-        <p class="note">Yalnızca e-postan ve çalışma kayıtların tutulur. Hiçbir kişisel bilgin yapay zekâya gönderilmez. Hesabını istediğin an tüm verinle birlikte silebilirsin.</p>
-      </form>
+
+      <div class="sheet authbox">
+        <div class="tabs" role="tablist" aria-label="Hesap">
+          <button role="tab" aria-selected="true" data-mode="register">Kayıt ol</button>
+          <button role="tab" aria-selected="false" data-mode="login">Giriş yap</button>
+          <button role="tab" aria-selected="false" data-mode="reset">Şifremi unuttum</button>
+        </div>
+        <form id="auth-form" novalidate>
+          <label for="email">E-posta</label>
+          <input id="email" type="email" autocomplete="email" required>
+          <div id="code-wrap" hidden>
+            <label for="code">Kurtarma kodu</label>
+            <input id="code" autocomplete="off" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX">
+          </div>
+          <label for="password" id="password-label">Şifre</label>
+          <input id="password" type="password" autocomplete="new-password" minlength="8" required>
+          <div class="err" id="auth-err" role="alert"></div>
+          <div class="actions" style="margin-top:6px"><button class="btn" id="auth-btn">Kayıt ol</button></div>
+          <p class="note" id="auth-note">Yalnızca e-postan ve çalışma kayıtların tutulur. Kişisel bilgin yapay zekâya gönderilmez. Hesabını istediğin an tüm verinle silebilirsin.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- kurtarma kodu -->
+  <section id="v-recovery" class="wrap narrow" hidden>
+    <p class="label">Bir kez gösterilir</p>
+    <h1>Kurtarma kodunu sakla</h1>
+    <p class="lede">E-posta ile şifre sıfırlama yok. Şifreni unutursan hesabına bu kodla girersin. Bir yere yaz ya da şifre yöneticine kaydet.</p>
+    <div class="sheet field">
+      <div class="codebox" id="rc-code"></div>
+      <div class="actions"><button class="btn ghost" id="rc-copy">Kopyala</button><button class="btn" id="rc-done">Kaydettim, devam et</button></div>
+      <p class="note">Kod tek kullanımlıktır. Kullandığında ya da hesap ekranından yenisini aldığında eskisi geçersiz olur.</p>
     </div>
   </section>
 
   <!-- tanışma -->
   <section id="v-onboard" class="wrap narrow" hidden>
-    <h1>Seni tanıyalım</h1>
-    <p class="sub">Bir dakikalık birkaç soru. Hepsini sonradan değiştirebilirsin.</p>
-    <form id="onboard-form" class="card">
-      <label for="o-lang">Hangi dil?</label>
+    <p class="label">Aday bilgileri</p>
+    <h1>Hedefini yaz, planı biz kuralım</h1>
+    <p class="lede">Bir dakika sürer. Hepsini sonradan değiştirebilirsin.</p>
+    <form id="onboard-form" class="sheet field">
+      <label for="o-lang">Dil</label>
       <select id="o-lang"><option value="en">İngilizce</option><option value="es" disabled>İspanyolca (yakında)</option></select>
       <div class="row">
-        <div><label for="o-target">Hedef puanın</label><input id="o-target" type="number" min="0" max="100" step="5" value="60" required></div>
-        <div><label for="o-date">Sınav tarihin (biliyorsan)</label><input id="o-date" type="date"></div>
+        <div><label for="o-target">Hedef puan</label><input id="o-target" type="number" min="0" max="100" step="5" value="60" required></div>
+        <div><label for="o-date">Sınav tarihi (biliyorsan)</label><input id="o-date" type="date"></div>
       </div>
-      <p class="muted small" id="o-need"></p>
-      <label for="o-weekly">Haftada ne kadar ayırabilirsin?</label>
+      <p class="small muted" id="o-need" style="margin:10px 0 0"></p>
+      <label for="o-weekly">Haftada ayırabileceğin süre</label>
       <select id="o-weekly">
         <option value="60">1 saat</option><option value="150" selected>2,5 saat</option>
         <option value="300">5 saat</option><option value="450">7,5 saat</option><option value="600">10 saat ve üstü</option>
       </select>
       <div class="row">
-        <div><label for="o-session">Oturum uzunluğu</label>
-          <select id="o-session"><option value="short">Kısa (5 soruluk bloklar)</option><option value="long">Uzun (10 soruluk bloklar)</option></select></div>
+        <div><label for="o-session">Test uzunluğu</label>
+          <select id="o-session"><option value="short">Kısa (5 soruluk testler)</option><option value="long">Uzun (10 soruluk testler)</option></select></div>
         <div><label for="o-explain">Açıklamalar ne zaman gelsin?</label>
-          <select id="o-explain"><option value="instant">Her sorudan hemen sonra</option><option value="end">Blok bitince topluca</option></select></div>
+          <select id="o-explain"><option value="instant">Her sorudan hemen sonra</option><option value="end">Test bitince topluca</option></select></div>
       </div>
-      <label><input type="checkbox" id="o-had" style="width:auto;margin-right:6px">Daha önce YDS'ye girdim</label>
+      <label style="margin-top:18px"><input type="checkbox" id="o-had">Daha önce YDS'ye girdim</label>
       <div class="row" id="o-prev" hidden>
         <div><label for="o-year">Yıl</label><input id="o-year" type="number" min="2000" max="2100"></div>
         <div><label for="o-score">Puan</label><input id="o-score" type="number" min="0" max="100" step="0.25"></div>
       </div>
-      <div class="err" id="onboard-err"></div>
+      <div class="err" id="onboard-err" role="alert"></div>
       <div class="actions"><button class="btn">Kaydet ve başla</button></div>
     </form>
   </section>
 
-  <!-- panel -->
+  <!-- bugün -->
   <section id="v-dash" class="wrap" hidden>
-    <h1 id="d-title">Panel</h1>
-    <p class="sub" id="d-sub"></p>
-    <div class="grid">
-      <div class="today span2" id="d-today"></div>
-      <div class="card" id="d-goal"></div>
-      <div class="card" id="d-weak"></div>
-      <div class="card" id="d-traps"></div>
-      <div class="card" id="d-timing"></div>
-      <div class="card" id="d-vocab"></div>
-      <div class="card" id="d-real"></div>
-      <div class="card span2" id="d-account"></div>
+    <div class="dash-top">
+      <div class="sheet today" id="d-today"><div class="skeleton"></div></div>
+      <div class="sheet" id="d-ledger"><div class="skeleton" style="margin:16px"></div></div>
+    </div>
+    <div class="sheet omr" id="d-goal"><div class="skeleton"></div></div>
+    <div class="cols">
+      <div class="sheet field" id="d-weak"></div>
+      <div class="sheet field" id="d-traps"></div>
+      <div class="sheet field" id="d-measure"></div>
+      <div class="sheet field" id="d-timing"></div>
+      <div class="sheet field" id="d-vocab"></div>
     </div>
   </section>
 
-  <!-- çalışma -->
-  <section id="v-study" class="wrap narrow" hidden></section>
+  <section id="v-account" class="wrap narrow" hidden>
+    <p class="label">Hesap</p>
+    <h1>Hesap ve sınav kayıtların</h1>
+    <div class="sheet field" id="d-real" style="margin:18px 0 16px"></div>
+    <div class="sheet field" id="d-account"></div>
+  </section>
 
-  <!-- kelime turu -->
+  <section id="v-study" class="wrap narrow" hidden></section>
+  <section id="v-measure" hidden></section>
+  <section id="v-mistakes" class="wrap narrow" hidden></section>
   <section id="v-vocab" class="wrap narrow" hidden></section>
 </main>
 
 <footer>
   <div class="wrap">
     <a href="/">← mfcodes.org</a>
-    <span>Sorular özgündür; ÖSYM sorusu veya telifli metin kullanılmaz. Verin yapay zekâya gönderilmez.</span>
+    <span>Sorular bu proje için yazıldı; ÖSYM sorusu ya da telifli metin kullanılmaz. Verin yapay zekâya gönderilmez.</span>
   </div>
 </footer>
 
@@ -243,62 +432,217 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 (() => {
   const API = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://127.0.0.1:8787' : 'https://yds-ai.mfpl12.workers.dev';
   const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const store = {
     get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
     set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} },
   };
+  const KEYS = ['A', 'B', 'C', 'D', 'E'];
   let token = store.get('yds-token');
   let me = null;
   let warmupDone = false;
+  let keyHandler = null; // aktif görünümün klavye kısayolları
+  let viewSeq = 0;       // her görünüm değişiminde artar; await sonrası eski ekranın işi bırakılır
+  let measureTimer = null;
+  const alive = (seq) => seq === viewSeq;
 
   async function api(method, path, body) {
-    const res = await fetch(API + path, {
-      method,
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    let res;
+    try {
+      res = await fetch(API + path, {
+        method,
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    } catch { throw new Error('Sunucuya ulaşılamadı. İnternet bağlantını kontrol edip tekrar dene.'); }
     const data = await res.json().catch(() => ({}));
     if (res.status === 401 && token) { setToken(null); show('auth'); }
-    if (!res.ok) throw new Error(data.error || 'Bağlantı hatası');
+    if (!res.ok) throw new Error(data.error || 'İstek başarısız oldu, tekrar dene.');
     return data;
   }
   function setToken(t) { token = t; store.set('yds-token', t); }
 
-  function show(view) {
-    for (const v of ['auth', 'onboard', 'dash', 'study', 'vocab']) $('#v-' + v).hidden = v !== view;
-    $('#nav').hidden = view === 'auth';
-    document.querySelectorAll('[data-go]').forEach((b) => (b.dataset.go === view ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current')));
-    window.scrollTo(0, 0);
+  function toast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
+    document.body.append(t); setTimeout(() => t.remove(), 2600);
   }
 
-  // ---------- giriş ----------
+  const VIEWS = ['auth', 'recovery', 'onboard', 'dash', 'study', 'measure', 'mistakes', 'vocab', 'account'];
+  function show(view) {
+    viewSeq++;
+    clearInterval(measureTimer);
+    for (const v of VIEWS) $('#v-' + v).hidden = v !== view;
+    $('#nav').hidden = ['auth', 'recovery'].includes(view);
+    $$('[data-go]').forEach((b) => (b.dataset.go === view ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current')));
+    keyHandler = null;
+    window.scrollTo(0, 0);
+  }
+  document.addEventListener('keydown', (e) => {
+    if (!keyHandler || e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    keyHandler(e);
+  });
+  const errBox = (box, msg, retry) => {
+    box.innerHTML = `<div class="sheet field"><span class="label">Bağlantı</span><p class="err" style="margin:0">${esc(msg)}</p><div class="actions"><button class="btn" data-retry>Tekrar dene</button></div></div>`;
+    $('[data-retry]', box).onclick = retry;
+  };
+  const updateDueBadge = (n) => { const b = $('#nav-due'); b.hidden = !n; b.textContent = n; };
+
+  // ---------- ortak: şık ve geri bildirim ----------
+  const optsHtml = (opts, tag = 'button') => opts.map((o) =>
+    `<${tag} class="opt${tag === 'div' ? ' static' : ''}" data-k="${o.key}"${tag === 'button' ? ` aria-label="${o.key} şıkkı: ${esc(o.text)}"` : ''}><span class="bub">${o.key}</span><span class="txt">${esc(o.text)}</span></${tag}>`).join('');
+
+  function paintOptions(root, r, chosen) {
+    $$('.opt', root).forEach((el) => {
+      const o = r.options.find((x) => x.key === el.dataset.k);
+      el.classList.remove('picked');
+      if (o.key === r.answer) el.classList.add('right');
+      else if (o.key === chosen) el.classList.add('wrong');
+      if (o.why) $('.txt', el).insertAdjacentHTML('beforeend', `<span class="why">${o.trapLabel ? `<b>${esc(o.trapLabel)}.</b> ` : ''}${esc(o.why)}</span>`);
+    });
+  }
+
+  function feedbackHtml(r, { flag = true } = {}) {
+    const blank = r.chosen === null;
+    return `<div class="mark ${r.correct ? '' : 'no'}">
+      <p class="verdict">${r.correct ? '✓ Doğru' : blank ? `Boş bıraktın · doğru cevap ${r.answer}` : `✗ Yanlış · doğru cevap ${r.answer}`}</p>
+      ${r.trapLabel ? `<span class="trap">Düştüğün tuzak: ${esc(r.trapLabel)}</span>` : ''}
+      <p style="margin:0">${esc(r.explanation)}</p>
+      ${r.words?.length ? `<div class="words">${r.words.map((w) => `<button class="word" data-lemma="${esc(w.lemma)}"><b>${esc(w.lemma)}</b> · ${esc(w.sense)} <span>+ deftere ekle</span></button>`).join('')}</div>` : ''}
+      ${flag ? `<div style="margin-top:12px"><button class="link small" data-flag>Bu soruda hata mı var?</button>
+        <div data-flagbox hidden><textarea rows="2" aria-label="Sorunu yaz" placeholder="Sorun ne? Ör. iki şık da doğru olabilir"></textarea><div class="actions" style="margin-top:8px"><button class="btn ghost" data-send>Bildir</button></div></div></div>` : ''}
+    </div>`;
+  }
+
+  function wireFeedback(root, itemId) {
+    $$('.word', root).forEach((w) => {
+      w.onclick = async () => {
+        if (w.classList.contains('added')) return;
+        try { await api('POST', '/api/vocab', { itemId, lemma: w.dataset.lemma }); w.classList.add('added'); $('span', w).textContent = '✓ defterde'; }
+        catch (err) { $('span', w).textContent = err.message; }
+      };
+    });
+    const f = $('[data-flag]', root);
+    if (!f) return;
+    f.onclick = () => { $('[data-flagbox]', root).hidden = false; $('textarea', root).focus(); };
+    $('[data-send]', root).onclick = async () => {
+      const t = $('textarea', root);
+      try { await api('POST', '/api/flag', { itemId, reason: t.value }); $('[data-flagbox]', root).innerHTML = '<p class="small muted">Bildirildi. Soruyu inceleyeceğiz.</p>'; }
+      catch (err) { t.placeholder = err.message; }
+    };
+  }
+
+  // Cloze sorularında kök hep aynı ("Boşluğa gelecek..."); listede metnin boşluklu kısmı gösterilir.
+  const summaryText = (it) => {
+    if (!it.passage || it.passageId) return it.stem;
+    const from = it.passage.indexOf('----') - 60;
+    return from > 0 ? '… ' + it.passage.slice(from).replace(/^\S*\s/, '') : it.passage;
+  };
+  const trapOf = (r) => (r.correct || !r.chosen ? null : r.options.find((o) => o.key === r.chosen)?.trapLabel ?? null);
+
+  const ROLE_TR = { subject: 'özne', verb: 'yüklem', complement: 'tümleç', conjunction: 'bağlaç', relative_clause: 'sıfat cümleciği', adverbial_clause: 'zarf cümleciği' };
+
+  // Metin + tıklanabilir cümleler. onHint: cümle çözümlemesi açılınca (ipucu sayılır).
+  function passageHtml(it) {
+    if (!it.passage) return '';
+    let html = esc(it.passage);
+    for (const s of it.sentences || []) html = html.replace(esc(s.text), `<span class="sent" tabindex="0" role="button" data-s="${esc(s.text)}" aria-label="Cümleyi çözümle">${esc(s.text)}</span>`);
+    return `<div class="passage"><p>${html}</p>${it.sentences?.length ? '<p class="note">Vurgulu cümleye dokun, yapısını göster (ipucu sayılır: o cevap beceri ölçümüne girmez).</p>' : ''}<div data-analysis></div></div>`;
+  }
+  function wireSentences(root, it, onHint) {
+    const map = new Map((it.sentences || []).map((s) => [s.text, s]));
+    $$('.sent', root).forEach((el) => {
+      const open = () => {
+        onHint?.();
+        const s = map.get(el.dataset.s);
+        $('[data-analysis]', root).innerHTML = `<div class="analysis">${s.parts.map((p) => `<span class="part p-${esc(p.role)}"><span class="role">${esc(ROLE_TR[p.role] || p.role)}</span>${esc(p.text)}</span>`).join(' ')}
+          ${s.parts.filter((p) => p.note).map((p) => `<div class="tr">${esc(p.note)}</div>`).join('')}<div class="tr">${esc(s.tr)}</div></div>`;
+      };
+      el.onclick = open;
+      el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } };
+    });
+  }
+
+  // ---------- giriş sayfası: kayıtsız deneme sorusu ----------
+  const DEMO = {
+    answer: 'D',
+    explanation: 'Yan etkisi az olan ilaç, yaşlı hastalar için özellikle uygundur: suitable for = -e uygun.',
+    words: [],
+    options: [
+      { key: 'A', text: 'reluctant', why: '"isteksiz": bir ilacı nitelemez.', trapLabel: 'Bağlama uymuyor' },
+      { key: 'B', text: 'scarce', why: '"kıt": yan etkiyle ilgisi yok; "for older patients" ile anlam kurmaz.', trapLabel: 'Bağlama uymuyor' },
+      { key: 'C', text: 'obedient', why: '"itaatkâr": canlılar için kullanılır.', trapLabel: 'Bağlama uymuyor' },
+      { key: 'D', text: 'suitable' },
+      { key: 'E', text: 'fragile', why: '"kırılgan": yaşlı hastalar kırılgan olabilir ama cümle ilacı niteliyor.', trapLabel: 'Metinde geçiyor ama soruyu cevaplamıyor' },
+    ],
+  };
+  function renderDemo() {
+    const box = $('#demo-opts');
+    box.innerHTML = optsHtml(DEMO.options);
+    $('#demo-fb').innerHTML = '';
+    $$('.opt', box).forEach((b) => (b.onclick = () => {
+      $$('.opt', box).forEach((x) => (x.disabled = true));
+      const r = { ...DEMO, chosen: b.dataset.k, correct: b.dataset.k === DEMO.answer };
+      r.trapLabel = trapOf(r);
+      paintOptions(box, r, b.dataset.k);
+      $('#demo-fb').innerHTML = feedbackHtml(r, { flag: false }) + `<div class="actions"><span class="small muted">Her soruda böyle: neden doğru, her yanlış şık neden yanlış.</span><button class="link small" id="demo-again">Tekrar dene</button></div>`;
+      $('#demo-again').onclick = renderDemo;
+    }));
+  }
+
+  // ---------- hesap ----------
   let authMode = 'register';
-  for (const b of document.querySelectorAll('[data-mode]')) {
+  const AUTH_TEXT = {
+    register: { btn: 'Kayıt ol', pw: 'Şifre (en az 8 karakter)', ac: 'new-password' },
+    login: { btn: 'Giriş yap', pw: 'Şifre', ac: 'current-password' },
+    reset: { btn: 'Şifreyi değiştir ve gir', pw: 'Yeni şifre (en az 8 karakter)', ac: 'new-password' },
+  };
+  for (const b of $$('[data-mode]')) {
     b.onclick = () => {
       authMode = b.dataset.mode;
-      document.querySelectorAll('[data-mode]').forEach((x) => x.setAttribute('aria-selected', x === b));
-      $('#auth-btn').textContent = authMode === 'register' ? 'Kayıt ol' : 'Giriş yap';
-      $('#password').autocomplete = authMode === 'register' ? 'new-password' : 'current-password';
+      $$('[data-mode]').forEach((x) => x.setAttribute('aria-selected', x === b));
+      const t = AUTH_TEXT[authMode];
+      $('#auth-btn').textContent = t.btn;
+      $('#password-label').textContent = t.pw;
+      $('#password').autocomplete = t.ac;
+      $('#code-wrap').hidden = authMode !== 'reset';
+      $('#auth-note').textContent = authMode === 'reset'
+        ? 'Kurtarma kodu kayıt olurken bir kez gösterildi. Kodun yoksa ve giriş yapamıyorsan yeni bir hesap açman gerekir.'
+        : 'Yalnızca e-postan ve çalışma kayıtların tutulur. Kişisel bilgin yapay zekâya gönderilmez. Hesabını istediğin an tüm verinle silebilirsin.';
       $('#auth-err').textContent = '';
     };
   }
   $('#auth-form').onsubmit = async (e) => {
     e.preventDefault();
+    const email = $('#email').value.trim(), password = $('#password').value;
     $('#auth-err').textContent = '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return void ($('#auth-err').textContent = 'Geçerli bir e-posta yaz.');
+    if (password.length < 8) return void ($('#auth-err').textContent = 'Şifre en az 8 karakter olmalı.');
+    if (authMode === 'reset' && $('#code').value.replace(/[^a-z0-9]/gi, '').length !== 16) return void ($('#auth-err').textContent = 'Kurtarma kodu 16 karakterdir.');
     $('#auth-btn').disabled = true;
     try {
-      const r = await api('POST', authMode === 'register' ? '/api/register' : '/api/login', { email: $('#email').value, password: $('#password').value });
+      const path = { register: '/api/register', login: '/api/login', reset: '/api/reset' }[authMode];
+      const r = await api('POST', path, { email, password, ...(authMode === 'reset' ? { code: $('#code').value } : {}) });
       setToken(r.token);
-      await boot();
+      $('#password').value = ''; $('#code').value = '';
+      if (r.recoveryCode) showRecovery(r.recoveryCode, boot);
+      else await boot();
     } catch (err) { $('#auth-err').textContent = err.message; }
     $('#auth-btn').disabled = false;
   };
 
+  function showRecovery(code, then) {
+    show('recovery');
+    $('#rc-code').textContent = code;
+    $('#rc-copy').onclick = async () => { try { await navigator.clipboard.writeText(code); toast('Kod kopyalandı'); } catch { toast('Kopyalanamadı; kodu seçip elle kopyala'); } };
+    $('#rc-done').onclick = then;
+  }
+
   // ---------- tanışma ----------
   const needText = () => {
     const t = Number($('#o-target').value);
-    $('#o-need').textContent = t >= 0 && t <= 100 ? `${t} puan için 80 sorudan en az ${Math.ceil(t / 1.25 - 1e-9)} doğru gerekiyor (her doğru 1,25 puan, yanlış götürmez).` : '';
+    $('#o-need').textContent = t >= 0 && t <= 100 ? `${t} puan için 80 sorudan en az ${Math.ceil(t / 1.25 - 1e-9)} doğru gerekir. Her doğru 1,25 puan; yanlış doğruyu götürmez.` : '';
   };
   $('#o-target').oninput = needText;
   $('#o-had').onchange = () => { $('#o-prev').hidden = !$('#o-had').checked; };
@@ -327,253 +671,537 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     show('onboard');
   }
 
-  // ---------- panel ----------
+  // ---------- bugün ----------
+  const fmtDate = (iso) => new Date(iso).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+  const fmtMin = (ms) => { const s = Math.round(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+
   async function renderDash() {
     show('dash');
-    document.querySelectorAll('#v-dash .grid > div').forEach((c) => (c.innerHTML = '<div class="skeleton"></div>'));
-    const [m, rep] = await Promise.all([api('GET', '/api/me'), api('GET', '/api/report')]);
+    let m, rep;
+    try { [m, rep] = await Promise.all([api('GET', '/api/me'), api('GET', '/api/report')]); }
+    catch (err) { return errBox($('#d-today'), err.message, renderDash); }
     me = m;
+    updateDueBadge(me.dueWords);
     const p = me.profile;
     const days = p.exam_date ? Math.ceil((new Date(p.exam_date) - new Date()) / 864e5) : null;
-    $('#d-title').textContent = 'Merhaba';
-    $('#d-sub').textContent = `Hedef ${p.target_score} puan` + (days != null && days >= 0 ? ` · sınava ${days} gün` : '') + ` · şimdiye kadar ${rep.answered} cevap`;
-
-    const block = p.session_pref === 'long' ? 10 : 5;
+    const size = p.session_pref === 'long' ? 10 : 5;
     const perSession = p.session_pref === 'long' ? 30 : 15;
+    const sessions = Math.max(1, Math.round(p.weekly_minutes / perSession));
+    const fresh = rep.answered === 0;
+
     $('#d-today').innerHTML = `
-      <h2>Bugünkü çalışma</h2>
-      <p class="muted">Haftada ${p.weekly_minutes} dakika ayırdın: yaklaşık ${Math.max(1, Math.round(p.weekly_minutes / perSession))} oturum × ${perSession} dk. Her oturumda ${block} soruluk bloklar çözersin; ne çalışacağına sistem karar verir ve nedenini söyler.</p>
-      <div class="actions"><button class="btn" id="start">Çalışmaya başla</button>${me.dueWords ? `<button class="btn ghost" id="start-vocab">${me.dueWords} kelime tekrarı bekliyor</button>` : ''}</div>`;
+      <span class="label">Bugün</span>
+      <h2 style="font-size:28px;margin:10px 0 8px">${fresh ? 'İlk testin seni bekliyor' : 'Sıradaki testin hazır'}</h2>
+      <p class="why">${fresh
+        ? `İlk testin ilk 3 sorusu ısınma için daha kolay seçilir. Sonra ${size} soruluk testlerle konuları tek tek yoklarız.`
+        : `Son cevaplarına bakarak seçtik.`}</p>
+      <p class="coach" id="d-next" style="margin:12px 0 4px" hidden></p>
+      <p class="small faint" style="margin:0">Haftada ${p.weekly_minutes} dk ayırdın: yaklaşık ${sessions} oturum × ${perSession} dk.</p>
+      <div class="actions">
+        <button class="btn" id="start">${fresh ? 'İlk teste başla' : 'Teste başla'}</button>
+        ${me.dueWords ? `<button class="btn ghost" id="start-vocab">${me.dueWords} kelime tekrarı</button>` : ''}
+      </div>`;
     $('#start').onclick = () => startStudy();
     if ($('#start-vocab')) $('#start-vocab').onclick = startVocab;
+    const seq = viewSeq;
+    api('GET', '/api/next?peek=1').then((n) => {
+      if (!alive(seq) || n.exhausted || !n.step) return;
+      const el = $('#d-next');
+      const what = n.step.phase === 'brief' ? 'önce 1 dakikalık konu anlatımı, sonra test' : n.step.phase === 'diagnose' ? `${n.size} soruluk yoklama testi` : `${n.size} soruluk test`;
+      el.innerHTML = `<span class="label" style="flex:none;padding-top:3px">Sırada</span><span><b>${esc(n.step.skillLabel)}</b> · ${what}. ${esc(n.step.reason)}</span>`;
+      el.hidden = false;
+    }).catch(() => {});
 
+    $('#d-ledger').innerHTML = `<div class="field" style="padding-bottom:12px"><span class="label">Aday kartı</span><span class="small muted" style="word-break:break-all">${esc(me.email)}</span></div>
+      <div class="ledger">
+        <div><b>${p.target_score}</b><span>hedef puan</span></div>
+        <div><b>${days != null && days >= 0 ? days : '–'}</b><span>${days != null && days >= 0 ? 'gün kaldı' : 'sınav tarihi yok'}</span></div>
+        <div><b>${rep.answered}</b><span>cevap</span></div>
+        <div><b>${me.deckSize}</b><span>kelime defterde</span></div>
+      </div>`;
+
+    // imza: hedefin 80 baloncuklu cevap kâğıdı
     const plan = rep.plan;
+    const measured = plan.perSection.filter((r) => r.measured);
+    const nowTotal = Math.round(measured.reduce((s, r) => s + r.currentCorrect, 0));
+    const cur = (r) => Math.round(r.currentCorrect);
     $('#d-goal').innerHTML = `
-      <h2>Hedef puan hesabı</h2>
-      <div class="kpi"><span class="big">${plan.required}</span><span class="muted">/ 80 doğru gerekiyor</span></div>
-      <table style="margin-top:14px"><thead><tr><th>Bölüm</th><th class="num">Şu an</th><th class="num">Hedef</th></tr></thead><tbody>
-      ${plan.perSection.map((r) => `<tr><td>${esc(r.label)}</td><td class="num">${r.measured ? r.currentCorrect : '<span class="muted">veri yok</span>'}</td><td class="num">${r.targetCorrect} / ${r.count}</td></tr>`).join('')}
-      </tbody></table>
-      <p class="note">"Şu an" yalnızca en az 5 cevabın olan bölümlerde hesaplanır. Ölçülmemiş bölümler 0 sayılır; tahmin uydurmuyoruz.</p>`;
+      <div class="omr-head">
+        <div><span class="label">Hedef cevap kâğıdı</span><h2 style="margin:8px 0 0">${p.target_score} puan için 80 sorudan</h2></div>
+        <div style="text-align:right"><span class="big">${plan.required}</span><div class="small muted">doğru gerekiyor</div></div>
+      </div>
+      <div class="omr-rows" role="table" aria-label="Bölüm bazında hedef">
+        ${plan.perSection.map((r) => `<div class="omr-row" role="row">
+          <span class="lbl" role="rowheader">${esc(r.label)}</span>
+          <span class="cells" role="cell" aria-label="${r.count} sorudan hedef ${r.targetCorrect}${r.measured ? `, şu an yaklaşık ${cur(r)}` : ''}">${Array.from({ length: r.count }, (_, i) => `<i class="${r.measured && i < cur(r) ? 'c' : i < r.targetCorrect ? 't' : ''}"></i>`).join('')}</span>
+          <span class="val" role="cell">${r.measured ? `${cur(r)} → ` : ''}${r.targetCorrect}/${r.count}</span></div>`).join('')}
+      </div>
+      <div class="legend"><span><i class="t"></i>hedeflenen doğru</span><span><i class="c"></i>şu anki başarınla beklenen</span><span><i></i>hedef dışındaki sorular</span></div>
+      <p class="note">${measured.length ? `Ölçülen ${measured.length} bölümde bugünkü başarınla yaklaşık ${nowTotal} doğru. ` : ''}Bir bölüm en az 5 cevaptan sonra ölçülür; ölçülmeyen bölüm için tahmin uydurmayız.</p>`;
 
-    $('#d-weak').innerHTML = `<h2>Zayıf konu haritası</h2>` + (rep.weak.length ? `<ul class="list">${rep.weak.map((w) => `
-      <li><div class="row" style="justify-content:space-between"><span>${esc(w.label)}</span><span class="small muted" style="flex:none">${w.enoughData ? `%${Math.round(w.accuracy * 100)}` : 'veri az'} · ${w.n} soru</span></div>
-      <div class="bar ${w.enoughData ? '' : 'low'}"><i style="width:${w.enoughData ? Math.round(w.accuracy * 100) : 100}%"></i></div></li>`).join('')}</ul>
-      <p class="note">Bir konu hakkında yorum için en az 5 cevap gerekir.</p>` : `<p class="empty">Soru çözdükçe burada güçlü ve zayıf konuların görünecek.</p>`);
+    $('#d-weak').innerHTML = `<span class="label">Konu haritası</span>` + (rep.weak.length ? `<ul class="list">${rep.weak.map((w) => `
+      <li><div class="top"><span>${esc(w.label)}</span><span class="small muted num">${w.enoughData ? `%${Math.round(w.accuracy * 100)}` : 'veri az'} · ${w.n} soru</span></div>
+      <div class="meter ${w.enoughData ? '' : 'low'}"><i style="width:${w.enoughData ? Math.round(w.accuracy * 100) : 100}%"></i></div></li>`).join('')}</ul>
+      <p class="note">En zayıftan güçlüye sıralı. Yorum için en az 5 cevap gerekir.</p>` : `<p class="empty">Test çözdükçe hangi konuda güçlü, hangisinde zayıf olduğun burada görünür.</p>`);
 
-    $('#d-traps').innerHTML = `<h2>Düştüğün tuzaklar</h2>` + (rep.traps.length ? `<ul class="list">${rep.traps.map((t) => `
-      <li><div class="row" style="justify-content:space-between"><span>${esc(t.label)}</span><span class="small muted" style="flex:none">${t.count} kez · ${t.confidence}</span></div></li>`).join('')}</ul>
-      <p class="note">"Olası": henüz az örnek var, bir eğilim olabilir. "Tekrarlıyor": en az 3 kez.</p>` : `<p class="empty">Yanlış cevaplarında hangi çeldiriciye düştüğün burada birikecek.</p>`);
+    $('#d-traps').innerHTML = `<span class="label">Düştüğün tuzaklar</span>` + (rep.traps.length ? `<ul class="list">${rep.traps.map((t) => `
+      <li><div class="top"><span>${esc(t.label)}</span><span class="small muted">${t.count} kez · ${esc(t.confidence)}</span></div></li>`).join('')}</ul>
+      <p class="note">"Olası": az örnek var. "Tekrarlıyor": en az 3 kez aynı tuzak.</p>
+      <div class="actions"><button class="btn ghost" data-go-mistakes>Hata defterini aç</button></div>` : `<p class="empty">Yanlış cevaplarında hangi çeldiriciye düştüğün burada birikir.</p>`);
+    $$('[data-go-mistakes]').forEach((b) => (b.onclick = renderMistakes));
 
-    $('#d-timing').innerHTML = `<h2>Süre</h2>` + (rep.timing.length ? `<table><thead><tr><th>Bölüm</th><th class="num">Ortanca</th><th class="num">Hedef</th></tr></thead><tbody>
-      ${rep.timing.map((t) => `<tr><td>${esc(t.label)}${t.slow ? ' <span class="trap" style="margin:0">yavaş</span>' : ''}</td><td class="num">${t.medianSec} sn</td><td class="num">${t.targetSec} sn</td></tr>`).join('')}
-      </tbody></table><p class="note">Hedef süreler 180 dakikaya sığacak şekilde belirlendi; ÖSYM'nin resmi değeri değildir.</p>` : `<p class="empty">Soru başına ne kadar süre harcadığın burada görünecek.</p>`);
+    const mt = rep.miniTests?.find((x) => x.form === 'A');
+    $('#d-measure').innerHTML = `<span class="label">Mini deneme</span>` + (mt
+      ? `<p style="margin:0"><b class="num" style="font:700 30px/1 var(--display)">${mt.correct}/${mt.total}</b> <span class="muted">doğru · ${fmtDate(mt.taken_at)}</span></p>
+         <p class="note">20 soruluk karışık test. 80 soruluk sınavın puanı bundan güvenilir biçimde çıkarılamaz; bölüm dağılımına bak.</p>
+         <div class="actions"><button class="btn ghost" data-go-measure>Sonuçları ve çözümleri gör</button></div>`
+      : `<p class="empty">Gramer, kelime, cloze ve okumadan 20 soru, süre tutularak. Cevaplar en sonda gösterilir, gerçek sınav gibi.</p>
+         <div class="actions"><button class="btn ghost" data-go-measure>Mini denemeye gir</button></div>`);
+    $$('[data-go-measure]').forEach((b) => (b.onclick = renderMeasure));
 
-    $('#d-vocab').innerHTML = `<h2>Kelime defteri</h2>
-      <div class="kpi"><span class="big">${me.dueWords}</span><span class="muted">kelime tekrar bekliyor</span></div>
-      <p class="note">Sorulardan sonra bilmediğin kelimeleri deftere ekle. Unutmak üzereyken tekrar karşına çıkar.</p>
-      <div class="actions"><button class="btn ghost" id="go-vocab" ${me.dueWords ? '' : 'disabled'}>Kelime turu</button></div>`;
+    $('#d-timing').innerHTML = `<span class="label">Süre</span>` + (rep.timing.length ? `<table><thead><tr><th>Bölüm</th><th class="r">Ortanca</th><th class="r">Hedef</th></tr></thead><tbody>
+      ${rep.timing.map((t) => `<tr><td>${esc(t.label)}${t.slow ? '<span class="tag">yavaş</span>' : ''}</td><td class="r">${t.medianSec} sn</td><td class="r">${t.targetSec} sn</td></tr>`).join('')}
+      </tbody></table><p class="note">Hedef süreler 180 dakikaya sığacak şekilde belirlendi; ÖSYM'nin resmi değeri değildir.</p>` : `<p class="empty">Soru başına ne kadar süre harcadığın burada görünür.</p>`);
+
+    $('#d-vocab').innerHTML = `<span class="label">Kelime defteri</span>
+      <p style="margin:0"><b class="num" style="font:700 30px/1 var(--display)">${me.dueWords}</b> <span class="muted">kelime bugün tekrar bekliyor · defterde ${me.deckSize}</span></p>
+      <p class="note">Sorulardan sonra bilmediğin kelimeyi deftere ekle ya da çekirdek listeden toplu al. Her kelime unutmak üzereyken yeniden gelir.</p>
+      <div class="actions"><button class="btn ghost" id="go-vocab" ${me.dueWords ? '' : 'disabled'}>Kelime turu</button><button class="link small" id="add-core">Çekirdek listeden 10 kelime ekle</button></div>`;
     $('#go-vocab').onclick = startVocab;
+    $('#add-core').onclick = addCore;
 
-    $('#d-real').innerHTML = `<h2>Gerçek sınav puanların</h2>
-      ${me.realScores.length ? `<ul class="list">${me.realScores.map((s) => `<li>${esc(s.exam)} ${s.year}${s.session ? ' ' + esc(s.session) : ''} · <b>${s.score}</b></li>`).join('')}</ul>` : '<p class="empty">Henüz puan girmedin.</p>'}
+  }
+
+  function renderRealScores() {
+    $('#d-real').innerHTML = `<span class="label">Gerçek sınav puanların</span>
+      ${me.realScores.length ? `<ul class="list">${me.realScores.map((s) => `<li class="top"><span>${esc(s.exam)} ${s.year}${s.session ? ' ' + esc(s.session) : ''}</span><b class="num">${s.score}</b></li>`).join('')}</ul>` : '<p class="empty">Henüz puan eklemedin.</p>'}
       <form id="real-form"><div class="row">
         <div><label for="r-exam">Sınav</label><select id="r-exam"><option>YDS</option><option>e-YDS</option><option>YÖKDİL</option></select></div>
         <div><label for="r-year">Yıl</label><input id="r-year" type="number" min="2000" max="2100" required></div>
         <div><label for="r-score">Puan</label><input id="r-score" type="number" min="0" max="100" step="0.25" required></div>
-      </div><div class="err" id="r-err"></div><button class="btn ghost">Ekle</button></form>
-      <p class="note">Sınava girdikten sonra puanını eklersen, sistemin tahminlerini gerçek sonuçlarla kalibre etmemize yardım edersin.</p>`;
+      </div><div class="err" id="r-err" role="alert"></div><button class="btn ghost">Puanı ekle</button></form>
+      <p class="note">Sınavdan sonra puanını eklersen, sistemin ölçümlerini gerçek sonuçlarla karşılaştırabiliriz.</p>`;
     $('#real-form').onsubmit = async (e) => {
       e.preventDefault();
-      try { await api('POST', '/api/real-score', { exam: $('#r-exam').value, year: Number($('#r-year').value), score: Number($('#r-score').value) }); renderDash(); }
+      try { await api('POST', '/api/real-score', { exam: $('#r-exam').value, year: Number($('#r-year').value), score: Number($('#r-score').value) }); toast('Puan eklendi'); renderAccount(); }
       catch (err) { $('#r-err').textContent = err.message; }
     };
 
-    $('#d-account').innerHTML = `<h2>Hesap</h2><p class="muted small">${esc(me.email)}</p>
-      <div class="actions"><button class="btn ghost" id="edit-profile">Hedef ve tercihleri değiştir</button><button class="btn danger" id="del">Hesabımı sil</button></div>`;
-    $('#edit-profile').onclick = openOnboard;
-    $('#del').onclick = async (e) => {
-      const b = e.currentTarget;
-      if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = 'Emin misin? Tüm verin silinir. Tekrar bas.'; return; }
-      await api('DELETE', '/api/me'); setToken(null); show('auth');
+  }
+
+  // ---------- hesap ----------
+  // Kod yenileme ve silme şifre ister: açık kalmış bir oturumla yapılamasın.
+  const confirmForm = (id, text, btn, danger) => `<form class="sheet field" id="${id}" style="margin-top:14px;background:var(--paper)">
+      <p style="margin:0">${text}</p>
+      <label for="${id}-pw">Şifren</label><input id="${id}-pw" type="password" autocomplete="current-password" required>
+      <div class="err" role="alert"></div>
+      <div class="actions" style="margin-top:6px"><button class="btn ${danger ? 'danger' : ''}">${btn}</button><button type="button" class="btn ghost" data-cancel>Vazgeç</button></div></form>`;
+  function askPassword(id, text, btn, danger, run) {
+    $('[data-confirm]').innerHTML = confirmForm(id, text, btn, danger);
+    const f = $('#' + id);
+    $('input', f).focus();
+    $('[data-cancel]', f).onclick = () => ($('[data-confirm]').innerHTML = '');
+    f.onsubmit = async (e) => {
+      e.preventDefault();
+      $('button', f).disabled = true;
+      try { await run($('input', f).value); } catch (err) { $('.err', f).textContent = err.message; $('button', f).disabled = false; }
     };
   }
 
-  // ---------- çalışma ----------
-  const ROLE_TR = { subject: 'özne', verb: 'yüklem', complement: 'tümleç', conjunction: 'bağlaç', relative_clause: 'sıfat cümleciği' };
+  async function renderAccount() {
+    show('account');
+    try { me = await api('GET', '/api/me'); } catch (err) { return errBox($('#d-account'), err.message, renderAccount); }
+    renderRealScores();
+    $('#d-account').innerHTML = `<span class="label">Hesap</span><p style="margin:0 0 6px;word-break:break-all">${esc(me.email)}</p>
+      ${me.hasRecovery ? '<p class="muted small" style="margin:0">Kurtarma kodun var. Kaybettiysen yenisini al; eskisi geçersiz olur.</p>' : '<p class="small" style="margin:0;color:var(--warn)">Hesabında kurtarma kodu yok. Şifreni unutursan giriş yapamazsın; aşağıdan bir kod oluştur.</p>'}
+      <div class="actions">
+        <button class="btn ghost" id="edit-profile">Hedefi ve tercihleri değiştir</button>
+        <button class="btn ghost" id="new-code">${me.hasRecovery ? 'Yeni kurtarma kodu al' : 'Kurtarma kodu oluştur'}</button>
+        <button class="btn danger" id="del">Hesabımı sil</button>
+      </div>
+      <div data-confirm></div>`;
+    $('#edit-profile').onclick = openOnboard;
+    $('#new-code').onclick = () => askPassword('f-code', me.hasRecovery ? 'Yeni kod oluşunca eski kodun hemen geçersiz olur.' : 'Kod bir kez gösterilir; bir yere kaydet.', 'Kodu oluştur', false, async (password) => {
+      const { recoveryCode } = await api('POST', '/api/recovery-code', { password });
+      $('[data-confirm]').innerHTML = `<div class="codebox" style="margin:14px 0 8px">${esc(recoveryCode)}</div><p class="note" style="margin:0">Bu kod bir kez gösterilir. Eski kod artık geçersiz.</p>`;
+      me.hasRecovery = true;
+    });
+    $('#del').onclick = () => askPassword('f-del', '<b>Hesabın, tüm cevapların, kelime defterin ve gönderdiğin hata bildirimleri kalıcı olarak silinir.</b> Bu geri alınamaz.', 'Hesabımı kalıcı olarak sil', true, async (password) => {
+      await api('DELETE', '/api/me', { password });
+      clearLocal(); setToken(null); show('auth'); toast('Hesabın ve tüm verin silindi');
+    });
+  }
 
+  async function addCore() {
+    try {
+      const r = await api('POST', '/api/vocab/core', { count: 10 });
+      toast(r.added ? `${r.added} kelime deftere eklendi` : 'Çekirdek listedeki tüm kelimeler zaten defterinde');
+      if (r.added) $('#v-vocab').hidden ? renderDash() : startVocab();
+    } catch (err) { toast(err.message); }
+  }
+
+  // ---------- öğretmen döngüsü: konu anlatımı + test ----------
   async function startStudy() {
     show('study');
     const box = $('#v-study');
-    box.innerHTML = '<div class="skeleton" style="height:56px;margin-bottom:16px"></div><div class="skeleton" style="height:280px"></div>';
+    box.innerHTML = '<div class="skeleton" style="height:48px;margin-bottom:16px"></div><div class="skeleton" style="height:300px"></div>';
     let data;
+    const seq = viewSeq;
     try { data = await api('GET', '/api/next' + (warmupDone ? '' : '?warmup=1')); }
-    catch (err) { box.innerHTML = `<div class="card"><p class="err">${esc(err.message)}</p></div>`; return; }
+    catch (err) { return alive(seq) && errBox(box, err.message, startStudy); }
+    if (!alive(seq)) return;
     if (data.exhausted) {
-      box.innerHTML = `<div class="card"><h2>Şimdilik tüm soruları çözdün</h2><p class="muted">Soru havuzu beta aşamasında büyüyor. Bu arada kelime defterini tekrar edebilirsin.</p><div class="actions"><button class="btn" id="b-dash">Panele dön</button></div></div>`;
-      $('#b-dash').onclick = renderDash;
+      box.innerHTML = `<div class="sheet field"><span class="label">Havuz</span><h2>Şimdilik tüm pratik sorularını çözdün</h2><p class="muted">Soru havuzu büyümeye devam ediyor. Bu arada mini denemeyi çöz, hata defterine dön ya da kelime tekrarı yap.</p><div class="actions"><button class="btn" id="b-m">Mini deneme</button><button class="btn ghost" id="b-dash">Bugün ekranına dön</button></div></div>`;
+      $('#b-m').onclick = renderMeasure; $('#b-dash').onclick = renderDash;
       return;
     }
     if (data.step.phase === 'brief') return renderBrief(data);
     warmupDone = true;
-    runBlock(data);
+    runTest(data);
   }
 
   function renderBrief({ step, brief }) {
     const box = $('#v-study');
     box.innerHTML = `
-      <div class="banner"><b>${esc(step.skillLabel)}</b> · ${esc(step.reason)}</div>
-      <div class="card">
-        <h1 style="font-size:22px">${esc(brief.title)}</h1>
-        <ul>${brief.points.map((x) => `<li style="margin:6px 0">${esc(x)}</li>`).join('')}</ul>
-        <div class="analysis"><b>Örnek:</b> ${esc(brief.example.text)}<div class="tr">${esc(brief.example.note)}</div></div>
-        <div class="actions"><button class="btn" id="b-go">Anladım, sorulara geç</button><button class="btn ghost" id="b-skip">Bunu biliyorum, atla</button></div>
-      </div>`;
-    const go = async () => { await api('POST', '/api/brief-seen', { skill: step.skill }); startStudy(); };
+      <div class="coach"><span class="label" style="flex:none;padding-top:3px">Neden</span><span><b>${esc(step.skillLabel)}</b>: ${esc(step.reason)}</span></div>
+      <article class="sheet field">
+        <span class="label">Konu anlatımı · 1 dakika</span>
+        <h1 style="font-size:clamp(26px,4vw,34px)">${esc(brief.title)}</h1>
+        <ul style="padding-left:20px;margin:4px 0 0">${brief.points.map((x) => `<li style="margin:8px 0">${esc(x)}</li>`).join('')}</ul>
+        <div class="analysis"><span class="label">Örnek</span><div style="font-family:var(--read);font-size:17px;margin-top:4px">${esc(brief.example.text)}</div><div class="tr">${esc(brief.example.note)}</div></div>
+        <div class="actions"><button class="btn" id="b-go">Anladım, teste geç</button><button class="btn ghost" id="b-skip">Bunu biliyorum, atla</button><span class="small faint">Anlatımı testin başından yeniden açabilirsin.</span></div>
+      </article>`;
+    const go = async (e) => {
+      e.currentTarget.disabled = true;
+      try { await api('POST', '/api/brief-seen', { skill: step.skill }); startStudy(); } catch (err) { toast(err.message); e.currentTarget.disabled = false; }
+    };
     $('#b-go').onclick = go;
     $('#b-skip').onclick = go;
+    $('#b-go').focus();
   }
 
-  function runBlock({ step, items, explainAtEnd }) {
+  function runTest({ step, items, explainAtEnd }) {
     const state = { i: 0, results: [] };
     const box = $('#v-study');
+    const stripHtml = () => `<div class="strip" aria-hidden="true">${items.map((_, k) => {
+      const r = state.results[k];
+      return `<i class="${k === state.i && !r ? 'now' : !r ? '' : explainAtEnd ? 'done' : r.r.correct ? 'ok' : 'no'}"></i>`;
+    }).join('')}</div>`;
 
     const renderQuestion = () => {
       const it = items[state.i];
-      let hinted = false;
+      let hinted = false, answered = false;
       const t0 = performance.now();
-      const sentMap = new Map((it.sentences || []).map((s) => [s.text, s]));
-      let passageHtml = '';
-      if (it.passage) {
-        let html = esc(it.passage);
-        for (const s of sentMap.keys()) html = html.replace(esc(s), `<span class="sent" tabindex="0" role="button" data-s="${esc(s)}" title="Cümleyi çözümle">${esc(s)}</span>`);
-        passageHtml = `<div class="passage">${html}${sentMap.size ? '<div class="note">Altı noktalı cümleye dokunarak yapısını görebilirsin (ipucu sayılır).</div>' : ''}<div id="analysis"></div></div>`;
-      }
       box.innerHTML = `
-        ${state.i === 0 ? `<div class="banner"><b>${esc(step.skillLabel)}</b> · ${esc(step.reason)}</div>` : ''}
-        <div class="progress"><span>Soru ${state.i + 1} / ${items.length}</span><span>${esc(step.skillLabel)}</span></div>
-        <div class="track"><i style="width:${(state.i / items.length) * 100}%"></i></div>
-        ${passageHtml}
+        ${state.i === 0 ? `<div class="coach"><span class="label" style="flex:none;padding-top:3px">Neden</span><span><b>${esc(step.skillLabel)}</b>: ${esc(step.reason)} <button class="link small" id="re-brief">Konu anlatımını aç</button></span></div><div id="brief-box"></div>` : ''}
+        ${stripHtml()}
+        <div class="qhead"><span class="qno">${state.i + 1}</span><div class="qmeta"><span class="label">${esc(step.skillLabel)}</span><span class="small faint">${items.length} soruluk test · <kbd>A</kbd>–<kbd>E</kbd> ile seç, <kbd>Enter</kbd> ile ilerle</span></div></div>
+        ${passageHtml(it)}
         <p class="stem">${esc(it.stem)}</p>
-        <div class="opts">${it.options.map((o) => `<button class="opt" data-k="${o.key}"><span class="key">${o.key}</span><span class="txt">${esc(o.text)}</span></button>`).join('')}</div>
-        <div id="fb"></div>`;
+        <div class="opts" role="group" aria-label="Şıklar">${optsHtml(it.options)}</div>
+        <div id="fb" aria-live="polite"></div>`;
+      wireSentences(box, it, () => { hinted = true; });
+      if ($('#re-brief')) $('#re-brief').onclick = async () => {
+        try {
+          const { brief } = await api('GET', '/api/brief?skill=' + encodeURIComponent(step.skill));
+          $('#brief-box').innerHTML = `<div class="sheet field" style="margin:-8px 0 20px"><span class="label">${esc(brief.title)}</span><ul style="padding-left:20px;margin:0">${brief.points.map((x) => `<li style="margin:6px 0">${esc(x)}</li>`).join('')}</ul><div class="analysis"><div style="font-family:var(--read)">${esc(brief.example.text)}</div><div class="tr">${esc(brief.example.note)}</div></div></div>`;
+          $('#re-brief').remove();
+        } catch (err) { toast(err.message); }
+      };
 
-      box.querySelectorAll('.sent').forEach((el) => {
-        const open = () => {
-          hinted = true;
-          const s = sentMap.get(el.dataset.s);
-          $('#analysis').innerHTML = `<div class="analysis">${s.parts.map((p) => `<span class="part p-${esc(p.role)}"><span class="role">${esc(ROLE_TR[p.role] || p.role)}</span>${esc(p.text)}</span>`).join(' ')}
-            ${s.parts.filter((p) => p.note).map((p) => `<div class="tr">${esc(p.note)}</div>`).join('')}<div class="tr">${esc(s.tr)}</div></div>`;
+      const seq = viewSeq;
+      const pick = async (b) => {
+        if (answered) return;
+        answered = true;
+        $$('.opt', box).forEach((x) => (x.disabled = true));
+        b.classList.add('picked');
+        let r;
+        try { r = await api('POST', '/api/answer', { itemId: it.id, chosen: b.dataset.k, ms: Math.round(performance.now() - t0), hinted }); }
+        catch (err) { if (!alive(seq)) return; $('#fb').innerHTML = `<p class="err">${esc(err.message)}</p>`; $$('.opt', box).forEach((x) => (x.disabled = false)); b.classList.remove('picked'); answered = false; return; }
+        if (!alive(seq)) return;
+        r.chosen = b.dataset.k;
+        state.results.push({ it, r });
+        const last = state.i + 1 >= items.length;
+        const nextBtn = `<div class="actions"><button class="btn" id="nx">${last ? 'Testi bitir' : 'Sonraki soru'}</button></div>`;
+        if (explainAtEnd) $('#fb').innerHTML = nextBtn;
+        else {
+          paintOptions(box, r, b.dataset.k);
+          $('#fb').innerHTML = feedbackHtml(r) + nextBtn;
+          wireFeedback($('#fb'), it.id);
+          $('.strip', box).outerHTML = stripHtml();
+        }
+        const nx = () => { state.i++; state.i < items.length ? renderQuestion() : renderSummary(); };
+        $('#nx').onclick = nx;
+        $('#nx').focus({ preventScroll: true });
+        keyHandler = (e) => {
+          const f = document.activeElement;
+          if (e.key === 'Enter' && (f === document.body || f?.id === 'nx')) { e.preventDefault(); nx(); }
         };
-        el.onclick = open;
-        el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } };
-      });
-
-      box.querySelectorAll('.opt').forEach((b) => {
-        b.onclick = async () => {
-          box.querySelectorAll('.opt').forEach((x) => (x.disabled = true));
-          b.classList.add('picked');
-          let r;
-          try { r = await api('POST', '/api/answer', { itemId: it.id, chosen: b.dataset.k, ms: Math.round(performance.now() - t0), hinted }); }
-          catch (err) { $('#fb').innerHTML = `<p class="err">${esc(err.message)}</p>`; box.querySelectorAll('.opt').forEach((x) => (x.disabled = false)); return; }
-          state.results.push({ it, chosen: b.dataset.k, r });
-          if (explainAtEnd) {
-            $('#fb').innerHTML = `<div class="actions"><button class="btn" id="nx">${state.i + 1 < items.length ? 'Sonraki soru' : 'Bloğu bitir'}</button></div>`;
-          } else {
-            paintOptions(box, r, b.dataset.k);
-            $('#fb').innerHTML = feedbackHtml(it, r) + `<div class="actions"><button class="btn" id="nx">${state.i + 1 < items.length ? 'Sonraki soru' : 'Bloğu bitir'}</button></div>`;
-            wireFeedback($('#fb'), it);
-          }
-          $('#nx').onclick = () => { state.i++; state.i < items.length ? renderQuestion() : renderSummary(); };
-          $('#nx').focus();
-        };
-      });
+      };
+      $$('.opt', box).forEach((b) => (b.onclick = () => pick(b)));
+      keyHandler = (e) => {
+        const k = e.key.toUpperCase();
+        if (KEYS.includes(k)) { e.preventDefault(); pick($(`.opt[data-k="${k}"]`, box)); }
+      };
     };
 
     const renderSummary = () => {
       const ok = state.results.filter((x) => x.r.correct).length;
       box.innerHTML = `
-        <div class="card"><h1 style="font-size:22px">Blok bitti: ${ok} / ${state.results.length} doğru</h1>
-        <p class="muted">${esc(step.skillLabel)} · Sıradaki adıma sistem senin cevaplarına göre karar verecek.</p>
-        <div class="actions"><button class="btn" id="s-next">Devam et</button><button class="btn ghost" id="s-dash">Panele dön</button></div></div>
-        ${explainAtEnd ? state.results.map((x, i) => `<div class="card" style="margin-top:16px" data-i="${i}"><p class="small muted">Soru ${i + 1}</p><p class="stem">${esc(x.it.stem)}</p><div class="opts">${x.r.options.map((o) => `<div class="opt" data-k="${o.key}"><span class="key">${o.key}</span><span class="txt">${esc(o.text)}</span></div>`).join('')}</div>${feedbackHtml(x.it, x.r)}</div>`).join('') : ''}`;
-      if (explainAtEnd) state.results.forEach((x, i) => { const c = box.querySelector(`[data-i="${i}"]`); paintOptions(c, x.r, x.chosen); wireFeedback(c, x.it); });
+        <div class="sheet result-hero">
+          <div><span class="label">Test bitti · ${esc(step.skillLabel)}</span><div class="big" style="margin-top:8px">${ok}<span class="faint" style="font-size:.5em">/${state.results.length}</span></div></div>
+          <p class="muted" style="flex:1;min-width:220px;margin:0">${ok === state.results.length ? 'Hepsi doğru. Sıradaki konuyu bu sonuca bakarak seçeceğiz.' : 'Yanlışların gerekçeleriyle hata defterine düştü. Sıradaki konuyu bu cevaplara bakarak seçeceğiz.'}</p>
+        </div>
+        <div class="actions" style="margin-bottom:22px"><button class="btn" id="s-next">Sonraki teste geç</button><button class="btn ghost" id="s-dash">Bugün ekranına dön</button></div>
+        ${explainAtEnd ? state.results.map((x, i) => `<div class="sheet field" style="margin-bottom:14px" data-i="${i}"><span class="label">Soru ${i + 1}</span>${passageHtml(x.it)}<p class="stem">${esc(x.it.stem)}</p><div class="opts">${optsHtml(x.r.options, 'div')}</div>${feedbackHtml(x.r)}</div>`).join('') : ''}`;
+      if (explainAtEnd) state.results.forEach((x, i) => { const c = $(`[data-i="${i}"]`, box); paintOptions(c, x.r, x.r.chosen); wireFeedback(c, x.it.id); wireSentences(c, x.it); });
       $('#s-next').onclick = startStudy;
       $('#s-dash').onclick = renderDash;
+      $('#s-next').focus({ preventScroll: true });
+      keyHandler = (e) => { if (e.key === 'Enter' && document.activeElement === document.body) { e.preventDefault(); startStudy(); } };
     };
 
     renderQuestion();
   }
 
-  function paintOptions(root, r, chosen) {
-    root.querySelectorAll('.opt').forEach((el) => {
-      const o = r.options.find((x) => x.key === el.dataset.k);
-      if (o.key === r.answer) el.classList.add('right');
-      else if (o.key === chosen) el.classList.add('wrong');
-      if (o.why) el.querySelector('.txt').insertAdjacentHTML('beforeend', `<span class="why">${o.trapLabel ? `<b>${esc(o.trapLabel)}:</b> ` : ''}${esc(o.why)}</span>`);
-    });
+  // ---------- mini deneme: gerçek sınav gibi, cevaplar sonda ----------
+  // Taslak hesaba ve forma özel; çıkışta ve silmede temizlenir.
+  const mkey = () => `yds-measure-A:${me?.email ?? ''}`;
+  function clearLocal() { try { for (const k of Object.keys(localStorage)) if (k.startsWith("yds-measure-")) localStorage.removeItem(k); } catch {} }
+  async function renderMeasure() {
+    show('measure');
+    const box = $('#v-measure');
+    box.innerHTML = '<div class="wrap narrow"><div class="skeleton" style="height:260px"></div></div>';
+    let d;
+    try { d = await api('GET', '/api/measure?form=A'); }
+    catch (err) { box.innerHTML = '<div class="wrap narrow"></div>'; return errBox($('.wrap', box), err.message, renderMeasure); }
+    if (d.done) return renderMeasureResult(d.result);
+    const ids = new Set(d.items.map((it) => it.id));
+    const saved = (() => {
+      try {
+        const x = JSON.parse(store.get(mkey()));
+        return x && typeof x.start === 'number' && Object.keys(x.answers ?? {}).every((id) => ids.has(id)) ? x : null;
+      } catch { return null; }
+    })();
+    box.innerHTML = `<div class="wrap narrow">
+      <p class="label">Mini deneme · Form A</p>
+      <h1>20 soru, yaklaşık ${d.minutes} dakika</h1>
+      <p class="lede">Gramerden 8, kelimeden 4, cloze'dan 4, okumadan 4 soru. Gerçek sınav gibi: sorular arasında serbestçe gezebilir, emin olmadıklarını "sonra bak" diye işaretleyebilirsin. Doğru cevaplar ve açıklamalar en sonda.</p>
+      <div class="sheet field">
+        <span class="label">Kurallar</span>
+        <ul style="margin:0;padding-left:20px;color:var(--ink-2)"><li>Süre işler ama seni durdurmaz; hedef süreyi aşarsan saat kırmızıya döner.</li><li>Bu deneme bir kez çözülür; sonucu konu planını değiştirmez, ayrı raporlanır.</li><li>Sayfayı kapatırsan cevapların bu tarayıcıda saklanır, kaldığın yerden devam edersin.</li></ul>
+        <div class="actions"><button class="btn" id="m-start">${saved ? 'Kaldığın yerden devam et' : 'Denemeyi başlat'}</button><button class="btn ghost" id="m-back">Şimdi değil</button></div>
+      </div></div>`;
+    $('#m-start').onclick = () => runMeasure(d, saved ?? { answers: {}, flags: [], start: Date.now(), i: 0 });
+    $('#m-back').onclick = renderDash;
   }
 
-  function feedbackHtml(it, r) {
-    return `<div class="feedback card">
-      <p class="verdict ${r.correct ? 'ok' : 'no'}">${r.correct ? 'Doğru' : `Yanlış, doğru cevap ${r.answer}`}</p>
-      ${r.trapLabel ? `<span class="trap">Olası tuzak: ${esc(r.trapLabel)}</span>` : ''}
-      <p style="margin:0">${esc(r.explanation)}</p>
-      ${r.words.length ? `<div class="words">${r.words.map((w) => `<button class="word" data-lemma="${esc(w.lemma)}"><b>${esc(w.lemma)}</b> · ${esc(w.sense)} <span>+ deftere ekle</span></button>`).join('')}</div>` : ''}
-      <div style="margin-top:14px"><button class="link small" data-flag>Bu soruda hata mı var?</button>
-        <div data-flagbox hidden><textarea rows="2" placeholder="Sorun ne? (ör. iki şık da doğru olabilir)"></textarea><div class="actions"><button class="btn ghost" data-send>Gönder</button></div></div></div>
-    </div>`;
-  }
+  function runMeasure(d, st) {
+    const box = $('#v-measure');
+    const items = d.items;
+    const limitMs = d.minutes * 60000;
+    const save = () => store.set(mkey(), JSON.stringify(st));
+    let reviewing = false;
+    const seq = viewSeq;
+    save();
 
-  function wireFeedback(root, it) {
-    root.querySelectorAll('.word').forEach((w) => {
-      w.onclick = async () => {
-        if (w.classList.contains('added')) return;
-        try { await api('POST', '/api/vocab', { itemId: it.id, lemma: w.dataset.lemma }); w.classList.add('added'); w.querySelector('span').textContent = '✓ eklendi'; }
-        catch (err) { w.querySelector('span').textContent = err.message; }
-      };
-    });
-    const f = root.querySelector('[data-flag]');
-    if (!f) return;
-    f.onclick = () => { root.querySelector('[data-flagbox]').hidden = false; };
-    root.querySelector('[data-send]').onclick = async () => {
-      const t = root.querySelector('textarea');
-      try { await api('POST', '/api/flag', { itemId: it.id, reason: t.value }); root.querySelector('[data-flagbox]').innerHTML = '<p class="small muted">Teşekkürler, inceleyeceğiz.</p>'; }
-      catch (err) { t.placeholder = err.message; }
+    box.innerHTML = `
+      <div class="exambar"><div class="wrap narrow">
+        <span class="clock" id="m-clock">0:00</span><span class="small faint">/ ${d.minutes}:00</span>
+        <span style="flex:1"></span>
+        <button class="btn ghost" id="m-grid" aria-expanded="false">Sorular <span class="num" id="m-count"></span></button>
+        <button class="btn" id="m-review">Gözden geçir</button>
+      </div></div>
+      <div class="wrap narrow"><div class="sheet navgrid" id="m-nav" hidden></div><div id="m-q"></div></div>`;
+
+    const tick = () => {
+      const c = $('#m-clock');
+      if (!c || !alive(seq)) return clearInterval(measureTimer);
+      const el = Date.now() - st.start;
+      c.textContent = fmtMin(el);
+      c.classList.toggle('over', el > limitMs);
     };
+    clearInterval(measureTimer);
+    measureTimer = setInterval(tick, 1000); tick();
+
+    const navHtml = () => items.map((it, k) => `<button class="${st.answers[it.id] ? 'a' : ''} ${st.flags.includes(it.id) ? 'f' : ''} ${k === st.i && !reviewing ? 'cur' : ''}" data-n="${k}" aria-label="Soru ${k + 1}${st.answers[it.id] ? ', cevaplandı' : ', boş'}${st.flags.includes(it.id) ? ', işaretli' : ''}">${k + 1}</button>`).join('');
+    const paintNav = () => {
+      $('#m-nav').innerHTML = navHtml();
+      $('#m-count').textContent = `${Object.keys(st.answers).length}/${items.length}`;
+      $$('#m-nav button').forEach((b) => (b.onclick = () => { st.i = Number(b.dataset.n); save(); reviewing = false; $('#m-nav').hidden = true; $('#m-grid').setAttribute('aria-expanded', 'false'); renderQ(); }));
+    };
+    $('#m-grid').onclick = () => { const n = $('#m-nav'); n.hidden = !n.hidden; $('#m-grid').setAttribute('aria-expanded', String(!n.hidden)); };
+    $('#m-review').onclick = () => renderReview();
+
+    const renderQ = () => {
+      reviewing = false;
+      const it = items[st.i];
+      const flagged = st.flags.includes(it.id);
+      $('#m-q').innerHTML = `
+        <div class="qhead"><span class="qno">${st.i + 1}</span><div class="qmeta"><span class="label">Soru ${st.i + 1} / ${items.length}</span><span class="small faint"><kbd>A</kbd>–<kbd>E</kbd> seç · <kbd>←</kbd> <kbd>→</kbd> gez</span></div></div>
+        ${passageHtml(it)}
+        <p class="stem">${esc(it.stem)}</p>
+        <div class="opts" role="group" aria-label="Şıklar">${optsHtml(it.options)}</div>
+        <div class="actions" style="justify-content:space-between">
+          <button class="btn ghost" id="m-prev" ${st.i === 0 ? 'disabled' : ''}>← Önceki</button>
+          <button class="btn ghost flagbtn" id="m-flag" aria-pressed="${flagged}">${flagged ? 'İşaretli' : 'Sonra bak'}</button>
+          <button class="btn" id="m-next">${st.i + 1 < items.length ? 'Sonraki →' : 'Gözden geçir'}</button>
+        </div>`;
+      wireSentences($('#m-q'), it);
+      const mark = () => $$('#m-q .opt').forEach((o) => { const on = st.answers[it.id] === o.dataset.k; o.classList.toggle('picked', on); o.setAttribute('aria-pressed', on); });
+      mark();
+      const choose = (k) => { st.answers[it.id] === k ? delete st.answers[it.id] : (st.answers[it.id] = k); mark(); save(); paintNav(); };
+      $$('#m-q .opt').forEach((o) => (o.onclick = () => choose(o.dataset.k)));
+      const go = (n) => { if (n < 0) return; if (n >= items.length) return renderReview(); st.i = n; save(); renderQ(); window.scrollTo(0, 0); };
+      $('#m-prev').onclick = () => go(st.i - 1);
+      $('#m-next').onclick = () => go(st.i + 1);
+      $('#m-flag').onclick = () => { st.flags = flagged ? st.flags.filter((x) => x !== it.id) : [...st.flags, it.id]; save(); renderQ(); };
+      keyHandler = (e) => {
+        const k = e.key.toUpperCase();
+        if (KEYS.includes(k)) { e.preventDefault(); choose(k); }
+        else if (e.key === 'ArrowRight') go(st.i + 1);
+        else if (e.key === 'ArrowLeft') go(st.i - 1);
+      };
+      paintNav();
+    };
+
+    const renderReview = () => {
+      reviewing = true;
+      keyHandler = null;
+      const blank = items.filter((it) => !st.answers[it.id]).length;
+      $('#m-q').innerHTML = `
+        <p class="label">Gözden geçir</p>
+        <h1 style="font-size:clamp(26px,4vw,34px)">${blank ? `${blank} soru boş` : 'Tüm sorular cevaplandı'}</h1>
+        <p class="lede">Bir numaraya basıp o soruya dönebilirsin. Dolu: cevaplandı. Turuncu nokta: "sonra bak" dediğin soru. Yanlış cevap doğruyu götürmez; boş bırakmak yerine tahmin etmek her zaman daha iyidir.</p>
+        <div class="sheet navgrid">${navHtml()}</div>
+        <div class="err" id="m-err" role="alert"></div>
+        <div class="actions"><button class="btn" id="m-submit">Testi bitir ve puanla</button><button class="btn ghost" id="m-cont">Sorulara dön</button></div>`;
+      $$('#m-q .navgrid button').forEach((b) => (b.onclick = () => { st.i = Number(b.dataset.n); save(); renderQ(); }));
+      $('#m-cont').onclick = () => renderQ();
+      $('#m-submit').onclick = async (e) => {
+        const b = e.currentTarget;
+        if (blank && b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = `${blank} boş soruyla bitir`; return; }
+        b.disabled = true;
+        try {
+          const r = await api('POST', '/api/measure', { form: d.form, ms: Date.now() - st.start, answers: Object.entries(st.answers).map(([itemId, chosen]) => ({ itemId, chosen })) });
+          clearInterval(measureTimer);
+          store.set(mkey(), null);
+          if (alive(seq)) renderMeasureResult(r.result);
+        } catch (err) { $('#m-err').textContent = err.message; b.disabled = false; }
+      };
+      paintNav();
+    };
+
+    renderQ();
   }
 
-  // ---------- kelime turu ----------
+  function renderMeasureResult(res) {
+    show('measure');
+    const box = $('#v-measure');
+    const secs = Object.values(res.bySection);
+    box.innerHTML = `<div class="wrap narrow">
+      <p class="label">Mini deneme · Form A · ${fmtDate(res.takenAt)}</p>
+      <div class="sheet result-hero" style="margin:10px 0 16px">
+        <div><div class="big">${res.correct}<span class="faint" style="font-size:.5em">/${res.total}</span></div><span class="small muted">doğru${res.blank ? ` · ${res.blank} boş` : ''}${res.ms ? ` · ${fmtMin(res.ms)} dk` : ''}</span></div>
+        <table style="flex:1;min-width:240px"><thead><tr><th>Bölüm</th><th class="r">Doğru</th></tr></thead><tbody>
+          ${secs.map((s) => `<tr><td>${esc(s.label)}</td><td class="r">${s.correct} / ${s.n}</td></tr>`).join('')}</tbody></table>
+      </div>
+      <p class="note" style="margin:0 0 22px">Bölüm başına 4-8 soru az bir örnek: bu sonuç yön gösterir, puan tahmini değildir. Konu planın pratik testlerinden gelir.</p>
+      <div class="sheet field"><span class="label">Çözümler</span>
+        ${res.review.map((it, i) => `<details class="rev" data-i="${i}">
+          <summary><span class="bub ${it.correct ? 'good' : it.chosen ? 'bad' : ''}" style="--s:24px">${it.chosen ?? '–'}</span><span class="s">${i + 1}. ${esc(summaryText(it))}</span></summary>
+          <div class="body">${passageHtml(it)}<p class="stem">${esc(it.stem)}</p><div class="opts">${optsHtml(it.options, 'div')}</div>${feedbackHtml({ ...it, trapLabel: trapOf(it) })}</div>
+        </details>`).join('')}
+      </div>
+      <div class="actions"><button class="btn" id="mr-dash">Bugün ekranına dön</button></div></div>`;
+    res.review.forEach((it, i) => { const c = $(`[data-i="${i}"]`, box); paintOptions(c, it, it.chosen); wireFeedback(c, it.id); wireSentences(c, it); });
+    $('#mr-dash').onclick = renderDash;
+  }
+
+  // ---------- hata defteri ----------
+  async function renderMistakes() {
+    show('mistakes');
+    const box = $('#v-mistakes');
+    box.innerHTML = '<div class="skeleton" style="height:200px"></div>';
+    let d;
+    try { d = await api('GET', '/api/mistakes'); } catch (err) { return errBox(box, err.message, renderMistakes); }
+    const groups = {};
+    for (const it of d.items) (groups[it.skillLabel] ??= []).push(it);
+    box.innerHTML = `<p class="label">Hata defteri · pratik testler</p><h1>${d.items.length ? `İlk denemede yanlış yaptığın ${d.total} soru` : 'Hata defterin boş'}</h1>
+      ${d.total > d.items.length ? `<p class="note" style="margin:0 0 10px">En yeni ${d.items.length} tanesi gösteriliyor. Mini deneme yanlışları deneme sonucunda.</p>` : ''}
+      <p class="lede">${d.items.length ? 'Konulara göre gruplu, en yenisi üstte. Bir soruyu açınca neden yanlış yaptığını ve doğrunun gerekçesini görürsün.' : 'Bir testte yanlış yaptığın her soru gerekçesiyle buraya düşer. Sınavdan önceki hafta tekrar etmek için en verimli liste budur.'}</p>
+      ${d.items.length ? Object.entries(groups).map(([label, list]) => `<div class="sheet field" style="margin-bottom:14px"><span class="label">${esc(label)} · ${list.length}</span>
+        ${list.map((it) => `<details class="rev" data-id="${esc(it.id)}"><summary><span class="bub bad" style="--s:24px">${esc(it.chosen)}</span><span class="s">${esc(summaryText(it))}</span></summary>
+          <div class="body">${it.trapLabel ? `<span class="trap">${esc(it.trapLabel)}</span>` : ''}${passageHtml(it)}<p class="stem">${esc(it.stem)}</p><div class="opts">${optsHtml(it.options, 'div')}</div>${feedbackHtml({ ...it, correct: false })}</div></details>`).join('')}
+      </div>`).join('') : '<div class="actions"><button class="btn" id="mk-start">Teste başla</button></div>'}`;
+    for (const it of d.items) { const c = $(`[data-id="${CSS.escape(it.id)}"]`, box); paintOptions(c, it, it.chosen); wireFeedback(c, it.id); wireSentences(c, it); }
+    if ($('#mk-start')) $('#mk-start').onclick = () => startStudy();
+  }
+
+  // ---------- kelime turu: dizin kartı ----------
   async function startVocab() {
     show('vocab');
     const box = $('#v-vocab');
-    const { words } = await api('GET', '/api/vocab/due');
+    box.innerHTML = '<div class="skeleton" style="height:280px;max-width:560px;margin:0 auto"></div>';
+    let words;
+    const seq = viewSeq;
+    try { ({ words } = await api('GET', '/api/vocab/due')); } catch (err) { return alive(seq) && errBox(box, err.message, startVocab); }
+    if (!alive(seq)) return;
     let i = 0;
-    const done = () => {
-      box.innerHTML = `<div class="card flash"><h2>Tur bitti</h2><p class="muted">Kelimeler hatırlama gücüne göre yeniden planlandı.</p><div class="actions" style="justify-content:center"><button class="btn" id="v-dash">Panele dön</button></div></div>`;
+    const done = async () => {
+      keyHandler = null;
+      let left = 0;
+      try { left = (await api('GET', '/api/me')).dueWords; } catch {}
+      if (!alive(seq)) return;
+      updateDueBadge(left);
+      box.innerHTML = `<div class="index" style="text-align:center"><div class="lemma" style="font-size:30px">${i ? 'Tur bitti' : 'Bugün tekrar edilecek kelime yok'}</div>
+        <p class="muted" style="margin:0 0 18px">${i ? `${i} kelime hatırlama gücüne göre yeniden planlandı.` : 'Sorulardan sonra kelime ekleyebilir ya da çekirdek listeden toplu alabilirsin.'}${left ? ` Bugün ${left} kelime daha bekliyor.` : ''}</p>
+        <div class="actions" style="justify-content:center">${left ? '<button class="btn" id="v-more">Sonraki tura geç</button>' : ''}<button class="btn ${left ? 'ghost' : ''}" id="v-core">Çekirdek listeden 10 kelime ekle</button><button class="btn ghost" id="v-dash">Bugün ekranına dön</button></div></div>`;
       $('#v-dash').onclick = renderDash;
+      $('#v-core').onclick = addCore;
+      if ($('#v-more')) $('#v-more').onclick = startVocab;
     };
     const card = () => {
       if (i >= words.length) return done();
       const w = words[i];
-      box.innerHTML = `<div class="progress"><span>Kelime ${i + 1} / ${words.length}</span></div>
-        <div class="card flash"><p class="muted small">Anlamını hatırlamaya çalış, sonra göster.</p><div class="lemma">${esc(w.lemma)}</div>
-        <div id="back" hidden><div class="sense">${esc(w.sense)}</div><p class="muted small">Ne kadar iyi hatırladın?</p>
-          <div class="grades"><button class="btn danger" data-g="again">Hatırlamadım</button><button class="btn ghost" data-g="hard">Zorlandım</button><button class="btn ghost" data-g="good">Hatırladım</button><button class="btn" data-g="easy">Çok kolay</button></div></div>
-        <div class="actions" style="justify-content:center" id="front"><button class="btn" id="reveal">Anlamını göster</button></div></div>`;
-      $('#reveal').onclick = () => { $('#front').hidden = true; $('#back').hidden = false; };
-      box.querySelectorAll('[data-g]').forEach((b) => {
-        b.onclick = async () => { await api('POST', '/api/vocab/review', { lemma: w.lemma, sense: w.sense, grade: b.dataset.g }); i++; card(); };
-      });
+      const ex = w.example ? esc(w.example).replace(new RegExp(`\\b(${w.lemma.split(' ')[0].slice(0, Math.max(4, w.lemma.split(' ')[0].length - 2)).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\w*)`, 'i'), '<mark>$1</mark>') : '';
+      box.innerHTML = `<p class="label" style="text-align:center;margin-bottom:14px">Kelime ${i + 1} / ${words.length}</p>
+        <div class="index">
+          <div class="lemma">${esc(w.lemma)}${w.pos ? `<span class="pos">${esc({ n: 'isim', v: 'fiil', adj: 'sıfat', adv: 'zarf', conj: 'bağlaç', prep: 'edat' }[w.pos] || w.pos)}</span>` : ''}</div>
+          <div id="front"><p class="muted" style="margin:0 0 18px">Anlamını hatırlamaya çalış, sonra kartı çevir.</p><button class="btn" id="reveal">Kartı çevir <kbd style="color:inherit;border-color:currentColor">Boşluk</kbd></button></div>
+          <div id="back" hidden><p class="sense">${esc(w.sense)}</p>${ex ? `<p class="ex">${ex}</p>` : ''}
+            <p class="small muted" style="margin:0 0 10px">Ne kadar iyi hatırladın?</p>
+            <div class="grades">
+              <button class="btn danger" data-g="again">Hatırlamadım<small>1</small></button>
+              <button class="btn ghost" data-g="hard">Zorlandım<small>2</small></button>
+              <button class="btn ghost" data-g="good">Hatırladım<small>3</small></button>
+              <button class="btn" data-g="easy">Çok kolay<small>4</small></button>
+            </div></div>
+        </div>`;
+      const reveal = () => { $('#front').hidden = true; $('#back').hidden = false; $('[data-g="good"]').focus({ preventScroll: true }); };
+      $('#reveal').onclick = reveal;
+      let sent = false;
+      const grade = async (g) => {
+        if (sent) return; sent = true;
+        try { await api('POST', '/api/vocab/review', { lemma: w.lemma, sense: w.sense, grade: g }); if (!alive(seq)) return; i++; card(); }
+        catch (err) { sent = false; toast(err.message); }
+      };
+      $$('[data-g]', box).forEach((b) => (b.onclick = () => grade(b.dataset.g)));
+      keyHandler = (e) => {
+        if (e.key === ' ' && !$('#front').hidden) { e.preventDefault(); reveal(); }
+        else if ($('#front').hidden && ['1', '2', '3', '4'].includes(e.key)) grade(['again', 'hard', 'good', 'easy'][Number(e.key) - 1]);
+      };
     };
     words.length ? card() : done();
   }
 
   // ---------- başlangıç ----------
-  document.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => (b.dataset.go === 'vocab' ? startVocab() : renderDash())));
-  $('#logout').onclick = async () => { try { await api('POST', '/api/logout'); } catch {} setToken(null); show('auth'); };
+  const GO = { dash: () => renderDash(), measure: () => renderMeasure(), mistakes: () => renderMistakes(), vocab: () => startVocab(), account: () => renderAccount() };
+  $$('[data-go]').forEach((b) => (b.onclick = () => GO[b.dataset.go]()));
+  $('#logout').onclick = async () => { try { await api('POST', '/api/logout'); } catch {} clearLocal(); setToken(null); show('auth'); };
 
   async function boot() {
+    renderDemo();
     if (!token) return show('auth');
     try { me = await api('GET', '/api/me'); }
     catch { return show('auth'); }
