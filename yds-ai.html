@@ -744,9 +744,10 @@ footer a{text-decoration-color:var(--form-line);text-underline-offset:3px}
       <p class="note">${measured.length ? `Ölçülen ${measured.length} bölümde bugünkü başarınla (her bölümün son 20 cevabı) yaklaşık ${nowTotal} doğru. ` : ''}Bir bölüm en az 5 cevaptan sonra ölçülür; ölçülmeyen bölüm için tahmin uydurmayız.</p>`;
 
     const pct = (x) => Math.round(x * 100);
+    const ARROW = { up: '↑', down: '↓', flat: '' };
     const trend = (w) => (w.now - w.accuracy >= 0.1 ? 'up' : w.accuracy - w.now >= 0.1 ? 'down' : 'flat');
     $('#d-weak').innerHTML = `<span class="label">Konu haritası</span>` + (rep.weak.length ? `<ul class="list">${rep.weak.map((w) => `
-      <li><div class="top"><span>${esc(w.label)}</span><span class="small muted num">${w.enoughData ? `%${pct(w.now)}${w.n > RECENT ? ` <span class="trend ${trend(w)}">${{ up: '↑', down: '↓', flat: '' }[trend(w)]} genel %${pct(w.accuracy)}</span>` : ''}` : 'veri az'} · ${w.n} soru</span></div>
+      <li><div class="top"><span>${esc(w.label)}</span><span class="small muted num">${w.enoughData ? `%${pct(w.now)}${w.n > RECENT ? ` <span class="trend ${trend(w)}">${ARROW[trend(w)]} genel %${pct(w.accuracy)}</span>` : ''}` : 'veri az'} · ${w.n} soru</span></div>
       <div class="meter ${w.enoughData ? '' : 'low'}"><i style="width:${w.enoughData ? pct(w.now) : 100}%"></i>${w.enoughData && w.n > RECENT ? `<b class="past" style="left:${pct(w.accuracy)}%" title="Genel ortalama"></b>` : ''}</div></li>`).join('')}</ul>
       <p class="note">Şu anki başarına (son ${RECENT} cevap) göre en zayıftan güçlüye. Çizgi genel ortalamayı gösterir. Yorum için en az 5 cevap gerekir.</p>` : `<p class="empty">Test çözdükçe hangi konuda güçlü, hangisinde zayıf olduğun burada görünür.</p>`);
 
