@@ -76,7 +76,10 @@ nav button{background:none;border:0;padding:8px 10px;border-radius:6px;font-weig
 nav button:hover{color:var(--ink);background:var(--form-soft)}
 nav button[aria-current=page]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--form);border-radius:0}
 nav .count{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--form);color:#fff;font:600 11px/1 var(--label)}
-@media (max-width:640px){header{position:static}header .wrap{height:auto;flex-wrap:wrap;padding-top:10px;gap:4px}nav{margin:0 -10px;width:calc(100% + 20px);padding-bottom:4px;flex-wrap:wrap;overflow:visible}nav button{padding:7px 9px;font-size:14.5px}}
+@media (max-width:640px){header{position:static}header .wrap{height:auto;flex-wrap:wrap;padding-top:10px;gap:4px}nav{margin:0 -10px;width:calc(100% + 20px);padding-bottom:4px;flex-wrap:wrap;overflow:visible}nav button{padding:7px 9px;font-size:14.5px}
+  /* Hesap ve Çıkış logonun yanına çıkar, dört ana bölüm alt satırda tek sıra kalır. */
+  nav:not([hidden]){display:contents}nav [data-go=account]{margin-left:auto}nav [data-go=account],#logout{order:1}
+  header .wrap:has(nav:not([hidden]))::after{content:'';order:2;flex-basis:100%}nav [data-go]:not([data-go=account]){order:3}nav [data-go=dash]{margin-left:-9px}}
 
 /* tipografi */
 h1{font:700 clamp(30px,4.6vw,46px)/1.04 var(--display);letter-spacing:-.035em;margin:0 0 12px}
@@ -308,7 +311,7 @@ details.rev .body{padding:4px 0 18px}
 
 footer{border-top:1px solid var(--form-line);padding:20px 0 30px;font-size:14px;color:var(--ink-2)}
 footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-between}
-footer a{text-decoration-color:var(--form-line);text-underline-offset:3px}
+footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-line);text-underline-offset:3px}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--lead);color:var(--lead-ink);padding:10px 16px;border-radius:var(--r-in);font-size:14.5px;z-index:40;box-shadow:0 8px 24px -10px rgba(0,0,0,.4)}
 </style>
 </head>
