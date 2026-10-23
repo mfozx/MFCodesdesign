@@ -152,6 +152,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--lead);margin:0 8p
 .qmeta{display:flex;flex-direction:column;gap:2px}
 .passage{font:18px/1.75 var(--read);padding:22px 24px;margin:0 0 18px;max-width:70ch;background:var(--sheet);border:1px solid var(--form-line);border-left:3px solid var(--form);border-radius:4px var(--r-sheet) var(--r-sheet) 4px}
 .passage p{margin:0}
+.passage>p:first-child{white-space:pre-line}
 .stem{font:19px/1.6 var(--read);margin:0 0 16px;max-width:68ch}
 .gap{display:inline-block;width:3.4em;height:1em;border-bottom:1.5px solid currentColor;vertical-align:-.12em;margin:0 .1em}
 .sent{background:linear-gradient(transparent 62%,var(--form-soft) 62%);cursor:pointer;border-radius:2px}
@@ -184,6 +185,16 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--lead);margin:0 8p
 .word:hover{border-color:var(--ink);background:var(--paper)}
 .word b{font-weight:600}.word span{color:var(--ink-3)}
 .word.added{border-style:solid;border-color:var(--good);color:var(--good)}.word.added span{color:var(--good)}
+/* öğretmene sor: hazır sorular, cevap düz metin */
+.tutor{margin-top:16px;padding-top:12px;border-top:1px dashed var(--form-line)}
+.asks{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.ask{border:1px solid var(--form-line);background:var(--sheet);border-radius:6px;padding:6px 12px;font-size:14px;transition:border-color .2s,background .2s}
+.ask:hover:not(:disabled){border-color:var(--form);background:var(--form-soft)}
+.ask:disabled{opacity:.55;cursor:default}
+.reply{margin-top:12px;padding:12px 14px;background:var(--paper);border-radius:var(--r-in);border-left:3px solid var(--form)}
+.reply .q{font:600 13.5px/1.3 var(--label);color:var(--form-text);margin:0 0 6px}
+.reply .a{margin:0;white-space:pre-line;font-size:15.5px;line-height:1.6}
+.reply.busy .a{color:var(--ink-3)}
 
 /* giriş sayfası */
 .landing{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:40px;align-items:start}
@@ -328,7 +339,7 @@ footer a{text-decoration-color:var(--form-line);text-underline-offset:3px}
         <p class="label">Ücretsiz YDS hazırlığı</p>
         <h1>Neyi, neden çalışacağını sana söyleyen YDS hazırlığı</h1>
         <p class="lede">Her test tek bir konuya odaklanır. Yanlış yaptığında hangi çeldiriciye düştüğünü gösterir; aynı hatayı tekrarlarsan seni önkoşul konuya geri götürür. Kelimeleri de unutmak üzereyken tekrar ettirir.</p>
-        <ul class="facts"><li>120+ özgün soru, seviyene göre büyür</li><li>15 konu</li><li>180 çekirdek kelime</li><li>20 soruluk mini deneme</li></ul>
+        <ul class="facts"><li>190+ özgün soru, seviyene göre büyür</li><li>Sınavın 10 bölümü, 22 konu</li><li>180 çekirdek kelime</li><li>3 mini deneme formu</li></ul>
 
         <div class="sheet demo marks" id="demo" aria-labelledby="demo-label">
           <div class="qhead"><span class="qno">1</span><div class="qmeta"><span class="label" id="demo-label">Kayıt olmadan dene</span><span class="small muted">Kelime · bağlama uygun sözcük</span></div></div>
@@ -526,12 +537,17 @@ footer a{text-decoration-color:var(--form-line);text-underline-offset:3px}
     });
   }
 
-  function feedbackHtml(r, { flag = true } = {}) {
+  // ai: çözülmüş soruda AI öğretmene hazır sorular (giriş sayfasındaki demo hariç; oturum gerekir)
+  function feedbackHtml(r, { flag = true, ai = true } = {}) {
     const blank = r.chosen === null;
     return `<div class="mark ${r.correct ? '' : 'no'}">
       <p class="verdict">${r.correct ? '✓ Doğru' : blank ? `Boş bıraktın · doğru cevap ${r.answer}` : `✗ Yanlış · doğru cevap ${r.answer}`}</p>
       ${r.trapLabel ? `<span class="trap">Düştüğün tuzak: ${esc(r.trapLabel)}</span>` : ''}
       <p style="margin:0">${esc(r.explanation)}</p>
+      ${ai ? `<div class="tutor" data-tutor data-chosen="${r.chosen ?? ''}"><span class="label">Öğretmene sor</span>
+        <div class="asks">${!r.correct && r.chosen ? `<button class="ask" data-ask="wrong">Neden ${r.chosen} değil?</button>` : ''}<button class="ask" data-ask="right">Neden ${r.answer}?</button><button class="ask" data-ask="rule">Kuralı anlat</button><button class="ask" data-ask="example">Benzer örnek ver</button></div>
+        <div data-replies aria-live="polite"></div>
+        <p class="note">Yapay zekâ yazar, hata yapabilir. Yalnızca soru ve seçtiğin şık gönderilir.</p></div>` : ''}
       ${r.words?.length ? `<div class="words">${r.words.map((w) => `<button class="word" data-lemma="${esc(w.lemma)}"><b>${esc(w.lemma)}</b> · ${esc(w.sense)} <span>+ deftere ekle</span></button>`).join('')}</div>` : ''}
       ${flag ? `<div style="margin-top:12px"><button class="link small" data-flag>Bu soruda hata mı var?</button>
         <div data-flagbox hidden><textarea rows="2" aria-label="Sorunu yaz" placeholder="Sorun ne? Ör. iki şık da doğru olabilir"></textarea><div class="actions" style="margin-top:8px"><button class="btn ghost" data-send>Bildir</button></div></div></div>` : ''}
@@ -544,6 +560,21 @@ footer a{text-decoration-color:var(--form-line);text-underline-offset:3px}
         if (w.classList.contains('added')) return;
         try { await api('POST', '/api/vocab', { itemId, lemma: w.dataset.lemma }); w.classList.add('added'); $('span', w).textContent = '✓ defterde'; }
         catch (err) { $('span', w).textContent = err.message; }
+      };
+    });
+    const tutor = $('[data-tutor]', root);
+    if (tutor) $$('[data-ask]', tutor).forEach((b) => {
+      b.onclick = async () => {
+        b.disabled = true;
+        const box = document.createElement('div');
+        box.className = 'reply busy';
+        box.innerHTML = `<p class="q">${esc(b.textContent)}</p><p class="a">Öğretmen yazıyor…</p>`;
+        $('[data-replies]', tutor).append(box);
+        try {
+          const r = await api('POST', '/api/why', { itemId, intent: b.dataset.ask, chosen: tutor.dataset.chosen || null });
+          box.classList.remove('busy');
+          $('.a', box).textContent = r.text;
+        } catch (err) { box.remove(); b.disabled = false; toast(err.message); }
       };
     });
     const f = $('[data-flag]', root);
@@ -609,7 +640,7 @@ footer a{text-decoration-color:var(--form-line);text-underline-offset:3px}
       const r = { ...DEMO, chosen: b.dataset.k, correct: b.dataset.k === DEMO.answer };
       r.trapLabel = trapOf(r);
       paintOptions(box, r, b.dataset.k);
-      $('#demo-fb').innerHTML = feedbackHtml(r, { flag: false }) + `<div class="actions"><span class="small muted">Her soruda böyle: neden doğru, her yanlış şık neden yanlış.</span><button class="link small" id="demo-again">Tekrar dene</button></div>`;
+      $('#demo-fb').innerHTML = feedbackHtml(r, { flag: false, ai: false }) + `<div class="actions"><span class="small muted">Her soruda böyle: neden doğru, her yanlış şık neden yanlış.</span><button class="link small" id="demo-again">Tekrar dene</button></div>`;
       $('#demo-again').onclick = renderDemo;
     }));
   }
@@ -807,14 +838,15 @@ footer a{text-decoration-color:var(--form-line);text-underline-offset:3px}
       <div class="actions"><button class="btn ghost" data-go-mistakes>Hata defterini aç</button></div>` : `<p class="empty">Yanlış cevaplarında hangi çeldiriciye düştüğün burada birikir.</p>`);
     $$('[data-go-mistakes]').forEach((b) => (b.onclick = renderMistakes));
 
-    const mt = rep.miniTests?.find((x) => x.form === 'A');
-    $('#d-measure').innerHTML = `<span class="label">Mini deneme</span>` + (mt
-      ? `<p style="margin:0"><b class="num" style="font:700 30px/1 var(--display)">${mt.correct}/${mt.total}</b> <span class="muted">doğru · ${fmtDate(mt.taken_at)}</span></p>
+    const taken = rep.miniTests ?? [];
+    const untaken = (rep.forms ?? ['A']).find((f) => !taken.some((x) => x.form === f));
+    $('#d-measure').innerHTML = `<span class="label">Mini deneme</span>` + (taken.length
+      ? `<ul class="list">${taken.map((mt) => `<li><div class="top"><span>Form ${esc(mt.form)} · <b class="num">${mt.correct}/${mt.total}</b> doğru</span><span class="small muted">${fmtDate(mt.taken_at)} · <button class="link small" data-go-measure="${esc(mt.form)}">Çözümler</button></span></div></li>`).join('')}</ul>
          <p class="note">20 soruluk karışık test. 80 soruluk sınavın puanı bundan güvenilir biçimde çıkarılamaz; bölüm dağılımına bak.</p>
-         <div class="actions"><button class="btn ghost" data-go-measure>Sonuçları ve çözümleri gör</button></div>`
-      : `<p class="empty">Gramer, kelime, cloze ve okumadan 20 soru, süre tutularak. Cevaplar en sonda gösterilir, gerçek sınav gibi.</p>
-         <div class="actions"><button class="btn ghost" data-go-measure>Mini denemeye gir</button></div>`);
-    $$('[data-go-measure]').forEach((b) => (b.onclick = renderMeasure));
+         ${untaken ? `<div class="actions"><button class="btn ghost" data-go-measure="${esc(untaken)}">Form ${esc(untaken)}'ye gir</button></div>` : '<p class="note">Tüm formları çözdün. Yeni form eklendiğinde burada görünür.</p>'}`
+      : `<p class="empty">Sınavın bölümlerinden 20 soru, süre tutularak. Cevaplar en sonda gösterilir, gerçek sınav gibi.</p>
+         <div class="actions"><button class="btn ghost" data-go-measure="${esc(untaken ?? 'A')}">Mini denemeye gir</button></div>`);
+    $$('[data-go-measure]').forEach((b) => (b.onclick = () => renderMeasure(b.dataset.goMeasure)));
 
     $('#d-timing').innerHTML = `<span class="label">Süre</span>` + (rep.timing.length ? `<table><thead><tr><th>Bölüm</th><th class="r">Ortanca</th><th class="r">Hedef</th></tr></thead><tbody>
       ${rep.timing.map((t) => `<tr><td>${esc(t.label)}${t.slow ? '<span class="tag">yavaş</span>' : ''}</td><td class="r">${t.medianSec} sn</td><td class="r">${t.targetSec} sn</td></tr>`).join('')}
@@ -909,7 +941,7 @@ footer a{text-decoration-color:var(--form-line);text-underline-offset:3px}
     if (!alive(seq)) return;
     if (data.exhausted) {
       box.innerHTML = `<div class="sheet field"><span class="label">Havuz</span><h2>Seviyene uygun yeni sorular hazırlanıyor</h2><p class="muted">Havuzdaki tüm pratik sorularını çözdün. Yeni sorular senin seviyene göre yazılıp iki ayrı kontrolden geçiyor; genelde yarım saat içinde hazır olur. Bu arada mini denemeyi çöz, hata defterine dön ya da kelime tekrarı yap.</p><div class="actions"><button class="btn" id="b-m">Mini deneme</button><button class="btn ghost" id="b-dash">Bugün ekranına dön</button></div></div>`;
-      $('#b-m').onclick = renderMeasure; $('#b-dash').onclick = renderDash;
+      $('#b-m').onclick = () => renderMeasure(); $('#b-dash').onclick = renderDash;
       return;
     }
     if (data.step.phase === 'brief') return renderBrief(data);
@@ -1022,27 +1054,28 @@ footer a{text-decoration-color:var(--form-line);text-underline-offset:3px}
 
   // ---------- mini deneme: gerçek sınav gibi, cevaplar sonda ----------
   // Taslak hesaba ve forma özel; çıkışta ve silmede temizlenir.
-  const mkey = () => `yds-measure-A:${me?.email ?? ''}`;
+  const mkey = (form) => `yds-measure-${form}:${me?.email ?? ''}`;
   function clearLocal() { try { for (const k of Object.keys(localStorage)) if (k.startsWith("yds-measure-")) localStorage.removeItem(k); } catch {} }
-  async function renderMeasure() {
+  // form verilmezse sunucu henüz çözülmemiş ilk formu açar
+  async function renderMeasure(form) {
     show('measure');
     const box = $('#v-measure');
     box.innerHTML = '<div class="wrap narrow"><div class="skeleton" style="height:260px"></div></div>';
     let d;
-    try { d = await api('GET', '/api/measure?form=A'); }
-    catch (err) { box.innerHTML = '<div class="wrap narrow"></div>'; return errBox($('.wrap', box), err.message, renderMeasure); }
-    if (d.done) return renderMeasureResult(d.result);
+    try { d = await api('GET', `/api/measure${form ? `?form=${encodeURIComponent(form)}` : ''}`); }
+    catch (err) { box.innerHTML = '<div class="wrap narrow"></div>'; return errBox($('.wrap', box), err.message, () => renderMeasure(form)); }
+    if (d.done) return renderMeasureResult(d.result, d.form);
     const ids = new Set(d.items.map((it) => it.id));
     const saved = (() => {
       try {
-        const x = JSON.parse(store.get(mkey()));
+        const x = JSON.parse(store.get(mkey(d.form)));
         return x && typeof x.start === 'number' && Object.keys(x.answers ?? {}).every((id) => ids.has(id)) ? x : null;
       } catch { return null; }
     })();
     box.innerHTML = `<div class="wrap narrow">
-      <p class="label">Mini deneme · Form A</p>
-      <h1>20 soru, yaklaşık ${d.minutes} dakika</h1>
-      <p class="lede">Gramerden 8, kelimeden 4, cloze'dan 4, okumadan 4 soru. Gerçek sınav gibi: sorular arasında serbestçe gezebilir, emin olmadıklarını "sonra bak" diye işaretleyebilirsin. Doğru cevaplar ve açıklamalar en sonda.</p>
+      <p class="label">Mini deneme · Form ${esc(d.form)}</p>
+      <h1>${d.items.length} soru, yaklaşık ${d.minutes} dakika</h1>
+      <p class="lede">${d.parts.map((x) => `${esc(x.label)} ${x.n}`).join(', ')}. Gerçek sınav gibi: sorular arasında serbestçe gezebilir, emin olmadıklarını "sonra bak" diye işaretleyebilirsin. Doğru cevaplar ve açıklamalar en sonda.</p>
       <div class="sheet field">
         <span class="label">Kurallar</span>
         <ul style="margin:0;padding-left:20px;color:var(--ink-2)"><li>Süre işler ama seni durdurmaz; hedef süreyi aşarsan saat kırmızıya döner.</li><li>Bu deneme bir kez çözülür; sonucu konu planını değiştirmez, ayrı raporlanır.</li><li>Sayfayı kapatırsan cevapların bu tarayıcıda saklanır, kaldığın yerden devam edersin.</li></ul>
@@ -1056,7 +1089,7 @@ footer a{text-decoration-color:var(--form-line);text-underline-offset:3px}
     const box = $('#v-measure');
     const items = d.items;
     const limitMs = d.minutes * 60000;
-    const save = () => store.set(mkey(), JSON.stringify(st));
+    const save = () => store.set(mkey(d.form), JSON.stringify(st));
     let reviewing = false;
     const seq = viewSeq;
     save();
@@ -1141,8 +1174,8 @@ footer a{text-decoration-color:var(--form-line);text-underline-offset:3px}
         try {
           const r = await api('POST', '/api/measure', { form: d.form, ms: Date.now() - st.start, answers: Object.entries(st.answers).map(([itemId, chosen]) => ({ itemId, chosen })) });
           clearInterval(measureTimer);
-          store.set(mkey(), null);
-          if (alive(seq)) renderMeasureResult(r.result);
+          store.set(mkey(d.form), null);
+          if (alive(seq)) renderMeasureResult(r.result, d.form);
         } catch (err) { $('#m-err').textContent = err.message; b.disabled = false; }
       };
       paintNav();
@@ -1151,12 +1184,12 @@ footer a{text-decoration-color:var(--form-line);text-underline-offset:3px}
     renderQ();
   }
 
-  function renderMeasureResult(res) {
+  function renderMeasureResult(res, form) {
     show('measure');
     const box = $('#v-measure');
     const secs = Object.values(res.bySection);
     box.innerHTML = `<div class="wrap narrow">
-      <p class="label">Mini deneme · Form A · ${fmtDate(res.takenAt)}</p>
+      <p class="label">Mini deneme · Form ${esc(form)} · ${fmtDate(res.takenAt)}</p>
       <div class="sheet result-hero" style="margin:10px 0 16px">
         <div><div class="big">${res.correct}<span class="faint" style="font-size:.5em">/${res.total}</span></div><span class="small muted">doğru${res.blank ? ` · ${res.blank} boş` : ''}${res.ms ? ` · ${fmtMin(res.ms)} dk` : ''}</span></div>
         <table style="flex:1;min-width:240px"><thead><tr><th>Bölüm</th><th class="r">Doğru</th></tr></thead><tbody>
