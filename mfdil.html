@@ -304,6 +304,9 @@ details.rev .body{padding:4px 0 18px}
 .index .sense{font-size:21px;font-weight:500;margin:0 0 10px}
 .index .ex{font:italic 17px/2 var(--read);color:var(--ink-2);margin:0 0 18px}
 .index .ex mark{background:none;color:var(--ink);font-style:normal;font-weight:600}
+.index .ex-tr{margin:-14px 0 18px;font-size:15px;line-height:1.5;color:var(--ink-2)}
+.index .ex-src{margin:-12px 0 18px;font-size:12px;color:var(--ink-3)}
+.index .ex-src a{color:inherit}
 .grades{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .grades .btn{justify-content:center;flex-direction:column;gap:2px;padding:9px 6px}
 .grades .btn small{font-weight:400;font-size:12px;opacity:.75}
@@ -459,7 +462,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
 <footer>
   <div class="wrap">
     <a href="/">← mfcodes.org</a>
-    <span>Sorular bu proje için yazıldı; ÖSYM sorusu ya da telifli metin kullanılmaz. Verin yapay zekâya gönderilmez.</span>
+    <span>Sorular bu proje için yazıldı; ÖSYM sorusu ya da telifli metin kullanılmaz. Verin yapay zekâya gönderilmez. Kelime listesinin bir kısmı <a href="https://www.newgeneralservicelist.com/" rel="noopener">NGSL ve NAWL</a> (CC BY-SA 4.0), örnek cümlelerin bir kısmı <a href="https://tatoeba.org" rel="noopener">Tatoeba</a> (CC BY 2.0 FR) kaynaklıdır.</span>
   </div>
 </footer>
 
@@ -1313,7 +1316,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         <div class="index">
           <div class="lemma">${esc(w.lemma)}${w.pos ? `<span class="pos">${esc({ n: 'isim', v: 'fiil', adj: 'sıfat', adv: 'zarf', conj: 'bağlaç', prep: 'edat' }[w.pos] || w.pos)}</span>` : ''}</div>
           <div id="front"><p class="muted" style="margin:0 0 18px">Anlamını hatırlamaya çalış, sonra kartı çevir.</p><button class="btn" id="reveal">Kartı çevir <kbd style="color:inherit;border-color:currentColor">Boşluk</kbd></button></div>
-          <div id="back" hidden><p class="sense">${esc(w.sense)}</p>${ex ? `<p class="ex">${ex}</p>` : ''}
+          <div id="back" hidden><p class="sense">${esc(w.sense)}</p>${ex ? `<p class="ex">${ex}</p>` : ''}${w.exampleTr ? `<p class="ex-tr">${esc(w.exampleTr)}</p>` : ''}${w.exampleSrc ? `<p class="ex-src">Örnek: <a href="https://tatoeba.org/tr/sentences/show/${Number(w.exampleSrc.id)}" target="_blank" rel="noopener">Tatoeba #${Number(w.exampleSrc.id)}</a>, ${esc(w.exampleSrc.by)} · CC BY 2.0 FR</p>` : ''}
             <p class="small muted" style="margin:0 0 10px">Ne kadar iyi hatırladın?</p>
             <div class="grades">
               <button class="btn danger" data-g="again">Hatırlamadım<small>1</small></button>
