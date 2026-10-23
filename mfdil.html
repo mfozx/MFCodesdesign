@@ -271,6 +271,20 @@ tr:last-child td{border-bottom:0}
 .tag.fixed{background:var(--good-soft);color:var(--good)}
 .tag{display:inline-block;font:600 11px/1.3 var(--label);letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--warn-soft);color:var(--warn);margin-left:6px}
 .empty{color:var(--ink-2);font-size:15px;margin:0}
+.timer{height:4px;border-radius:2px;background:var(--form-line);margin:0 0 6px;overflow:hidden}
+.timer i{display:block;height:100%;width:100%;background:var(--form)}
+.timer.over i{background:var(--bad)}
+.timer-t{margin:0 0 18px}
+.evid{margin-top:16px}
+.evid-list{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.evid-s{width:100%;text-align:left;font:15px/1.55 var(--read);color:var(--ink);background:var(--sheet);border:1px solid var(--form-line);border-radius:var(--r-in);padding:8px 10px;cursor:pointer}
+.evid-s:hover:not(:disabled){border-color:var(--ink-3)}
+.evid-s:disabled{cursor:default}
+.evid-s.right{border-color:var(--good);background:var(--good-soft)}
+.evid-s.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.cn-group{margin:0 0 12px}
+.cn-group summary{cursor:pointer;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.plan li p{margin:4px 0 0}
 .skeleton{height:110px;border-radius:var(--r-in);background:linear-gradient(90deg,var(--paper),var(--form-soft),var(--paper));background-size:200% 100%;animation:sk 1.3s ease-in-out infinite}
 @keyframes sk{to{background-position:-200% 0}}
 
@@ -345,7 +359,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         <p class="label">Ücretsiz YDS hazırlığı</p>
         <h1>Neyi, neden çalışacağını sana söyleyen YDS hazırlığı</h1>
         <p class="lede">Her test tek bir konuya odaklanır. Yanlış yaptığında hangi çeldiriciye düştüğünü gösterir; aynı hatayı tekrarlarsan seni önkoşul konuya geri götürür. Kelimeleri de unutmak üzereyken tekrar ettirir.</p>
-        <ul class="facts"><li>190+ özgün soru, seviyene göre büyür</li><li>Sınavın 10 bölümü, 22 konu</li><li>180 çekirdek kelime</li><li>3 mini deneme formu</li></ul>
+        <ul class="facts"><li>190+ özgün soru, seviyene göre büyür</li><li>Sınavın 10 bölümü, 22 konu</li><li>549 çekirdek kelime, bağlaç atölyesi</li><li>3 mini deneme formu</li></ul>
 
         <div class="sheet demo marks" id="demo" aria-labelledby="demo-label">
           <div class="qhead"><span class="qno">1</span><div class="qmeta"><span class="label" id="demo-label">Kayıt olmadan dene</span><span class="small muted">Kelime · bağlama uygun sözcük</span></div></div>
@@ -438,11 +452,13 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     </div>
     <div class="sheet omr marks" id="d-goal"><div class="skeleton"></div></div>
     <div class="cols">
+      <div class="sheet field" id="d-plan"></div>
       <div class="sheet field" id="d-weak"></div>
       <div class="sheet field" id="d-traps"></div>
       <div class="sheet field" id="d-measure"></div>
       <div class="sheet field" id="d-timing"></div>
       <div class="sheet field" id="d-vocab"></div>
+      <div class="sheet field" id="d-connect"></div>
     </div>
   </section>
 
@@ -457,6 +473,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   <section id="v-measure" hidden></section>
   <section id="v-mistakes" class="wrap narrow" hidden></section>
   <section id="v-vocab" class="wrap narrow" hidden></section>
+  <section id="v-connect" class="wrap narrow" hidden></section>
 </main>
 
 <footer>
@@ -509,7 +526,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   }
 
   const RECENT = 10; // worker diagnosis.js RECENT ile aynı
-  const VIEWS = ['auth', 'recovery', 'onboard', 'dash', 'study', 'measure', 'mistakes', 'vocab', 'account'];
+  const VIEWS = ['auth', 'recovery', 'onboard', 'dash', 'study', 'measure', 'mistakes', 'vocab', 'account', 'connect'];
   function show(view) {
     viewSeq++;
     clearInterval(measureTimer);
@@ -600,6 +617,29 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     return from > 0 ? '… ' + it.passage.slice(from).replace(/^\S*\s/, '') : it.passage;
   };
   const trapOf = (r) => (r.correct || !r.chosen ? null : r.options.find((o) => o.key === r.chosen)?.trapLabel ?? null);
+
+  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const splitSentences = (t) => t.trim().split(/(?<=[.!?])\s+/); // worker data/bank/reading.mjs ile aynı
+
+  // Kanıtı bul: cevaptan sonra, doğru şıkkı destekleyen metin cümlesini seçtirir. Ölçüme girmez.
+  function evidenceHtml(it, r) {
+    if (!r.evidence?.length || !it.passage) return '';
+    return `<div class="evid" data-evid><span class="label">Kanıtı bul</span>
+      <p class="small muted" style="margin:4px 0 8px">Doğru şıkkı metindeki hangi cümle destekliyor? Doğru şık metni neredeyse hiç aynen tekrar etmez, başka sözlerle söyler.</p>
+      <ol class="evid-list">${splitSentences(it.passage).map((x) => `<li><button class="evid-s">${esc(x)}</button></li>`).join('')}</ol>
+      <p class="small" style="margin:8px 0 0" data-evid-out aria-live="polite"></p></div>`;
+  }
+  function wireEvidence(root, r) {
+    const box = $('[data-evid]', root);
+    if (!box) return;
+    const ok = new Set(r.evidence);
+    $$('.evid-s', box).forEach((b) => (b.onclick = () => {
+      $$('.evid-s', box).forEach((x) => { x.disabled = true; if (ok.has(x.textContent)) x.classList.add('right'); });
+      const hit = ok.has(b.textContent);
+      if (!hit) b.classList.add('wrong');
+      $('[data-evid-out]', box).textContent = hit ? 'Doğru: cevap bu cümleye dayanıyor.' : 'Kanıt yeşil işaretli cümlede; doğru şık onu başka sözlerle söylüyor.';
+    }));
+  }
 
   const ROLE_TR = { subject: 'özne', verb: 'yüklem', complement: 'tümleç', conjunction: 'bağlaç', relative_clause: 'sıfat cümleciği', adverbial_clause: 'zarf cümleciği' };
 
@@ -788,11 +828,14 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         : `Son cevaplarına bakarak seçtik.`}</p>
       <p class="coach" id="d-next" style="margin:12px 0 4px" hidden></p>
       <p class="small faint" style="margin:0">Haftada ${p.weekly_minutes} dk ayırdın: yaklaşık ${sessions} oturum × ${perSession} dk.</p>
+      ${fresh ? '' : habitLine(rep.habit)}
       <div class="actions">
         <button class="btn" id="start">${fresh ? 'İlk teste başla' : 'Teste başla'}</button>
+        ${rep.review.due ? `<button class="btn ghost" id="start-review">${rep.review.due} soru tekrar</button>` : ''}
         ${me.dueWords ? `<button class="btn ghost" id="start-vocab">${me.dueWords} kelime tekrarı</button>` : ''}
       </div>`;
     $('#start').onclick = () => startStudy();
+    if ($('#start-review')) $('#start-review').onclick = startReview;
     if ($('#start-vocab')) $('#start-vocab').onclick = startVocab;
     const seq = viewSeq;
     api('GET', '/api/next?peek=1').then((n) => {
@@ -839,10 +882,13 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       <p class="note">Şu anki başarına (son ${RECENT} cevap) göre en zayıftan güçlüye. Çizgi genel ortalamayı gösterir. Yorum için en az 5 cevap gerekir.</p>` : `<p class="empty">Test çözdükçe hangi konuda güçlü, hangisinde zayıf olduğun burada görünür.</p>`);
 
     $('#d-traps').innerHTML = `<span class="label">Düştüğün tuzaklar</span>` + (rep.traps.length ? `<ul class="list">${rep.traps.map((t) => `
-      <li><div class="top"><span>${esc(t.label)}</span><span class="small muted">${t.count} kez · ${esc(t.confidence)}</span></div></li>`).join('')}</ul>
-      <p class="note">"Olası": az örnek var. "Tekrarlıyor": en az 3 kez aynı tuzak.</p>
+      <li><div class="top"><span>${esc(t.label)}</span><span class="small muted">yanlışlarının %${pct(t.share)} · ${t.count} kez · ${esc(t.confidence)}</span></div>
+        <p class="small muted" style="margin:4px 0 0">En çok ${esc(t.sectionLabel)} sorularında. ${esc(t.tip ?? '')}</p>
+        <button class="link small" data-trap="${esc(t.trap)}">Bu tuzağı içeren sorularla çalış</button></li>`).join('')}</ul>
+      <p class="note">Son 40 cevabındaki yanlışlardan. "Olası": az örnek var. "Tekrarlıyor": en az 3 kez aynı tuzak.</p>
       <div class="actions"><button class="btn ghost" data-go-mistakes>Hata defterini aç</button></div>` : `<p class="empty">Yanlış cevaplarında hangi çeldiriciye düştüğün burada birikir.</p>`);
     $$('[data-go-mistakes]').forEach((b) => (b.onclick = renderMistakes));
+    $$('[data-trap]').forEach((b) => (b.onclick = () => startStudy({ trap: b.dataset.trap })));
 
     const taken = rep.miniTests ?? [];
     const untaken = (rep.forms ?? ['A']).find((f) => !taken.some((x) => x.form === f));
@@ -854,9 +900,25 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
          <div class="actions"><button class="btn ghost" data-go-measure="${esc(untaken ?? 'A')}">Mini denemeye gir</button></div>`);
     $$('[data-go-measure]').forEach((b) => (b.onclick = () => renderMeasure(b.dataset.goMeasure)));
 
-    $('#d-timing').innerHTML = `<span class="label">Süre</span>` + (rep.timing.length ? `<table><thead><tr><th>Bölüm</th><th class="r">Ortanca</th><th class="r">Hedef</th></tr></thead><tbody>
-      ${rep.timing.map((t) => `<tr><td>${esc(t.label)}${t.slow ? '<span class="tag">yavaş</span>' : ''}</td><td class="r">${t.medianSec} sn</td><td class="r">${t.targetSec} sn</td></tr>`).join('')}
-      </tbody></table><p class="note">Hedef süreler 180 dakikaya sığacak şekilde belirlendi; ÖSYM'nin resmi değeri değildir.</p>` : `<p class="empty">Soru başına ne kadar süre harcadığın burada görünür.</p>`);
+    $('#d-timing').innerHTML = `<span class="label">Süre</span>` + (rep.timing.length ? `<table><thead><tr><th>Bölüm</th><th class="r">Ortanca</th><th class="r">Hedef</th><th class="r">Aşan</th></tr></thead><tbody>
+      ${rep.timing.map((t) => `<tr><td>${esc(t.label)}${t.slow ? '<span class="tag">yavaş</span>' : ''}</td><td class="r">${t.medianSec} sn</td><td class="r">${t.targetSec} sn</td><td class="r">${t.over}/${t.n}</td></tr>`).join('')}
+      </tbody></table><p class="note">"Aşan": hedef süreden uzun süren cevaplar. Hedef süreler 180 dakikaya sığacak şekilde belirlendi; ÖSYM'nin resmi değeri değildir.</p>` : `<p class="empty">Soru başına ne kadar süre harcadığın burada görünür.</p>`)
+      + `<div class="actions"><button class="btn ghost" id="go-timed">Süreli test çöz</button></div>`;
+    $('#go-timed').onclick = () => startStudy({ timed: true });
+
+    const ep = rep.examPlan;
+    $('#d-plan').innerHTML = `<span class="label">Sınav planı</span>` + (ep ? `<p style="margin:0 0 4px"><b class="num">${ep.daysLeft}</b> gün, ${ep.weeks} hafta kaldı.</p>
+      <ol class="list plan">${ep.rows.map((w) => `<li><div class="top"><span><b>${w.week}. hafta</b> · ${fmtDate(w.start)}</span><span class="small muted">${w.minutes} dk</span></div>
+        <p class="small">${w.finalWeek ? 'Son hafta: yeni konu yok. Hata defteri, kelime tekrarı ve hafif tempo.' : w.focus.length ? `Odak: ${w.focus.map((f) => esc(f.label) + (f.unmeasured ? ' (önce yokla)' : '')).join(', ')}` : 'Odak: en zayıf kalan konular'}${w.mock ? ` · ${w.mock === 'review' ? 'deneme yerine hata defteri turu' : `Form ${esc(w.mock)} denemesi`}` : ''}</p>
+        ${w.split ? `<p class="small faint">${w.split.focus} dk konu · ${w.split.vocab} dk kelime · ${w.split.review} dk hata defteri</p>` : ''}</li>`).join('')}</ol>
+      <p class="note">${ep.weeks > ep.rows.length ? `İlk ${ep.rows.length} hafta gösteriliyor. ` : ''}Odaklar hedefine kalan doğru sayısından çıkar ve cevapların değiştikçe yeniden hesaplanır.</p>`
+      : `<p class="empty">${p.exam_date ? 'Sınav tarihin geçmiş görünüyor. Yeni tarihi girersen plan yeniden çıkar.' : 'Sınav tarihini girersen kalan haftalara bölüm bölüm plan çıkarırız.'}</p><div class="actions"><button class="btn ghost" id="plan-edit">Sınav tarihini gir</button></div>`);
+    if ($('#plan-edit')) $('#plan-edit').onclick = openOnboard;
+
+    $('#d-connect').innerHTML = `<span class="label">Bağlaç atölyesi</span>
+      <p class="muted" style="margin:0">Cümle tamamlama, cloze ve paragraf sorularının çoğu bağlaçla çözülür. Anlam grubunu ve yapısını (bağlaç mı, edat mı) 10 saniyelik turlarla çalış.</p>
+      <div class="actions"><button class="btn ghost" id="go-connect">Atölyeye gir</button></div>`;
+    $('#go-connect').onclick = renderConnect;
 
     $('#d-vocab').innerHTML = `<span class="label">Kelime defteri</span>
       <p style="margin:0"><b class="num" style="font:700 30px/1 var(--display)">${me.dueWords}</b> <span class="muted">kelime bugün tekrar bekliyor · defterde ${me.deckSize}</span></p>
@@ -865,6 +927,11 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     $('#go-vocab').onclick = startVocab;
     $('#add-core').onclick = addCore;
 
+  }
+
+  function habitLine(h) {
+    const goal = h.goalMinutes ? ` · bugün ${h.todayMinutes}/${h.goalMinutes} dk` : '';
+    return `<p class="small muted" style="margin:6px 0 0">${h.streak ? `<b class="num" style="color:var(--ink)">${h.streak} gün</b> üst üste çalıştın` : 'Bugünkü testinle yeni bir seri başlar'}${goal}${h.streak && !h.activeToday ? '. Bugün bir test seriyi sürdürür.' : ''}</p>`;
   }
 
   function renderRealScores() {
@@ -936,25 +1003,31 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   }
 
   // ---------- öğretmen döngüsü: konu anlatımı + test ----------
-  async function startStudy() {
+  // opts.trap: o çeldiriciyi içeren sorular; opts.timed: soru başına hedef süre gösterilir
+  async function startStudy(opts = {}) {
     show('study');
     const box = $('#v-study');
     box.innerHTML = '<div class="skeleton" style="height:48px;margin-bottom:16px"></div><div class="skeleton" style="height:300px"></div>';
     let data;
     const seq = viewSeq;
-    try { data = await api('GET', '/api/next'); }
-    catch (err) { return alive(seq) && errBox(box, err.message, startStudy); }
+    try { data = await api('GET', '/api/next' + (opts.trap ? '?trap=' + encodeURIComponent(opts.trap) : '')); }
+    catch (err) { return alive(seq) && errBox(box, err.message, () => startStudy(opts)); }
     if (!alive(seq)) return;
+    if (data.exhausted && opts.trap) {
+      box.innerHTML = `<div class="sheet field"><span class="label">Tuzak çalışması</span><h2>Bu tuzağı içeren yeni soru kalmadı</h2><p class="muted">Bu çeldiriciyi taşıyan soruların hepsini çözdün. Hata defterinden yanlışlarını tekrar edebilir ya da normal teste dönebilirsin.</p><div class="actions"><button class="btn" id="b-mk">Hata defteri</button><button class="btn ghost" id="b-dash">Bugün ekranına dön</button></div></div>`;
+      $('#b-mk').onclick = renderMistakes; $('#b-dash').onclick = renderDash;
+      return;
+    }
     if (data.exhausted) {
       box.innerHTML = `<div class="sheet field"><span class="label">Havuz</span><h2>Seviyene uygun yeni sorular hazırlanıyor</h2><p class="muted">Havuzdaki tüm pratik sorularını çözdün. Yeni sorular senin seviyene göre yazılıp iki ayrı kontrolden geçiyor; genelde yarım saat içinde hazır olur. Bu arada mini denemeyi çöz, hata defterine dön ya da kelime tekrarı yap.</p><div class="actions"><button class="btn" id="b-m">Mini deneme</button><button class="btn ghost" id="b-dash">Bugün ekranına dön</button></div></div>`;
       $('#b-m').onclick = () => renderMeasure(); $('#b-dash').onclick = renderDash;
       return;
     }
-    if (data.step.phase === 'brief') return renderBrief(data);
-    runTest(data);
+    if (data.step.phase === 'brief') return renderBrief(data, opts);
+    runTest({ ...data, opts });
   }
 
-  function renderBrief({ step, brief }) {
+  function renderBrief({ step, brief }, opts = {}) {
     const box = $('#v-study');
     box.innerHTML = `
       <div class="coach"><span class="label" style="flex:none;padding-top:3px">Neden</span><span><b>${esc(step.skillLabel)}</b>: ${esc(step.reason)}</span></div>
@@ -967,14 +1040,14 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       </article>`;
     const go = async (e) => {
       e.currentTarget.disabled = true;
-      try { await api('POST', '/api/brief-seen', { skill: step.skill }); startStudy(); } catch (err) { toast(err.message); e.currentTarget.disabled = false; }
+      try { await api('POST', '/api/brief-seen', { skill: step.skill }); startStudy(opts); } catch (err) { toast(err.message); e.currentTarget.disabled = false; }
     };
     $('#b-go').onclick = go;
     $('#b-skip').onclick = go;
     $('#b-go').focus();
   }
 
-  function runTest({ step, items, explainAtEnd, warmup = 0 }) {
+  function runTest({ step, items, explainAtEnd, warmup = 0, opts = {} }) {
     const state = { i: 0, results: [] };
     const box = $('#v-study');
     const stripHtml = () => `<div class="strip" aria-hidden="true">${items.map((_, k) => {
@@ -987,14 +1060,28 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       let hinted = false, answered = false;
       const t0 = performance.now();
       box.innerHTML = `
-        ${state.i === 0 ? `<div class="coach"><span class="label" style="flex:none;padding-top:3px">Neden</span><span><b>${esc(step.skillLabel)}</b>: ${esc(step.reason)} <button class="link small" id="re-brief">Konu anlatımını aç</button></span></div><div id="brief-box"></div>` : ''}
+        ${state.i === 0 ? `<div class="coach"><span class="label" style="flex:none;padding-top:3px">${opts.trap ? 'Strateji' : 'Neden'}</span><span><b>${esc(step.skillLabel)}</b>: ${esc(step.reason)}${opts.timed ? ' Süreli test: her soru için hedef süre işler; süre dolsa da cevaplayabilirsin.' : ''} <button class="link small" id="re-brief">Konu anlatımını aç</button></span></div><div id="brief-box"></div>` : ''}
         ${stripHtml()}
         <div class="qhead"><span class="qno">${state.i + 1}</span><div class="qmeta"><span class="label">${esc(step.skillLabel)}</span><span class="small faint">${state.i < warmup ? '<span class="tag warm">Isınma · ölçüme girmez</span> ' : ''}${it.beta ? '<span class="tag" title="Yapay zekâ yazdı, iki ayrı model cevabı görmeden çözüp onayladı. Hata görürsen bildir.">Beta soru</span> ' : ''}${items.length} soruluk test · <kbd>A</kbd>–<kbd>E</kbd> ile seç, <kbd>Enter</kbd> ile ilerle</span></div></div>
+        ${opts.timed ? '<div class="timer" aria-hidden="true"><i id="tm-bar"></i></div><p class="small faint timer-t" id="tm-t"></p>' : ''}
         ${passageHtml(it)}
         <p class="stem">${gaps(esc(it.stem))}</p>
         <div class="opts" role="group" aria-label="Şıklar">${optsHtml(it.options)}</div>
         <div id="fb" aria-live="polite"></div>`;
       wireSentences(box, it, () => { hinted = true; });
+      if (opts.timed) {
+        const limit = it.targetSec * 1000;
+        const tick = () => {
+          const used = performance.now() - t0, bar = $('#tm-bar');
+          if (!bar) return clearInterval(measureTimer);
+          bar.style.width = Math.max(0, 100 - (used / limit) * 100) + '%';
+          bar.parentElement.classList.toggle('over', used > limit);
+          $('#tm-t').textContent = used > limit ? `Hedef süre (${it.targetSec} sn) doldu; cevaplamaya devam edebilirsin.` : `Hedef ${it.targetSec} sn · kalan ${Math.ceil((limit - used) / 1000)} sn`;
+        };
+        clearInterval(measureTimer);
+        measureTimer = setInterval(tick, 250);
+        tick();
+      }
       if ($('#re-brief')) $('#re-brief').onclick = async () => {
         try {
           const { brief } = await api('GET', '/api/brief?skill=' + encodeURIComponent(step.skill));
@@ -1007,21 +1094,24 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       const pick = async (b) => {
         if (answered) return;
         answered = true;
+        clearInterval(measureTimer);
+        const ms = Math.round(performance.now() - t0);
         $$('.opt', box).forEach((x) => (x.disabled = true));
         b.classList.add('picked');
         let r;
-        try { r = await api('POST', '/api/answer', { itemId: it.id, chosen: b.dataset.k, ms: Math.round(performance.now() - t0), hinted }); }
+        try { r = await api('POST', '/api/answer', { itemId: it.id, chosen: b.dataset.k, ms, hinted }); }
         catch (err) { if (!alive(seq)) return; $('#fb').innerHTML = `<p class="err">${esc(err.message)}</p>`; $$('.opt', box).forEach((x) => (x.disabled = false)); b.classList.remove('picked'); answered = false; return; }
         if (!alive(seq)) return;
         r.chosen = b.dataset.k;
-        state.results.push({ it, r });
+        state.results.push({ it, r, inTime: ms <= it.targetSec * 1000 });
         const last = state.i + 1 >= items.length;
         const nextBtn = `<div class="actions"><button class="btn" id="nx">${last ? 'Testi bitir' : 'Sonraki soru'}</button></div>`;
         if (explainAtEnd) $('#fb').innerHTML = nextBtn;
         else {
           paintOptions(box, r, b.dataset.k);
-          $('#fb').innerHTML = feedbackHtml(r) + nextBtn;
+          $('#fb').innerHTML = feedbackHtml(r) + evidenceHtml(it, r) + nextBtn;
           wireFeedback($('#fb'), it.id);
+          wireEvidence($('#fb'), r);
           $('.strip', box).outerHTML = stripHtml();
         }
         const nx = () => { state.i++; state.i < items.length ? renderQuestion() : renderSummary(); };
@@ -1044,15 +1134,15 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       box.innerHTML = `
         <div class="sheet result-hero">
           <div><span class="label">Test bitti · ${esc(step.skillLabel)}</span><div class="big" style="margin-top:8px">${ok}<span class="faint" style="font-size:.5em">/${state.results.length}</span></div></div>
-          <p class="muted" style="flex:1;min-width:220px;margin:0">${ok === state.results.length ? 'Hepsi doğru. Sıradaki konuyu bu sonuca bakarak seçeceğiz.' : 'Yanlışların gerekçeleriyle hata defterine düştü. Sıradaki konuyu bu cevaplara bakarak seçeceğiz.'}</p>
+          <p class="muted" style="flex:1;min-width:220px;margin:0">${ok === state.results.length ? 'Hepsi doğru. Sıradaki konuyu bu sonuca bakarak seçeceğiz.' : 'Yanlışların gerekçeleriyle hata defterine düştü; yarın tekrar sırana girer.'}${opts.timed ? ` ${state.results.filter((x) => x.inTime).length}/${state.results.length} soruyu hedef sürede cevapladın.` : ''}</p>
         </div>
-        <div class="actions" style="margin-bottom:22px"><button class="btn" id="s-next">Sonraki teste geç</button><button class="btn ghost" id="s-dash">Bugün ekranına dön</button></div>
-        ${explainAtEnd ? state.results.map((x, i) => `<div class="sheet field" style="margin-bottom:14px" data-i="${i}"><span class="label">Soru ${i + 1}</span>${passageHtml(x.it)}<p class="stem">${gaps(esc(x.it.stem))}</p><div class="opts">${optsHtml(x.r.options, 'div')}</div>${feedbackHtml(x.r)}</div>`).join('') : ''}`;
-      if (explainAtEnd) state.results.forEach((x, i) => { const c = $(`[data-i="${i}"]`, box); paintOptions(c, x.r, x.r.chosen); wireFeedback(c, x.it.id); wireSentences(c, x.it); });
-      $('#s-next').onclick = startStudy;
+        <div class="actions" style="margin-bottom:22px"><button class="btn" id="s-next">${opts.trap ? 'Bu tuzakla devam et' : opts.timed ? 'Bir süreli test daha' : 'Sonraki teste geç'}</button><button class="btn ghost" id="s-dash">Bugün ekranına dön</button></div>
+        ${explainAtEnd ? state.results.map((x, i) => `<div class="sheet field" style="margin-bottom:14px" data-i="${i}"><span class="label">Soru ${i + 1}</span>${passageHtml(x.it)}<p class="stem">${gaps(esc(x.it.stem))}</p><div class="opts">${optsHtml(x.r.options, 'div')}</div>${feedbackHtml(x.r)}${evidenceHtml(x.it, x.r)}</div>`).join('') : ''}`;
+      if (explainAtEnd) state.results.forEach((x, i) => { const c = $(`[data-i="${i}"]`, box); paintOptions(c, x.r, x.r.chosen); wireFeedback(c, x.it.id); wireSentences(c, x.it); wireEvidence(c, x.r); });
+      $('#s-next').onclick = () => startStudy(opts);
       $('#s-dash').onclick = renderDash;
       $('#s-next').focus({ preventScroll: true });
-      keyHandler = (e) => { if (e.key === 'Enter' && document.activeElement === document.body) { e.preventDefault(); startStudy(); } };
+      keyHandler = (e) => { if (e.key === 'Enter' && document.activeElement === document.body) { e.preventDefault(); startStudy(opts); } };
     };
 
     renderQuestion();
@@ -1225,19 +1315,31 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     const open = d.items.filter((it) => !it.fixed);
     box.innerHTML = `<p class="label">Hata defteri · pratik testler</p><h1>${d.items.length ? `İlk denemede yanlış yaptığın ${d.total} soru` : 'Hata defterin boş'}</h1>
       ${d.total > d.items.length ? `<p class="note" style="margin:0 0 10px">${d.items.length} tanesi gösteriliyor, düzeltmediklerin önce. Mini deneme yanlışları deneme sonucunda.</p>` : ''}
-      <p class="lede">${d.items.length ? `Konulara göre gruplu. ${d.fixed ? `${d.fixed} tanesini sonradan doğru çözdün. ` : ''}En verimli tekrar: cevabı görmeden yeniden çöz, sonra gerekçeye bak.` : 'Bir testte yanlış yaptığın her soru gerekçesiyle buraya düşer. Sınavdan önceki hafta tekrar etmek için en verimli liste budur.'}</p>
-      ${open.length ? `<div class="actions" style="margin:0 0 20px"><button class="btn" id="mk-retry">Cevapları gizle, ${open.length} soruyu tekrar çöz</button></div>` : d.items.length ? '<p class="note" style="margin:0 0 20px">Listedeki tüm soruları sonradan doğru çözdün.</p>' : ''}
+      <p class="lede">${d.items.length ? `Konulara göre gruplu. ${d.fixed ? `${d.fixed} tanesini sonradan doğru çözdün. ` : ''}Yanlış yaptığın soru 1, 3 ve 7 gün sonra şıkların yeri değişmiş olarak yeniden gelir; üçünde de doğru yaparsan tekrar sırasından çıkar.` : 'Bir testte yanlış yaptığın her soru gerekçesiyle buraya düşer. Sınavdan önceki hafta tekrar etmek için en verimli liste budur.'}</p>
+      ${d.due || open.length ? `<div class="actions" style="margin:0 0 20px">${d.due ? `<button class="btn" id="mk-due">Tekrar vakti gelen ${d.due} soruyu çöz</button>` : ''}${open.length ? `<button class="btn ${d.due ? 'ghost' : ''}" id="mk-retry">Cevapları gizle, ${open.length} soruyu şimdi çöz</button>` : ''}</div>` : d.items.length ? '<p class="note" style="margin:0 0 20px">Listedeki tüm soruları sonradan doğru çözdün.</p>' : ''}
       ${d.items.length ? Object.entries(groups).map(([label, list]) => `<div class="sheet field" style="margin-bottom:14px"><span class="label">${esc(label)} · ${list.length}</span>
-        ${list.map((it) => `<details class="rev" data-id="${esc(it.id)}"><summary><span class="bub bad" style="--s:24px">${esc(it.chosen)}</span><span class="s">${esc(summaryText(it))}</span>${it.fixed ? '<span class="tag fixed">Düzeldi</span>' : ''}</summary>
+        ${list.map((it) => `<details class="rev" data-id="${esc(it.id)}"><summary><span class="bub bad" style="--s:24px">${esc(it.chosen)}</span><span class="s">${esc(summaryText(it))}</span>${it.review?.done ? '<span class="tag fixed">Kalıcı</span>' : it.fixed ? '<span class="tag fixed">Düzeldi</span>' : ''}${it.review && !it.review.done ? `<span class="tag">${it.review.isDue ? 'Tekrar vakti' : 'Tekrar ' + fmtDate(it.review.due)}</span>` : ''}</summary>
           <div class="body">${it.trapLabel ? `<span class="trap">${esc(it.trapLabel)}</span>` : ''}${passageHtml(it)}<p class="stem">${gaps(esc(it.stem))}</p><div class="opts">${optsHtml(it.options, 'div')}</div>${feedbackHtml({ ...it, correct: false })}</div></details>`).join('')}
       </div>`).join('') : '<div class="actions"><button class="btn" id="mk-start">Teste başla</button></div>'}`;
     for (const it of d.items) { const c = $(`[data-id="${CSS.escape(it.id)}"]`, box); paintOptions(c, it, it.chosen); wireFeedback(c, it.id); wireSentences(c, it); }
     if ($('#mk-start')) $('#mk-start').onclick = () => startStudy();
     if ($('#mk-retry')) $('#mk-retry').onclick = () => runRetry(open);
+    if ($('#mk-due')) $('#mk-due').onclick = startReview;
+  }
+
+  async function startReview() {
+    show('mistakes');
+    const box = $('#v-mistakes');
+    box.innerHTML = '<div class="skeleton" style="height:200px"></div>';
+    let d;
+    try { d = await api('GET', '/api/mistakes?due=1'); } catch (err) { return errBox(box, err.message, startReview); }
+    d.items.length ? runRetry(d.items) : renderMistakes();
   }
 
   // Tekrar çözme: cevap gizli, seçince açılır. Sunucuda tekrar deneme olarak kaydedilir
-  // (puana ve teşhise girmez); doğruysa soru "düzeldi" sayılır.
+  // (puana ve teşhise girmez); doğruysa soru "düzeldi" sayılır ve bir sonraki tekrar aralığına geçer.
+  // Şıklar karışık gelir ki yer ezberi işe yaramasın; cevaptan sonra özgün sıraya döner (açıklamadaki harfler o sıraya göre).
+  // Anlam bütünlüğü sorusunda şıklar cümle numarası olduğu için karışmaz.
   function runRetry(list) {
     const box = $('#v-mistakes');
     let i = 0, ok = 0;
@@ -1246,7 +1348,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       if (i >= list.length) {
         keyHandler = null;
         box.innerHTML = `<div class="sheet result-hero"><div><span class="label">Tekrar bitti</span><div class="big" style="margin-top:8px">${ok}<span class="faint" style="font-size:.5em">/${list.length}</span></div></div>
-          <p class="muted" style="flex:1;min-width:220px;margin:0">${ok === list.length ? 'Hepsini bu sefer doğru çözdün; defterde "düzeldi" olarak işaretlendi.' : 'Doğru çözdüklerin "düzeldi" olarak işaretlendi. Kalanlar bir sonraki tekrarda yine gelir.'}</p></div>
+          <p class="muted" style="flex:1;min-width:220px;margin:0">${ok === list.length ? 'Hepsini bu sefer doğru çözdün; her biri bir sonraki tekrar aralığına geçti.' : 'Doğru çözdüklerin bir sonraki tekrar aralığına geçti; yanlışlar yarın yeniden gelir.'}</p></div>
           <div class="actions"><button class="btn" id="rt-back">Hata defterine dön</button><button class="btn ghost" id="rt-dash">Bugün ekranına dön</button></div>`;
         $('#rt-back').onclick = renderMistakes; $('#rt-dash').onclick = renderDash;
         $('#rt-back').focus({ preventScroll: true });
@@ -1254,25 +1356,32 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       }
       const it = list[i];
       let answered = false;
+      const fixedOrder = it.skill === 'irrelevant.sentence';
+      const order = fixedOrder ? it.options : shuffle([...it.options]);
+      const shown = order.map((o, k) => ({ key: KEYS[k], text: o.text, orig: o.key }));
       box.innerHTML = `<p class="label">Hata defteri · tekrar ${i + 1} / ${list.length}</p>
-        <div class="qhead"><span class="qno">${i + 1}</span><div class="qmeta"><span class="label">${esc(it.skillLabel)}</span><span class="small faint">Daha önce ${esc(it.chosen)} demiştin · <kbd>A</kbd>–<kbd>E</kbd> ile seç</span></div></div>
+        <div class="qhead"><span class="qno">${i + 1}</span><div class="qmeta"><span class="label">${esc(it.skillLabel)}</span><span class="small faint">Daha önce yanlış yapmıştın${fixedOrder ? '' : ' · şıkların yeri değişti'} · <kbd>A</kbd>–<kbd>E</kbd> ile seç</span></div></div>
         ${passageHtml(it)}<p class="stem">${gaps(esc(it.stem))}</p>
-        <div class="opts" role="group" aria-label="Şıklar">${optsHtml(it.options)}</div><div id="rt-fb" aria-live="polite"></div>`;
+        <div class="opts" role="group" aria-label="Şıklar">${optsHtml(shown)}</div><div id="rt-fb" aria-live="polite"></div>`;
       wireSentences(box, it);
       const pick = async (b) => {
         if (answered) return;
         answered = true;
         $$('.opt', box).forEach((x) => (x.disabled = true));
+        const chosen = shown.find((o) => o.key === b.dataset.k).orig;
         let r;
-        try { r = await api('POST', '/api/answer', { itemId: it.id, chosen: b.dataset.k }); }
+        try { r = await api('POST', '/api/answer', { itemId: it.id, chosen }); }
         catch (err) { if (!alive(seq)) return; $('#rt-fb').innerHTML = `<p class="err">${esc(err.message)}</p>`; $$('.opt', box).forEach((x) => (x.disabled = false)); answered = false; return; }
         if (!alive(seq)) return;
-        r.chosen = b.dataset.k;
+        r.chosen = chosen;
         if (r.correct) ok++;
-        paintOptions(box, r, b.dataset.k);
+        $('.opts', box).innerHTML = optsHtml(it.options, 'div');
+        paintOptions(box, r, chosen);
         const last = i + 1 >= list.length;
-        $('#rt-fb').innerHTML = feedbackHtml(r, { flag: false }) + `<div class="actions"><button class="btn" id="rt-nx">${last ? 'Tekrarı bitir' : 'Sonraki soru'}</button></div>`;
+        $('#rt-fb').innerHTML = (fixedOrder ? '' : '<p class="note" style="margin:10px 0 0">Şıklar özgün sırasına döndü.</p>') + feedbackHtml(r, { flag: false }) + evidenceHtml(it, r)
+          + `<div class="actions"><button class="btn" id="rt-nx">${last ? 'Tekrarı bitir' : 'Sonraki soru'}</button></div>`;
         wireFeedback($('#rt-fb'), it.id);
+        wireEvidence($('#rt-fb'), r);
         const nx = () => { i++; q(); };
         $('#rt-nx').onclick = nx;
         $('#rt-nx').focus({ preventScroll: true });
@@ -1283,6 +1392,87 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       window.scrollTo(0, 0);
     };
     q();
+  }
+
+  // ---------- bağlaç atölyesi: başvuru listesi + 10 saniyelik hızlı tur ----------
+  const FORM_TR = { conj: 'bağlaç', prep: 'edat', adv: 'zarf' };
+  const CN_ROUND = 10, CN_LIMIT_MS = 10000;
+  let connectors = null;
+
+  async function renderConnect() {
+    show('connect');
+    const box = $('#v-connect');
+    box.innerHTML = '<div class="skeleton" style="height:240px"></div>';
+    try { connectors ??= await api('GET', '/api/connectors'); } catch (err) { return errBox(box, err.message, renderConnect); }
+    const c = connectors;
+    box.innerHTML = `<p class="label">Bağlaç atölyesi</p><h1>Bağlaçlar ve geçiş ifadeleri</h1>
+      <p class="lede">Bağlaç sorusunda iki şeye bakılır: iki parça arasındaki ilişki (zıtlık mı, sebep mi?) ve arkadan ne geldiği (tam cümle mi, isim mi?).</p>
+      <div class="actions" style="margin:0 0 22px"><button class="btn" id="cn-go">${CN_ROUND} soruluk hızlı tur</button><span class="small faint">Her soru için 10 saniye</span></div>
+      <div class="sheet field" style="margin:0 0 12px"><span class="label">Yapıya göre</span><ul class="list">${Object.entries(c.forms).map(([k, v]) => `<li><b>${FORM_TR[k]}</b> · <span class="muted">${esc(v)}</span></li>`).join('')}</ul></div>
+      ${c.groups.map((g) => `<details class="sheet field cn-group"><summary><span class="label">${esc(g.label)}</span><span class="small muted">${esc(g.note)}</span></summary>
+        <ul class="list">${c.items.filter((x) => x.g === g.id).map((x) => `<li><div class="top"><span><b>${esc(x.w)}</b> <span class="small faint">${FORM_TR[x.f]}</span></span><span class="small muted">${esc(x.tr)}</span></div><p class="small" style="margin:4px 0 0;font-family:var(--read)">${esc(x.ex)}</p></li>`).join('')}</ul></details>`).join('')}
+      <div class="actions"><button class="btn ghost" id="cn-dash">Bugün ekranına dön</button></div>`;
+    $('#cn-go').onclick = () => runConnect(c);
+    $('#cn-dash').onclick = renderDash;
+  }
+
+  // Şıkların yeri her turda karışır; süre dolarsa soru boş sayılır.
+  function runConnect(c) {
+    const box = $('#v-connect');
+    const qs = shuffle([...c.quiz]).slice(0, CN_ROUND).map((q) => {
+      const order = shuffle([0, 1, 2, 3]);
+      return { ...q, opts: order.map((k) => q.o[k]), right: order.indexOf(q.a) };
+    });
+    const res = [];
+    let i = 0;
+    const ask = () => {
+      if (i >= qs.length) return done();
+      const q = qs[i];
+      const t0 = performance.now();
+      let answered = false;
+      box.innerHTML = `<p class="label">Hızlı tur · ${i + 1} / ${qs.length}</p>
+        <div class="timer" aria-hidden="true"><i id="cn-bar"></i></div><p class="small faint timer-t" id="cn-t">10 sn</p>
+        <p class="stem">${gaps(esc(q.s))}</p>
+        <div class="opts" role="group" aria-label="Şıklar">${q.opts.map((o, k) => `<button class="opt" data-k="${k}" aria-label="${KEYS[k]} şıkkı: ${esc(o)}"><span class="bub">${KEYS[k]}</span><span class="txt">${esc(o)}</span></button>`).join('')}</div>
+        <div id="cn-fb" aria-live="polite"></div>`;
+      const finish = (k) => {
+        if (answered) return;
+        answered = true;
+        clearInterval(measureTimer);
+        const ok = k === q.right;
+        res.push({ q, ok, k });
+        $$('.opt', box).forEach((b, j) => { b.disabled = true; if (j === q.right) b.classList.add('right'); else if (j === k) b.classList.add('wrong'); });
+        $('#cn-fb').innerHTML = `<div class="mark ${ok ? '' : 'no'}"><p class="verdict">${ok ? '✓ Doğru' : k == null ? 'Süre doldu' : '✗ Yanlış'}</p><p style="margin:0">${esc(q.why)}</p></div>
+          <div class="actions"><button class="btn" id="cn-nx">${i + 1 < qs.length ? 'Sonraki' : 'Turu bitir'}</button></div>`;
+        const nx = () => { i++; ask(); };
+        $('#cn-nx').onclick = nx;
+        $('#cn-nx').focus({ preventScroll: true });
+        keyHandler = (e) => { if (e.key === 'Enter') { e.preventDefault(); nx(); } };
+      };
+      $$('.opt', box).forEach((b) => (b.onclick = () => finish(Number(b.dataset.k))));
+      keyHandler = (e) => { const k = KEYS.indexOf(e.key.toUpperCase()); if (k >= 0 && k < 4) { e.preventDefault(); finish(k); } };
+      clearInterval(measureTimer);
+      measureTimer = setInterval(() => {
+        const left = CN_LIMIT_MS - (performance.now() - t0), bar = $('#cn-bar');
+        if (!bar) return clearInterval(measureTimer);
+        bar.style.width = Math.max(0, (left / CN_LIMIT_MS) * 100) + '%';
+        $('#cn-t').textContent = `${Math.max(0, Math.ceil(left / 1000))} sn`;
+        if (left <= 0) finish(null);
+      }, 100);
+    };
+    const done = () => {
+      keyHandler = null;
+      const ok = res.filter((x) => x.ok).length;
+      const missed = res.filter((x) => !x.ok);
+      box.innerHTML = `<div class="sheet result-hero"><div><span class="label">Tur bitti</span><div class="big" style="margin-top:8px">${ok}<span class="faint" style="font-size:.5em">/${res.length}</span></div></div>
+        <p class="muted" style="flex:1;min-width:220px;margin:0">${missed.length ? 'Kaçırdıkların aşağıda, gerekçesiyle. Çoğu hata ya ilişkiyi (zıtlık/sebep) ya da yapıyı (cümle/isim) karıştırmaktan gelir.' : 'Hepsi doğru ve süresinde.'}</p></div>
+        ${missed.length ? `<div class="sheet field" style="margin:16px 0"><ul class="list">${missed.map((x) => `<li><p class="stem" style="margin:0 0 4px">${esc(x.q.s.replace('----', x.q.o[x.q.a]))}</p><p class="small muted" style="margin:0">${x.k == null ? 'Süre doldu. ' : `Seçtiğin: ${esc(x.q.opts[x.k])}. `}${esc(x.q.why)}</p></li>`).join('')}</ul></div>` : ''}
+        <div class="actions"><button class="btn" id="cn-again">Yeni tur</button><button class="btn ghost" id="cn-back">Atölyeye dön</button></div>`;
+      $('#cn-again').onclick = () => runConnect(c);
+      $('#cn-back').onclick = renderConnect;
+      $('#cn-again').focus({ preventScroll: true });
+    };
+    ask();
   }
 
   // ---------- kelime turu: dizin kartı ----------
