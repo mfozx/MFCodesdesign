@@ -571,7 +571,9 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       el.classList.remove('picked');
       if (o.key === r.answer) el.classList.add('right');
       else if (o.key === chosen) el.classList.add('wrong');
-      if (o.why) $('.txt', el).insertAdjacentHTML('beforeend', `<span class="why">${o.trapLabel ? `<b>${esc(o.trapLabel)}.</b> ` : ''}${esc(o.why)}</span>`);
+      // Gerekçe yalnız tuzak adını tekrarlıyorsa etiket tek başına gösterilir.
+      const why = o.why && o.why.replace(/\.$/, '') !== o.trapLabel ? o.why : '';
+      if (o.why) $('.txt', el).insertAdjacentHTML('beforeend', `<span class="why">${o.trapLabel ? `<b>${esc(o.trapLabel)}.</b> ` : ''}${esc(why)}</span>`);
     });
   }
 
