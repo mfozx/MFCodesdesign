@@ -284,6 +284,10 @@ tr:last-child td{border-bottom:0}
 .evid-s.wrong{border-color:var(--bad);background:var(--bad-soft)}
 .cn-group{margin:0 0 12px}
 .cn-group summary{cursor:pointer;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.pick-sec{margin:0 0 10px}
+.pick-sec summary{cursor:pointer;display:flex;justify-content:space-between;gap:10px;padding:6px 0}
+.pick-list{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}
+.pick-list .btn{min-height:36px;padding:6px 12px;font-size:14px}
 .plan li p{margin:4px 0 0}
 .skeleton{height:110px;border-radius:var(--r-in);background:linear-gradient(90deg,var(--paper),var(--form-soft),var(--paper));background-size:200% 100%;animation:sk 1.3s ease-in-out infinite}
 @keyframes sk{to{background-position:-200% 0}}
@@ -453,6 +457,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     <div class="sheet omr marks" id="d-goal"><div class="skeleton"></div></div>
     <div class="cols">
       <div class="sheet field" id="d-plan"></div>
+      <div class="sheet field" id="d-pick"></div>
       <div class="sheet field" id="d-weak"></div>
       <div class="sheet field" id="d-traps"></div>
       <div class="sheet field" id="d-measure"></div>
@@ -919,6 +924,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       <p class="muted" style="margin:0">Cümle tamamlama, cloze ve paragraf sorularının çoğu bağlaçla çözülür. Anlam grubunu ve yapısını (bağlaç mı, edat mı) 10 saniyelik turlarla çalış.</p>
       <div class="actions"><button class="btn ghost" id="go-connect">Atölyeye gir</button></div>`;
     $('#go-connect').onclick = renderConnect;
+    renderPick();
 
     $('#d-vocab').innerHTML = `<span class="label">Kelime defteri</span>
       <p style="margin:0"><b class="num" style="font:700 30px/1 var(--display)">${me.dueWords}</b> <span class="muted">kelime bugün tekrar bekliyor · defterde ${me.deckSize}</span></p>
@@ -927,6 +933,24 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     $('#go-vocab').onclick = startVocab;
     $('#add-core').onclick = addCore;
 
+  }
+
+  // Konu seç: önerilen sıranın dışında, istediği soru tipinde test.
+  async function renderPick() {
+    const box = $('#d-pick');
+    box.innerHTML = `<span class="label">Konu seç</span><div class="skeleton" style="height:120px;margin-top:10px"></div>`;
+    let d;
+    try { d = await api('GET', '/api/skills'); } catch (err) { return errBox(box, err.message, renderPick); }
+    if (!box.isConnected) return;
+    box.innerHTML = `<span class="label">Konu seç</span>
+      <p class="muted" style="margin:0 0 10px">Önerilen sıra yerine istediğin soru tipini çalış. Parantezdeki sayı çözmediğin soru sayısı.</p>
+      ${d.sections.map((sec) => {
+        const left = sec.skills.reduce((n, k) => n + k.left, 0);
+        return `<details class="pick-sec"><summary><b>${esc(sec.label)}</b><span class="small muted">${left} soru</span></summary>
+          <div class="pick-list">${sec.skills.map((k) => `<button class="btn ghost" data-skill="${esc(k.skill)}">${esc(k.label)} (${k.left})</button>`).join('')}</div></details>`;
+      }).join('')}
+      <p class="note">Soru kalmayan konuya girersen yenisi üretilmek üzere sıraya alınır.</p>`;
+    $$('[data-skill]', box).forEach((b) => (b.onclick = () => startStudy({ skill: b.dataset.skill })));
   }
 
   function habitLine(h) {
@@ -1003,16 +1027,22 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   }
 
   // ---------- öğretmen döngüsü: konu anlatımı + test ----------
-  // opts.trap: o çeldiriciyi içeren sorular; opts.timed: soru başına hedef süre gösterilir
+  // opts.trap: o çeldiriciyi içeren sorular; opts.skill: kullanıcının seçtiği konu; opts.timed: soru başına hedef süre gösterilir
   async function startStudy(opts = {}) {
     show('study');
     const box = $('#v-study');
     box.innerHTML = '<div class="skeleton" style="height:48px;margin-bottom:16px"></div><div class="skeleton" style="height:300px"></div>';
     let data;
     const seq = viewSeq;
-    try { data = await api('GET', '/api/next' + (opts.trap ? '?trap=' + encodeURIComponent(opts.trap) : '')); }
+    const qs = opts.trap ? '?trap=' + encodeURIComponent(opts.trap) : opts.skill ? '?skill=' + encodeURIComponent(opts.skill) : '';
+    try { data = await api('GET', '/api/next' + qs); }
     catch (err) { return alive(seq) && errBox(box, err.message, () => startStudy(opts)); }
     if (!alive(seq)) return;
+    if (data.exhausted && opts.skill) {
+      box.innerHTML = `<div class="sheet field"><span class="label">${esc(data.skillLabel)}</span><h2>Bu konuda çözmediğin soru kalmadı</h2><p class="muted">Yeni sorular üretilmek üzere sıraya alındı; birkaç saat içinde gelir. Bu arada başka bir konu seçebilir ya da hata defterinden yanlışlarını tekrar edebilirsin.</p><div class="actions"><button class="btn" id="b-dash">Bugün ekranına dön</button><button class="btn ghost" id="b-mk">Hata defteri</button></div></div>`;
+      $('#b-mk').onclick = renderMistakes; $('#b-dash').onclick = renderDash;
+      return;
+    }
     if (data.exhausted && opts.trap) {
       box.innerHTML = `<div class="sheet field"><span class="label">Tuzak çalışması</span><h2>Bu tuzağı içeren yeni soru kalmadı</h2><p class="muted">Bu çeldiriciyi taşıyan soruların hepsini çözdün. Hata defterinden yanlışlarını tekrar edebilir ya da normal teste dönebilirsin.</p><div class="actions"><button class="btn" id="b-mk">Hata defteri</button><button class="btn ghost" id="b-dash">Bugün ekranına dön</button></div></div>`;
       $('#b-mk').onclick = renderMistakes; $('#b-dash').onclick = renderDash;
@@ -1136,7 +1166,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
           <div><span class="label">Test bitti · ${esc(step.skillLabel)}</span><div class="big" style="margin-top:8px">${ok}<span class="faint" style="font-size:.5em">/${state.results.length}</span></div></div>
           <p class="muted" style="flex:1;min-width:220px;margin:0">${ok === state.results.length ? 'Hepsi doğru. Sıradaki konuyu bu sonuca bakarak seçeceğiz.' : 'Yanlışların gerekçeleriyle hata defterine düştü; yarın tekrar sırana girer.'}${opts.timed ? ` ${state.results.filter((x) => x.inTime).length}/${state.results.length} soruyu hedef sürede cevapladın.` : ''}</p>
         </div>
-        <div class="actions" style="margin-bottom:22px"><button class="btn" id="s-next">${opts.trap ? 'Bu tuzakla devam et' : opts.timed ? 'Bir süreli test daha' : 'Sonraki teste geç'}</button><button class="btn ghost" id="s-dash">Bugün ekranına dön</button></div>
+        <div class="actions" style="margin-bottom:22px"><button class="btn" id="s-next">${opts.trap ? 'Bu tuzakla devam et' : opts.skill ? 'Bu konuyla devam et' : opts.timed ? 'Bir süreli test daha' : 'Sonraki teste geç'}</button><button class="btn ghost" id="s-dash">Bugün ekranına dön</button></div>
         ${explainAtEnd ? state.results.map((x, i) => `<div class="sheet field" style="margin-bottom:14px" data-i="${i}"><span class="label">Soru ${i + 1}</span>${passageHtml(x.it)}<p class="stem">${gaps(esc(x.it.stem))}</p><div class="opts">${optsHtml(x.r.options, 'div')}</div>${feedbackHtml(x.r)}${evidenceHtml(x.it, x.r)}</div>`).join('') : ''}`;
       if (explainAtEnd) state.results.forEach((x, i) => { const c = $(`[data-i="${i}"]`, box); paintOptions(c, x.r, x.r.chosen); wireFeedback(c, x.it.id); wireSentences(c, x.it); wireEvidence(c, x.r); });
       $('#s-next').onclick = () => startStudy(opts);
