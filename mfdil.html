@@ -460,6 +460,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       <div class="sheet field" id="d-pick"></div>
       <div class="sheet field" id="d-weak"></div>
       <div class="sheet field" id="d-traps"></div>
+      <div class="sheet field" id="d-exam"></div>
       <div class="sheet field" id="d-measure"></div>
       <div class="sheet field" id="d-timing"></div>
       <div class="sheet field" id="d-vocab"></div>
@@ -810,6 +811,8 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   // ---------- bugün ----------
   const fmtDate = (iso) => new Date(iso).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
   const fmtMin = (ms) => { const s = Math.round(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+  const fmtClock = (ms) => { const s = Math.floor(ms / 1000); return `${Math.floor(s / 3600)}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+  const fmtScore = (n) => n.toLocaleString('tr-TR', { maximumFractionDigits: 2 });
 
   async function renderDash() {
     show('dash');
@@ -904,6 +907,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       : `<p class="empty">Sınavın bölümlerinden 20 soru, süre tutularak. Cevaplar en sonda gösterilir, gerçek sınav gibi.</p>
          <div class="actions"><button class="btn ghost" data-go-measure="${esc(untaken ?? 'A')}">Mini denemeye gir</button></div>`);
     $$('[data-go-measure]').forEach((b) => (b.onclick = () => renderMeasure(b.dataset.goMeasure)));
+    fillExamCard();
 
     $('#d-timing').innerHTML = `<span class="label">Süre</span>` + (rep.timing.length ? `<table><thead><tr><th>Bölüm</th><th class="r">Ortanca</th><th class="r">Hedef</th><th class="r">Aşan</th></tr></thead><tbody>
       ${rep.timing.map((t) => `<tr><td>${esc(t.label)}${t.slow ? '<span class="tag">yavaş</span>' : ''}</td><td class="r">${t.medianSec} sn</td><td class="r">${t.targetSec} sn</td><td class="r">${t.over}/${t.n}</td></tr>`).join('')}
@@ -1217,12 +1221,13 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     const limitMs = d.minutes * 60000;
     const save = () => store.set(mkey(d.form), JSON.stringify(st));
     let reviewing = false;
+    let sending = false;
     const seq = viewSeq;
     save();
 
     box.innerHTML = `
       <div class="exambar"><div class="wrap narrow">
-        <span class="clock" id="m-clock">0:00</span><span class="small faint">/ ${d.minutes}:00</span>
+        <span class="clock" id="m-clock">0:00</span><span class="small faint">${d.exam ? 'kaldı' : `/ ${d.minutes}:00`}</span>
         <span style="flex:1"></span>
         <button class="btn ghost" id="m-grid" aria-expanded="false">Sorular <span class="num" id="m-count"></span></button>
         <button class="btn" id="m-review">Gözden geçir</button>
@@ -1233,6 +1238,13 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       const c = $('#m-clock');
       if (!c || !alive(seq)) return clearInterval(measureTimer);
       const el = Date.now() - st.start;
+      if (d.exam) {
+        const left = Math.max(0, limitMs - el);
+        c.textContent = fmtClock(left);
+        c.classList.toggle('over', left < 10 * 60000);
+        if (!left) { clearInterval(measureTimer); submit(null); }
+        return;
+      }
       c.textContent = fmtMin(el);
       c.classList.toggle('over', el > limitMs);
     };
@@ -1293,35 +1305,113 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         <div class="actions"><button class="btn" id="m-submit">Testi bitir ve puanla</button><button class="btn ghost" id="m-cont">Sorulara dön</button></div>`;
       $$('#m-q .navgrid button').forEach((b) => (b.onclick = () => { st.i = Number(b.dataset.n); save(); renderQ(); }));
       $('#m-cont').onclick = () => renderQ();
-      $('#m-submit').onclick = async (e) => {
+      $('#m-submit').onclick = (e) => {
         const b = e.currentTarget;
         if (blank && b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = `${blank} boş soruyla bitir`; return; }
-        b.disabled = true;
-        try {
-          const r = await api('POST', '/api/measure', { form: d.form, ms: Date.now() - st.start, answers: Object.entries(st.answers).map(([itemId, chosen]) => ({ itemId, chosen })) });
-          clearInterval(measureTimer);
-          store.set(mkey(d.form), null);
-          if (alive(seq)) renderMeasureResult(r.result, d.form);
-        } catch (err) { $('#m-err').textContent = err.message; b.disabled = false; }
+        submit(b);
       };
       paintNav();
     };
 
+    async function submit(b) {
+      if (sending) return;
+      sending = true;
+      if (b) b.disabled = true;
+      const answers = Object.entries(st.answers).map(([itemId, chosen]) => ({ itemId, chosen }));
+      try {
+        const r = d.exam
+          ? await api('POST', '/api/exam/submit', { id: d.id, answers })
+          : await api('POST', '/api/measure', { form: d.form, ms: Date.now() - st.start, answers });
+        clearInterval(measureTimer);
+        store.set(mkey(d.form), null);
+        if (alive(seq)) d.exam ? renderExamResult(r.result) : renderMeasureResult(r.result, d.form);
+      } catch (err) {
+        sending = false;
+        if (b) b.disabled = false;
+        if (!$('#m-err')) renderReview();
+        $('#m-err').textContent = err.message;
+      }
+    }
+
     renderQ();
   }
 
-  function renderMeasureResult(res, form) {
+  // ---------- tam deneme ----------
+  // 80 soru, 180 dakika, gerçek sınav sırası. Süre sunucuda başlar; süre dolunca cevaplar kendiliğinden gönderilir.
+  const examForm = (x) => ({ exam: true, id: x.id, form: `exam${x.id}`, minutes: x.minutes, items: x.items, startedAt: x.startedAt });
+  const examState = (d) => {
+    const ids = new Set(d.items.map((it) => it.id));
+    try {
+      const x = JSON.parse(store.get(mkey(d.form)));
+      if (x && Object.keys(x.answers ?? {}).every((id) => ids.has(id))) return { ...x, start: d.startedAt };
+    } catch {}
+    return { answers: {}, flags: [], start: d.startedAt, i: 0 };
+  };
+
+  async function fillExamCard() {
+    const card = $('#d-exam');
+    let d;
+    try { d = await api('GET', '/api/exam'); } catch { card.innerHTML = '<span class="label">Tam deneme</span><p class="empty">Deneme bilgisi şu an alınamadı.</p>'; return; }
+    const last = d.history.slice(0, 5);
+    card.innerHTML = `<span class="label">Tam deneme</span>` +
+      (d.active ? `<p>Süren bir denemen var: ${Math.ceil(Math.max(0, d.active.deadline - Date.now()) / 60000)} dakika kaldı.</p>` :
+        last.length ? '' : '<p class="empty">80 soru, 180 dakika, gerçek sınavın bölüm sırası ve sayılarıyla. Sonunda YDS puanını (doğru × 1,25) ve bölüm kırılımını görürsün.</p>') +
+      (last.length ? `<ul class="list">${last.map((x) => `<li><div class="top"><span><b class="num">${fmtScore(x.score)}</b> puan · ${x.correct}/${x.total} doğru</span><span class="small muted">${fmtDate(x.finishedAt)} · <button class="link small" data-exam="${x.id}">Çözümler</button></span></div></li>`).join('')}</ul>` : '') +
+      `<div class="actions"><button class="btn ghost" id="d-exam-go">${d.active ? 'Denemeye dön' : last.length ? 'Yeni deneme' : 'Tam denemeye gir'}</button></div>`;
+    $('#d-exam-go').onclick = renderExam;
+    $$('[data-exam]', card).forEach((b) => (b.onclick = () => openExamResult(b.dataset.exam)));
+  }
+
+  async function renderExam() {
+    show('measure');
+    const box = $('#v-measure');
+    box.innerHTML = '<div class="wrap narrow"><div class="skeleton" style="height:260px"></div></div>';
+    let d;
+    try { d = await api('GET', '/api/exam'); }
+    catch (err) { box.innerHTML = '<div class="wrap narrow"></div>'; return errBox($('.wrap', box), err.message, renderExam); }
+    if (d.active) { const f = examForm(d.active); return runMeasure(f, examState(f)); }
+    box.innerHTML = `<div class="wrap narrow">
+      <p class="label">Tam deneme</p>
+      <h1>80 soru, 180 dakika</h1>
+      <p class="lede">Gerçek sınavın sırası ve bölüm sayıları: kelime 6, dilbilgisi 10, cloze 10, cümle tamamlama 10, çeviri 6, okuma 20, diyalog 5, yakın anlam 4, paragraf tamamlama 4, anlam bütünlüğü 5. Sorular daha önce görmediklerin arasından seçilir.</p>
+      <div class="sheet field">
+        <span class="label">Kurallar</span>
+        <ul style="margin:0;padding-left:20px;color:var(--ink-2)"><li>Süre başlattığın anda sunucuda işlemeye başlar; sayfayı kapatsan da durmaz.</li><li>Süre dolunca cevapların kendiliğinden gönderilir. Boş soru puan götürmez, yanlış cevap doğruyu götürmez.</li><li>Puan gerçek hesapla verilir: doğru sayısı × 1,25. Sonuç konu planını değiştirmez, ayrı raporlanır.</li><li>Günde en fazla 3 deneme başlatılabilir.</li></ul>
+        <div class="err" id="e-err" role="alert"></div>
+        <div class="actions"><button class="btn" id="e-start">Denemeyi başlat</button><button class="btn ghost" id="e-back">Şimdi değil</button></div>
+      </div></div>`;
+    $('#e-back').onclick = renderDash;
+    $('#e-start').onclick = async (e) => {
+      e.currentTarget.disabled = true;
+      try { const f = examForm(await api('POST', '/api/exam/start')); runMeasure(f, examState(f)); }
+      catch (err) { $('#e-err').textContent = err.message; e.currentTarget.disabled = false; }
+    };
+  }
+
+  async function openExamResult(id) {
+    show('measure');
+    const box = $('#v-measure');
+    box.innerHTML = '<div class="wrap narrow"><div class="skeleton" style="height:260px"></div></div>';
+    try { renderExamResult((await api('GET', `/api/exam?id=${encodeURIComponent(id)}`)).result); }
+    catch (err) { box.innerHTML = '<div class="wrap narrow"></div>'; errBox($('.wrap', box), err.message, () => openExamResult(id)); }
+  }
+
+  function renderExamResult(res) {
+    renderMeasureResult({ ...res, takenAt: res.finishedAt }, null, res);
+  }
+
+  function renderMeasureResult(res, form, exam = null) {
     show('measure');
     const box = $('#v-measure');
     const secs = Object.values(res.bySection);
     box.innerHTML = `<div class="wrap narrow">
-      <p class="label">Mini deneme · Form ${esc(form)} · ${fmtDate(res.takenAt)}</p>
+      <p class="label">${exam ? 'Tam deneme' : `Mini deneme · Form ${esc(form)}`} · ${fmtDate(res.takenAt)}</p>
       <div class="sheet result-hero" style="margin:10px 0 16px">
-        <div><div class="big">${res.correct}<span class="faint" style="font-size:.5em">/${res.total}</span></div><span class="small muted">doğru${res.blank ? ` · ${res.blank} boş` : ''}${res.ms ? ` · ${fmtMin(res.ms)} dk` : ''}</span></div>
+        <div>${exam ? `<div class="big">${fmtScore(exam.score)}</div><span class="small muted">YDS puanı · ${res.correct}/${res.total} doğru</span><br>` : `<div class="big">${res.correct}<span class="faint" style="font-size:.5em">/${res.total}</span></div>`}<span class="small muted">${exam ? '' : 'doğru'}${res.blank ? `${exam ? '' : ' · '}${res.blank} boş` : ''}${res.ms ? ` · ${fmtMin(res.ms)} dk` : ''}</span></div>
         <table style="flex:1;min-width:240px"><thead><tr><th>Bölüm</th><th class="r">Doğru</th></tr></thead><tbody>
           ${secs.map((s) => `<tr><td>${esc(s.label)}</td><td class="r">${s.correct} / ${s.n}</td></tr>`).join('')}</tbody></table>
       </div>
-      <p class="note" style="margin:0 0 22px">Bölüm başına 4-8 soru az bir örnek: bu sonuç yön gösterir, puan tahmini değildir. Konu planın pratik testlerinden gelir.</p>
+      <p class="note" style="margin:0 0 22px">${exam ? 'Puan, sınavla aynı hesapla verilir (doğru × 1,25). Sorular bu sitenin özgün sorularıdır; gerçek sınavın zorluğu dönemden döneme değişir, sonucu yön gösterici olarak oku.' : 'Bölüm başına 4-8 soru az bir örnek: bu sonuç yön gösterir, puan tahmini değildir. Konu planın pratik testlerinden gelir.'}</p>
       <div class="sheet field"><span class="label">Çözümler</span>
         ${res.review.map((it, i) => `<details class="rev" data-i="${i}">
           <summary><span class="bub ${it.correct ? 'good' : it.chosen ? 'bad' : ''}" style="--s:24px">${it.chosen ?? '–'}</span><span class="s">${i + 1}. ${esc(summaryText(it))}</span></summary>
