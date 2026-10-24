@@ -269,7 +269,6 @@ tr:last-child td{border-bottom:0}
 .meter{position:relative}.meter .past{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--ink)}
 .tag.warm{margin-left:0;background:var(--good-soft);color:var(--good)}
 .tag.fixed{background:var(--good-soft);color:var(--good)}
-.tag.exam{background:var(--form-soft);color:var(--form-text)}
 .tag{display:inline-block;font:600 11px/1.3 var(--label);letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--warn-soft);color:var(--warn);margin-left:6px}
 .empty{color:var(--ink-2);font-size:15px;margin:0}
 .timer{height:4px;border-radius:2px;background:var(--form-line);margin:0 0 6px;overflow:hidden}
@@ -309,9 +308,14 @@ tr:last-child td{border-bottom:0}
 .result-hero{display:flex;flex-wrap:wrap;gap:12px 32px;align-items:flex-end;padding:22px 24px}
 .result-hero .big{font:700 64px/0.9 var(--display);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
 details.rev{border-top:1px solid var(--form-line)}
-details.rev summary{display:flex;gap:12px;align-items:center;padding:12px 2px;cursor:pointer;list-style:none}
+details.rev summary{display:flex;gap:12px;align-items:flex-start;padding:12px 2px;cursor:pointer;list-style:none}
+details.rev summary .bub{margin-top:2px}
 details.rev summary::-webkit-details-marker{display:none}
-details.rev summary .s{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--read)}
+details.rev summary .s{flex:1;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-family:var(--read);line-height:1.45}
+details.rev summary .sw{flex:1;min-width:0}
+details.rev summary .meta{display:block;margin-top:4px;font:500 13px/1.3 var(--label);color:var(--ink-3)}
+details.rev summary .meta .due{color:var(--warn);font-weight:600}details.rev summary .meta .ok{color:var(--good);font-weight:600}
+.h-sm{font-size:clamp(26px,3.6vw,34px)}
 details.rev summary::after{content:"+";font:600 18px/1 var(--label);color:var(--form)}
 details.rev[open] summary::after{content:"–"}
 details.rev .body{padding:4px 0 18px}
@@ -1434,18 +1438,28 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     const groups = {};
     for (const it of d.items) (groups[it.skillLabel] ??= []).push(it);
     const open = d.items.filter((it) => !it.fixed);
-    box.innerHTML = `<p class="label">Hata defteri · pratik testler ve tam deneme</p><h1>${d.items.length ? `İlk denemede yanlış yaptığın ${d.total} soru` : 'Hata defterin boş'}</h1>
+    box.innerHTML = `<p class="label">Hata defteri · pratik testler ve tam deneme</p><h1 class="h-sm">${d.items.length ? `İlk denemede yanlış yaptığın ${d.total} soru` : 'Hata defterin boş'}</h1>
       ${d.total > d.items.length ? `<p class="note" style="margin:0 0 10px">${d.items.length} tanesi gösteriliyor, düzeltmediklerin önce. Mini deneme yanlışları mini deneme sonucunda.</p>` : ''}
       <p class="lede">${d.items.length ? `Konulara göre gruplu. ${d.fixed ? `${d.fixed} tanesini sonradan doğru çözdün. ` : ''}Yanlış yaptığın soru 1, 3 ve 7 gün sonra şıkların yeri değişmiş olarak yeniden gelir; üçünde de doğru yaparsan tekrar sırasından çıkar.` : 'Bir testte yanlış yaptığın her soru gerekçesiyle buraya düşer. Sınavdan önceki hafta tekrar etmek için en verimli liste budur.'}</p>
       ${d.due || open.length ? `<div class="actions" style="margin:0 0 20px">${d.due ? `<button class="btn" id="mk-due">Tekrar vakti gelen ${d.due} soruyu çöz</button>` : ''}${open.length ? `<button class="btn ${d.due ? 'ghost' : ''}" id="mk-retry">Cevapları gizle, ${open.length} soruyu şimdi çöz</button>` : ''}</div>` : d.items.length ? '<p class="note" style="margin:0 0 20px">Listedeki tüm soruları sonradan doğru çözdün.</p>' : ''}
       ${d.items.length ? Object.entries(groups).map(([label, list]) => `<div class="sheet field" style="margin-bottom:14px"><span class="label">${esc(label)} · ${list.length}</span>
-        ${list.map((it) => `<details class="rev" data-id="${esc(it.id)}"><summary><span class="bub bad" style="--s:24px">${esc(it.chosen)}</span><span class="s">${esc(summaryText(it))}</span>${it.fromExam ? '<span class="tag exam">Denemeden</span>' : ''}${it.review?.done ? '<span class="tag fixed">Kalıcı</span>' : it.fixed ? '<span class="tag fixed">Düzeldi</span>' : ''}${it.review && !it.review.done ? `<span class="tag">${it.review.isDue ? 'Tekrar vakti' : 'Tekrar ' + fmtDate(it.review.due)}</span>` : ''}</summary>
+        ${list.map((it) => `<details class="rev" data-id="${esc(it.id)}"><summary><span class="bub bad" style="--s:24px">${esc(it.chosen)}</span><span class="sw"><span class="s">${esc(summaryText(it))}</span>${reviewMeta(it)}</span></summary>
           <div class="body">${it.trapLabel ? `<span class="trap">${esc(it.trapLabel)}</span>` : ''}${passageHtml(it)}<p class="stem">${gaps(esc(it.stem))}</p><div class="opts">${optsHtml(it.options, 'div')}</div>${feedbackHtml({ ...it, correct: false })}</div></details>`).join('')}
       </div>`).join('') : '<div class="actions"><button class="btn" id="mk-start">Teste başla</button></div>'}`;
     for (const it of d.items) { const c = $(`[data-id="${CSS.escape(it.id)}"]`, box); paintOptions(c, it, it.chosen); wireFeedback(c, it.id); wireSentences(c, it); }
     if ($('#mk-start')) $('#mk-start').onclick = () => startStudy();
     if ($('#mk-retry')) $('#mk-retry').onclick = () => runRetry(open);
     if ($('#mk-due')) $('#mk-due').onclick = startReview;
+  }
+
+  // Hata defteri satırının alt bilgisi: kaynak ve tekrar durumu tek satır düz yazı (etiket kalabalığı yerine).
+  function reviewMeta(it) {
+    const parts = [];
+    if (it.fromExam) parts.push('Denemeden');
+    if (it.review?.done) parts.push('<span class="ok">Kalıcı</span>');
+    else if (it.fixed) parts.push('<span class="ok">Düzeldi</span>');
+    if (it.review && !it.review.done) parts.push(it.review.isDue ? '<span class="due">Tekrar vakti</span>' : 'Tekrar ' + esc(fmtDate(it.review.due)));
+    return parts.length ? `<span class="meta">${parts.join(' · ')}</span>` : '';
   }
 
   async function startReview() {
