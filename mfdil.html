@@ -388,8 +388,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
 
       <div class="sheet authbox">
         <div class="tabs" role="tablist" aria-label="Hesap">
-          <button role="tab" aria-selected="true" data-mode="register">Kayıt ol</button>
-          <button role="tab" aria-selected="false" data-mode="login">Giriş yap</button>
+          <button role="tab" aria-selected="true" data-mode="login">Giriş yap</button>
           <button role="tab" aria-selected="false" data-mode="reset">Şifremi unuttum</button>
         </div>
         <form id="auth-form" novalidate>
@@ -400,10 +399,10 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
             <input id="code" autocomplete="off" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX">
           </div>
           <div id="password-wrap"><label for="password" id="password-label">Şifre</label>
-          <input id="password" type="password" autocomplete="new-password" minlength="8" required></div>
+          <input id="password" type="password" autocomplete="current-password" minlength="8" required></div>
           <div class="err" id="auth-err" role="alert"></div>
-          <div class="actions" style="margin-top:6px"><button class="btn" id="auth-btn">Kayıt ol</button><button type="button" class="link small" id="auth-alt" hidden></button></div>
-          <p class="note" id="auth-note">Yalnızca e-postan ve çalışma kayıtların tutulur. Kişisel bilgin yapay zekâya gönderilmez. Hesabını istediğin an tüm verinle silebilirsin.</p>
+          <div class="actions" style="margin-top:6px"><button class="btn" id="auth-btn">Giriş yap</button><button type="button" class="link small" id="auth-alt" hidden></button></div>
+          <p class="note" id="auth-note">Hesaplar şu an davetle açılıyor. Yalnızca e-postan ve çalışma kayıtların tutulur. Kişisel bilgin yapay zekâya gönderilmez. Hesabını istediğin an tüm verinle silebilirsin.</p>
         </form>
       </div>
     </div>
@@ -710,15 +709,14 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
 
   // ---------- hesap ----------
   // reset: kurtarma kodu · mail: e-postaya bağlantı · confirm: bağlantıdan gelip yeni şifre
-  let authMode = 'register';
+  let authMode = 'login';
   let emailReset = false; // sunucu e-posta gönderebiliyorsa /api/config açar
   let resetToken = null;
-  const NOTE = 'Yalnızca e-postan ve çalışma kayıtların tutulur. Kişisel bilgin yapay zekâya gönderilmez. Hesabını istediğin an tüm verinle silebilirsin.';
+  const NOTE = 'Hesaplar şu an davetle açılıyor. Yalnızca e-postan ve çalışma kayıtların tutulur. Kişisel bilgin yapay zekâya gönderilmez. Hesabını istediğin an tüm verinle silebilirsin.';
   const AUTH_TEXT = {
-    register: { btn: 'Kayıt ol', pw: 'Şifre (en az 8 karakter)', ac: 'new-password', note: NOTE },
     login: { btn: 'Giriş yap', pw: 'Şifre', ac: 'current-password', note: NOTE },
     reset: { btn: 'Şifreyi değiştir ve gir', pw: 'Yeni şifre (en az 8 karakter)', ac: 'new-password', alt: 'Kodum yok, e-postama bağlantı gönder',
-      note: 'Kurtarma kodu kayıt olurken bir kez gösterildi.' },
+      note: 'Kurtarma kodunu hesabın açılırken aldın.' },
     mail: { btn: 'Sıfırlama bağlantısı gönder', alt: 'Kurtarma kodum var', note: 'Bağlantı 30 dakika geçerlidir ve bir kez kullanılır. Gelmezse gereksiz klasörüne bak.' },
     confirm: { btn: 'Yeni şifreyi kaydet ve gir', pw: 'Yeni şifre (en az 8 karakter)', ac: 'new-password', note: 'Şifren değişince açık kalan tüm oturumların kapanır.' },
   };
@@ -735,7 +733,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     const alt = $('#auth-alt');
     alt.hidden = !(t.alt && emailReset);
     alt.textContent = t.alt ?? '';
-    $('#auth-note').textContent = mode === 'reset' && !emailReset ? t.note + ' Kodun yoksa ve giriş yapamıyorsan yeni bir hesap açman gerekir.' : t.note;
+    $('#auth-note').textContent = mode === 'reset' && !emailReset ? t.note + ' Kodun yoksa hesabını açan kişiye yaz.' : t.note;
     $('#auth-err').textContent = '';
     $('#auth-err').style.color = '';
   }
@@ -770,7 +768,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     if (authMode === 'reset' && $('#code').value.replace(/[^a-z0-9]/gi, '').length !== 16) return void ($('#auth-err').textContent = 'Kurtarma kodu 16 karakterdir.');
     $('#auth-btn').disabled = true;
     try {
-      const path = { register: '/api/register', login: '/api/login', reset: '/api/reset' }[authMode];
+      const path = { login: '/api/login', reset: '/api/reset' }[authMode];
       const r = await api('POST', path, { email, password, ...(authMode === 'reset' ? { code: $('#code').value } : {}) });
       setToken(r.token);
       $('#password').value = ''; $('#code').value = '';
