@@ -158,6 +158,8 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--lead);margin:0 8p
 .passage>p:first-child{white-space:pre-line}
 .stem{font:19px/1.6 var(--read);margin:0 0 16px;max-width:68ch}
 .gap{display:inline-block;width:3.4em;height:1em;border-bottom:1.5px solid currentColor;vertical-align:-.12em;margin:0 .1em}
+.gap .gn{display:block;font:600 11px/1 var(--label);color:var(--ink-3);text-align:center;padding-top:.15em}
+.gap.on{border-bottom:2.5px solid var(--form);background:var(--tint)}.gap.on .gn{color:var(--form-text)}
 .sent{background:linear-gradient(transparent 62%,var(--form-soft) 62%);cursor:pointer;border-radius:2px}
 .sent:hover{background:var(--form-soft)}
 .sent:focus-visible{background:var(--form-soft);outline:2px solid var(--form);outline-offset:1px}
@@ -501,7 +503,10 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   // Soru boşluğu (----) satır sonunda bölünmeyen çizgi olur. Yalnız metin içinde kullanılır, özniteliklerde değil.
-  const gaps = (html) => html.replace(/-{4,}/g, '<span class="gap" role="img" aria-label="boşluk"></span>');
+  // Çok boşluklu cloze metninde boşluklar "(1)----" biçiminde numaralıdır; on: sorunun kendi boşluğu vurgulanır.
+  const gaps = (html, on) => html
+    .replace(/\((\d)\)-{4,}/g, (_, n) => `<span class="gap${+n === on ? ' on' : ''}" role="img" aria-label="${n} numaralı boşluk"><span class="gn">${n}</span></span>`)
+    .replace(/-{4,}/g, '<span class="gap" role="img" aria-label="boşluk"></span>');
   const store = {
     get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
     set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} },
@@ -622,9 +627,10 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   }
 
   // Cloze sorularında kök hep aynı ("Boşluğa gelecek..."); listede metnin boşluklu kısmı gösterilir.
+  // Çok boşluklu metinde sorunun kendi numaralı boşluğu.
   const summaryText = (it) => {
-    if (!it.passage || it.passageId) return it.stem;
-    const from = it.passage.indexOf('----') - 60;
+    if (!it.passage || (it.passageId && !it.blank)) return it.stem;
+    const from = it.passage.indexOf(it.blank ? `(${it.blank})----` : '----') - 60;
     return from > 0 ? '… ' + it.passage.slice(from).replace(/^\S*\s/, '') : it.passage;
   };
   const trapOf = (r) => (r.correct || !r.chosen ? null : r.options.find((o) => o.key === r.chosen)?.trapLabel ?? null);
@@ -657,7 +663,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   // Metin + tıklanabilir cümleler. onHint: cümle çözümlemesi açılınca (ipucu sayılır).
   function passageHtml(it) {
     if (!it.passage) return '';
-    let html = gaps(esc(it.passage));
+    let html = gaps(esc(it.passage), it.blank);
     for (const s of it.sentences || []) html = html.replace(gaps(esc(s.text)), `<span class="sent" tabindex="0" role="button" data-s="${esc(s.text)}" aria-label="Cümleyi çözümle">${gaps(esc(s.text))}</span>`);
     return `<div class="passage"><p>${html}</p>${it.sentences?.length ? '<p class="note">Vurgulu cümleye dokun, yapısını göster (ipucu sayılır: o cevap beceri ölçümüne girmez).</p>' : ''}<div data-analysis></div></div>`;
   }
