@@ -148,6 +148,13 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--lead);margin:0 8p
 .opt.picked{border-color:var(--ink-2)}.opt.picked .bub{background:var(--lead);color:var(--lead-ink);border-color:var(--lead)}
 .opt.right{border-color:var(--good);background:var(--good-soft)}.opt.right .bub{background:var(--good);border-color:var(--good);color:#fff}
 .opt.wrong{border-color:var(--bad);background:var(--bad-soft)}.opt.wrong .bub{background:var(--bad);border-color:var(--bad);color:#fff}
+/* şık eleme: üstünü çiz, seçimi engellemez */
+.optrow{display:flex;gap:6px;align-items:stretch}.optrow .opt{flex:1;min-width:0}
+.strike{flex:none;width:42px;border:1px solid transparent;border-radius:var(--r-in);background:none;color:var(--ink-3);font:600 15px/1 var(--label);transition:color .15s,border-color .15s}
+.strike::before{content:"✕"}.strike[aria-pressed=true]::before{content:"↺"}
+.strike:hover{border-color:var(--form-line);color:var(--ink)}.strike[aria-pressed=true]{color:var(--ink-2)}
+.optrow.struck .opt{opacity:.5}.optrow.struck .opt .txt{text-decoration:line-through}
+td.over{color:var(--bad);font-weight:600}
 
 /* soru kitapçığı */
 .qhead{display:flex;align-items:baseline;gap:14px;margin:0 0 14px}
@@ -355,6 +362,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       <button data-go="dash">Bugün</button>
       <button data-go="measure">Mini deneme</button>
       <button data-go="mistakes">Hata defteri</button>
+      <button data-go="strategy">Strateji</button>
       <button data-go="vocab">Kelime<span class="count" id="nav-due" hidden></span></button>
       <button data-go="account">Hesap</button>
       <button id="logout">Çıkış</button>
@@ -486,6 +494,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   <section id="v-mistakes" class="wrap narrow" hidden></section>
   <section id="v-vocab" class="wrap narrow" hidden></section>
   <section id="v-connect" class="wrap narrow" hidden></section>
+  <section id="v-strategy" class="wrap narrow" hidden></section>
 </main>
 
 <footer>
@@ -541,7 +550,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   }
 
   const RECENT = 10; // worker diagnosis.js RECENT ile aynı
-  const VIEWS = ['auth', 'recovery', 'onboard', 'dash', 'study', 'measure', 'mistakes', 'vocab', 'account', 'connect'];
+  const VIEWS = ['auth', 'recovery', 'onboard', 'dash', 'study', 'measure', 'mistakes', 'vocab', 'account', 'connect', 'strategy'];
   function show(view) {
     viewSeq++;
     clearInterval(measureTimer);
@@ -562,8 +571,33 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   const updateDueBadge = (n) => { const b = $('#nav-due'); b.hidden = !n; b.textContent = n; };
 
   // ---------- ortak: şık ve geri bildirim ----------
-  const optsHtml = (opts, tag = 'button') => opts.map((o) =>
-    `<${tag} class="opt${tag === 'div' ? ' static' : ''}" data-k="${o.key}"${tag === 'button' ? ` aria-label="${o.key} şıkkı: ${esc(o.text)}"` : ''}><span class="bub">${o.key}</span><span class="txt">${esc(o.text)}</span></${tag}>`).join('');
+  // strike: şıkkın yanında eleme düğmesi (sınavdaki gibi üstünü çizmek); yalnız cevaplanabilir şıklarda.
+  const optsHtml = (opts, tag = 'button', { strike = false } = {}) => opts.map((o) => {
+    const opt = `<${tag} class="opt${tag === 'div' ? ' static' : ''}" data-k="${o.key}"${tag === 'button' ? ` aria-label="${o.key} şıkkı: ${esc(o.text)}"` : ''}><span class="bub">${o.key}</span><span class="txt">${esc(o.text)}</span></${tag}>`;
+    return strike ? `<div class="optrow">${opt}<button class="strike" data-strike="${o.key}" aria-pressed="false" aria-label="${o.key} şıkkını ele" title="Ele (Shift+${o.key})"></button></div>` : opt;
+  }).join('');
+
+  // Eleme durumu soruya özel; onChange elenen harfleri alır (deneme taslağına yazmak için). Dönen fonksiyon klavyeden çağrılır.
+  function wireStrike(root, struck = [], onChange) {
+    const set = new Set(struck);
+    const paint = () => $$('.strike', root).forEach((b) => { const on = set.has(b.dataset.strike); b.setAttribute('aria-pressed', on); b.parentElement.classList.toggle('struck', on); });
+    const toggle = (k) => { set.has(k) ? set.delete(k) : set.add(k); paint(); onChange?.([...set]); };
+    $$('.strike', root).forEach((b) => (b.onclick = () => toggle(b.dataset.strike)));
+    paint();
+    return toggle;
+  }
+  const unstrike = (root) => $$('.optrow', root).forEach((r) => { r.classList.remove('struck'); $('.strike', r).remove(); });
+
+  // Sonra bak: soru hata defterindeki "sonra bak" listesine girer (doğru çözülse de).
+  function wireMark(btn, itemId, on = false) {
+    const paint = () => { btn.setAttribute('aria-pressed', on); btn.textContent = on ? 'İşaretli' : 'Sonra bak'; };
+    btn.onclick = async () => {
+      btn.disabled = true;
+      try { on = (await api('POST', '/api/mark', { itemId, on: !on })).on; paint(); } catch (err) { toast(err.message); }
+      btn.disabled = false;
+    };
+    paint();
+  }
 
   function paintOptions(root, r, chosen) {
     $$('.opt', root).forEach((el) => {
@@ -1107,13 +1141,14 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       box.innerHTML = `
         ${state.i === 0 ? `<div class="coach"><span class="label" style="flex:none;padding-top:3px">${opts.trap ? 'Strateji' : 'Neden'}</span><span><b>${esc(step.skillLabel)}</b>: ${esc(step.reason)}${opts.timed ? ' Süreli test: her soru için hedef süre işler; süre dolsa da cevaplayabilirsin.' : ''} <button class="link small" id="re-brief">Konu anlatımını aç</button></span></div><div id="brief-box"></div>` : ''}
         ${stripHtml()}
-        <div class="qhead"><span class="qno">${state.i + 1}</span><div class="qmeta"><span class="label">${esc(step.skillLabel)}</span><span class="small faint">${state.i < warmup ? '<span class="tag warm">Isınma · ölçüme girmez</span> ' : ''}${it.beta ? '<span class="tag" title="Yapay zekâ yazdı, iki ayrı model cevabı görmeden çözüp onayladı. Hata görürsen bildir.">Beta soru</span> ' : ''}${items.length} soruluk test · <kbd>A</kbd>–<kbd>E</kbd> ile seç, <kbd>Enter</kbd> ile ilerle</span></div></div>
+        <div class="qhead"><span class="qno">${state.i + 1}</span><div class="qmeta"><span class="label">${esc(step.skillLabel)}</span><span class="small faint">${state.i < warmup ? '<span class="tag warm">Isınma · ölçüme girmez</span> ' : ''}${it.beta ? '<span class="tag" title="Yapay zekâ yazdı, iki ayrı model cevabı görmeden çözüp onayladı. Hata görürsen bildir.">Beta soru</span> ' : ''}${items.length} soruluk test · <kbd>A</kbd>–<kbd>E</kbd> ile seç, <kbd>Shift</kbd>+harf ile ele, <kbd>Enter</kbd> ile ilerle</span></div></div>
         ${opts.timed ? '<div class="timer" aria-hidden="true"><i id="tm-bar"></i></div><p class="small faint timer-t" id="tm-t"></p>' : ''}
         ${passageHtml(it)}
         <p class="stem">${gaps(esc(it.stem))}</p>
-        <div class="opts" role="group" aria-label="Şıklar">${optsHtml(it.options)}</div>
+        <div class="opts" role="group" aria-label="Şıklar">${optsHtml(it.options, 'button', { strike: true })}</div>
         <div id="fb" aria-live="polite"></div>`;
       wireSentences(box, it, () => { hinted = true; });
+      const strike = wireStrike(box);
       if (opts.timed) {
         const limit = it.targetSec * 1000;
         const tick = () => {
@@ -1140,6 +1175,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         if (answered) return;
         answered = true;
         clearInterval(measureTimer);
+        unstrike(box);
         const ms = Math.round(performance.now() - t0);
         $$('.opt', box).forEach((x) => (x.disabled = true));
         b.classList.add('picked');
@@ -1150,7 +1186,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         r.chosen = b.dataset.k;
         state.results.push({ it, r, inTime: ms <= it.targetSec * 1000 });
         const last = state.i + 1 >= items.length;
-        const nextBtn = `<div class="actions"><button class="btn" id="nx">${last ? 'Testi bitir' : 'Sonraki soru'}</button></div>`;
+        const nextBtn = `<div class="actions"><button class="btn" id="nx">${last ? 'Testi bitir' : 'Sonraki soru'}</button><button class="btn ghost flagbtn" id="mk"></button></div>`;
         if (explainAtEnd) $('#fb').innerHTML = nextBtn;
         else {
           paintOptions(box, r, b.dataset.k);
@@ -1159,6 +1195,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
           wireEvidence($('#fb'), r);
           $('.strip', box).outerHTML = stripHtml();
         }
+        wireMark($('#mk'), it.id);
         const nx = () => { state.i++; state.i < items.length ? renderQuestion() : renderSummary(); };
         $('#nx').onclick = nx;
         $('#nx').focus({ preventScroll: true });
@@ -1170,7 +1207,9 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       $$('.opt', box).forEach((b) => (b.onclick = () => pick(b)));
       keyHandler = (e) => {
         const k = e.key.toUpperCase();
-        if (KEYS.includes(k)) { e.preventDefault(); pick($(`.opt[data-k="${k}"]`, box)); }
+        if (!KEYS.includes(k)) return;
+        e.preventDefault();
+        e.shiftKey ? strike(k) : pick($(`.opt[data-k="${k}"]`, box));
       };
     };
 
@@ -1234,6 +1273,11 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     let reviewing = false;
     let sending = false;
     const seq = viewSeq;
+    st.struck ??= {};
+    st.ms ??= {};
+    // Soru başına süre: soru ekrandayken geçen süre; gözden geçirme ekranı sayılmaz. Taslakla birlikte saklanır.
+    let shown = null;
+    const leave = () => { if (shown) { st.ms[shown.id] = (st.ms[shown.id] ?? 0) + Date.now() - shown.at; shown = null; save(); } };
     save();
 
     box.innerHTML = `
@@ -1274,18 +1318,21 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     const renderQ = () => {
       reviewing = false;
       const it = items[st.i];
+      leave();
+      shown = { id: it.id, at: Date.now() };
       const flagged = st.flags.includes(it.id);
       $('#m-q').innerHTML = `
-        <div class="qhead"><span class="qno">${st.i + 1}</span><div class="qmeta"><span class="label">Soru ${st.i + 1} / ${items.length}</span><span class="small faint"><kbd>A</kbd>–<kbd>E</kbd> seç · <kbd>←</kbd> <kbd>→</kbd> gez</span></div></div>
+        <div class="qhead"><span class="qno">${st.i + 1}</span><div class="qmeta"><span class="label">Soru ${st.i + 1} / ${items.length}</span><span class="small faint"><kbd>A</kbd>–<kbd>E</kbd> seç · <kbd>Shift</kbd>+harf ele · <kbd>←</kbd> <kbd>→</kbd> gez</span></div></div>
         ${passageHtml(it)}
         <p class="stem">${gaps(esc(it.stem))}</p>
-        <div class="opts" role="group" aria-label="Şıklar">${optsHtml(it.options)}</div>
+        <div class="opts" role="group" aria-label="Şıklar">${optsHtml(it.options, 'button', { strike: true })}</div>
         <div class="actions" style="justify-content:space-between">
           <button class="btn ghost" id="m-prev" ${st.i === 0 ? 'disabled' : ''}>← Önceki</button>
           <button class="btn ghost flagbtn" id="m-flag" aria-pressed="${flagged}">${flagged ? 'İşaretli' : 'Sonra bak'}</button>
           <button class="btn" id="m-next">${st.i + 1 < items.length ? 'Sonraki →' : 'Gözden geçir'}</button>
         </div>`;
       wireSentences($('#m-q'), it);
+      const strike = wireStrike($('#m-q'), st.struck[it.id], (l) => { l.length ? (st.struck[it.id] = l) : delete st.struck[it.id]; save(); });
       const mark = () => $$('#m-q .opt').forEach((o) => { const on = st.answers[it.id] === o.dataset.k; o.classList.toggle('picked', on); o.setAttribute('aria-pressed', on); });
       mark();
       const choose = (k) => { st.answers[it.id] === k ? delete st.answers[it.id] : (st.answers[it.id] = k); mark(); save(); paintNav(); };
@@ -1296,7 +1343,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       $('#m-flag').onclick = () => { st.flags = flagged ? st.flags.filter((x) => x !== it.id) : [...st.flags, it.id]; save(); renderQ(); };
       keyHandler = (e) => {
         const k = e.key.toUpperCase();
-        if (KEYS.includes(k)) { e.preventDefault(); choose(k); }
+        if (KEYS.includes(k)) { e.preventDefault(); e.shiftKey ? strike(k) : choose(k); }
         else if (e.key === 'ArrowRight') go(st.i + 1);
         else if (e.key === 'ArrowLeft') go(st.i - 1);
       };
@@ -1305,6 +1352,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
 
     const renderReview = () => {
       reviewing = true;
+      leave();
       keyHandler = null;
       const blank = items.filter((it) => !st.answers[it.id]).length;
       $('#m-q').innerHTML = `
@@ -1328,10 +1376,11 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       if (sending) return;
       sending = true;
       if (b) b.disabled = true;
+      leave();
       const answers = Object.entries(st.answers).map(([itemId, chosen]) => ({ itemId, chosen }));
       try {
         const r = d.exam
-          ? await api('POST', '/api/exam/submit', { id: d.id, answers })
+          ? await api('POST', '/api/exam/submit', { id: d.id, answers, times: st.ms, flags: st.flags })
           : await api('POST', '/api/measure', { form: d.form, ms: Date.now() - st.start, answers });
         clearInterval(measureTimer);
         store.set(mkey(d.form), null);
@@ -1387,7 +1436,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       <p class="lede">Gerçek sınavın sırası ve bölüm sayıları: kelime 6, dilbilgisi 10, cloze 10, cümle tamamlama 10, çeviri 6, okuma 20, diyalog 5, yakın anlam 4, paragraf tamamlama 4, anlam bütünlüğü 5. Sorular daha önce görmediklerin arasından seçilir.</p>
       <div class="sheet field">
         <span class="label">Kurallar</span>
-        <ul style="margin:0;padding-left:20px;color:var(--ink-2)"><li>Süre başlattığın anda sunucuda işlemeye başlar; sayfayı kapatsan da durmaz.</li><li>Süre dolunca cevapların kendiliğinden gönderilir. Boş soru puan götürmez, yanlış cevap doğruyu götürmez.</li><li>Puan gerçek hesapla verilir: doğru sayısı × 1,25. Sonuç konu planını değiştirmez, ayrı raporlanır.</li><li>Günde en fazla 3 deneme başlatılabilir.</li></ul>
+        <ul style="margin:0;padding-left:20px;color:var(--ink-2)"><li>Süre başlattığın anda sunucuda işlemeye başlar; sayfayı kapatsan da durmaz.</li><li>Süre dolunca cevapların kendiliğinden gönderilir. Boş soru puan götürmez, yanlış cevap doğruyu götürmez.</li><li>Puan gerçek hesapla verilir: doğru sayısı × 1,25. Sonuç konu planını değiştirmez, ayrı raporlanır.</li><li>"Sonra bak" dediğin sorular deneme bitince hata defterine de düşer.</li><li>Günde en fazla 3 deneme başlatılabilir.</li></ul>
         <div class="err" id="e-err" role="alert"></div>
         <div class="actions"><button class="btn" id="e-start">Denemeyi başlat</button><button class="btn ghost" id="e-back">Şimdi değil</button></div>
       </div></div>`;
@@ -1415,17 +1464,21 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     show('measure');
     const box = $('#v-measure');
     const secs = Object.values(res.bySection);
+    // Bölüm süresi yalnız soru başına süre tutulan denemelerde var.
+    const timed = secs.some((s) => s.ms != null);
+    const slow = timed && secs.filter((s) => s.ms > s.targetMs).sort((a, b) => (b.ms - b.targetMs) - (a.ms - a.targetMs))[0];
     box.innerHTML = `<div class="wrap narrow">
       <p class="label">${exam ? 'Tam deneme' : `Mini deneme · Form ${esc(form)}`} · ${fmtDate(res.takenAt)}</p>
       <div class="sheet result-hero" style="margin:10px 0 16px">
         <div>${exam ? `<div class="big">${fmtScore(exam.score)}</div><span class="small muted">YDS puanı · ${res.correct}/${res.total} doğru</span><br>` : `<div class="big">${res.correct}<span class="faint" style="font-size:.5em">/${res.total}</span></div>`}<span class="small muted">${exam ? '' : 'doğru'}${res.blank ? `${exam ? '' : ' · '}${res.blank} boş` : ''}${res.ms ? ` · ${fmtMin(res.ms)} dk` : ''}</span></div>
-        <table style="flex:1;min-width:240px"><thead><tr><th>Bölüm</th><th class="r">Doğru</th></tr></thead><tbody>
-          ${secs.map((s) => `<tr><td>${esc(s.label)}</td><td class="r">${s.correct} / ${s.n}</td></tr>`).join('')}</tbody></table>
+        <table style="flex:1;min-width:240px"><thead><tr><th>Bölüm</th><th class="r">Doğru</th>${timed ? '<th class="r">Süre</th><th class="r">Hedef</th>' : ''}</tr></thead><tbody>
+          ${secs.map((s) => `<tr><td>${esc(s.label)}</td><td class="r">${s.correct} / ${s.n}</td>${timed ? `<td class="r${s.ms > s.targetMs ? ' over' : ''}">${fmtMin(s.ms)}</td><td class="r">${fmtMin(s.targetMs)}</td>` : ''}</tr>`).join('')}</tbody></table>
       </div>
+      ${timed ? `<p class="note" style="margin:-4px 0 12px">${slow ? `En çok zamanı ${esc(slow.label)} aldı: hedefin ${fmtMin(slow.ms - slow.targetMs)} dakika üstünde. ` : res.blank ? '' : 'Tüm bölümleri hedef süre içinde çözdün. '}Süre, sorunun ekranda kaldığı süredir; gözden geçirme ekranı sayılmaz.</p>` : ''}
       <p class="note" style="margin:0 0 22px">${exam ? 'Puan, sınavla aynı hesapla verilir (doğru × 1,25). Sorular bu sitenin özgün sorularıdır; gerçek sınavın zorluğu dönemden döneme değişir, sonucu yön gösterici olarak oku.' : 'Bölüm başına 4-8 soru az bir örnek: bu sonuç yön gösterir, puan tahmini değildir. Konu planın pratik testlerinden gelir.'}</p>
       <div class="sheet field"><span class="label">Çözümler</span>
         ${res.review.map((it, i) => `<details class="rev" data-i="${i}">
-          <summary><span class="bub ${it.correct ? 'good' : it.chosen ? 'bad' : ''}" style="--s:24px">${it.chosen ?? '–'}</span><span class="s">${i + 1}. ${esc(summaryText(it))}</span></summary>
+          <summary><span class="bub ${it.correct ? 'good' : it.chosen ? 'bad' : ''}" style="--s:24px">${it.chosen ?? '–'}</span><span class="s">${i + 1}. ${esc(summaryText(it))}</span>${it.ms != null ? `<span class="small faint num" style="flex:none;margin-top:3px">${fmtMin(it.ms)}</span>` : ''}</summary>
           <div class="body">${passageHtml(it)}<p class="stem">${gaps(esc(it.stem))}</p><div class="opts">${optsHtml(it.options, 'div')}</div>${feedbackHtml({ ...it, trapLabel: trapOf(it) })}</div>
         </details>`).join('')}
       </div>
@@ -1450,9 +1503,22 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       ${d.due || open.length ? `<div class="actions" style="margin:0 0 20px">${d.due ? `<button class="btn" id="mk-due">Tekrar vakti gelen ${d.due} soruyu çöz</button>` : ''}${open.length ? `<button class="btn ${d.due ? 'ghost' : ''}" id="mk-retry">Cevapları gizle, ${open.length} soruyu şimdi çöz</button>` : ''}</div>` : d.items.length ? '<p class="note" style="margin:0 0 20px">Listedeki tüm soruları sonradan doğru çözdün.</p>' : ''}
       ${d.items.length ? Object.entries(groups).map(([label, list]) => `<div class="sheet field" style="margin-bottom:14px"><span class="label">${esc(label)} · ${list.length}</span>
         ${list.map((it) => `<details class="rev" data-id="${esc(it.id)}"><summary><span class="bub bad" style="--s:24px">${esc(it.chosen)}</span><span class="sw"><span class="s">${esc(summaryText(it))}</span>${reviewMeta(it)}</span></summary>
-          <div class="body">${it.trapLabel ? `<span class="trap">${esc(it.trapLabel)}</span>` : ''}${passageHtml(it)}<p class="stem">${gaps(esc(it.stem))}</p><div class="opts">${optsHtml(it.options, 'div')}</div>${feedbackHtml({ ...it, correct: false })}</div></details>`).join('')}
-      </div>`).join('') : '<div class="actions"><button class="btn" id="mk-start">Teste başla</button></div>'}`;
+          <div class="body">${it.trapLabel ? `<span class="trap">${esc(it.trapLabel)}</span>` : ''}${passageHtml(it)}<p class="stem">${gaps(esc(it.stem))}</p><div class="opts">${optsHtml(it.options, 'div')}</div>${feedbackHtml({ ...it, correct: false })}<button class="link small" data-strat="${esc(it.skill)}">Bu soru tipinin stratejisi</button></div></details>`).join('')}
+      </div>`).join('') : '<div class="actions"><button class="btn" id="mk-start">Teste başla</button></div>'}
+      ${d.marked.length ? `<div class="sheet field" style="margin-bottom:14px"><span class="label">Sonra bak dediklerin · ${d.marked.length}</span>
+        ${d.marked.map((it) => `<details class="rev" data-mid="${esc(it.id)}"><summary><span class="bub ${!it.chosen ? '' : it.chosen === it.answer ? 'good' : 'bad'}" style="--s:24px">${esc(it.chosen ?? '–')}</span><span class="sw"><span class="s">${esc(summaryText(it))}</span><span class="meta">${esc(it.skillLabel)}</span></span></summary>
+          <div class="body">${passageHtml(it)}<p class="stem">${gaps(esc(it.stem))}</p><div class="opts">${optsHtml(it.options, 'div')}</div>${feedbackHtml({ ...it, correct: it.chosen === it.answer, trapLabel: it.chosen === it.answer ? null : it.options.find((o) => o.key === it.chosen)?.trapLabel })}
+          <div class="actions"><button class="btn ghost" data-unmark>İşareti kaldır</button><button class="link small" data-strat="${esc(it.skill)}">Bu soru tipinin stratejisi</button></div></div></details>`).join('')}</div>` : ''}`;
     for (const it of d.items) { const c = $(`[data-id="${CSS.escape(it.id)}"]`, box); paintOptions(c, it, it.chosen); wireFeedback(c, it.id); wireSentences(c, it); }
+    for (const it of d.marked) {
+      const c = $(`[data-mid="${CSS.escape(it.id)}"]`, box);
+      paintOptions(c, it, it.chosen); wireFeedback(c, it.id); wireSentences(c, it);
+      $('[data-unmark]', c).onclick = async (e) => {
+        e.currentTarget.disabled = true;
+        try { await api('POST', '/api/mark', { itemId: it.id, on: false }); renderMistakes(); } catch (err) { toast(err.message); e.currentTarget.disabled = false; }
+      };
+    }
+    $$('[data-strat]', box).forEach((b) => (b.onclick = () => renderStrategy(b.dataset.strat)));
     if ($('#mk-start')) $('#mk-start').onclick = () => startStudy();
     if ($('#mk-retry')) $('#mk-retry').onclick = () => runRetry(open);
     if ($('#mk-due')) $('#mk-due').onclick = startReview;
@@ -1501,10 +1567,11 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       const order = fixedOrder ? it.options : shuffle([...it.options]);
       const shown = order.map((o, k) => ({ key: KEYS[k], text: o.text, orig: o.key }));
       box.innerHTML = `<p class="label">Hata defteri · tekrar ${i + 1} / ${list.length}</p>
-        <div class="qhead"><span class="qno">${i + 1}</span><div class="qmeta"><span class="label">${esc(it.skillLabel)}</span><span class="small faint">Daha önce yanlış yapmıştın${fixedOrder ? '' : ' · şıkların yeri değişti'} · <kbd>A</kbd>–<kbd>E</kbd> ile seç</span></div></div>
+        <div class="qhead"><span class="qno">${i + 1}</span><div class="qmeta"><span class="label">${esc(it.skillLabel)}</span><span class="small faint">Daha önce yanlış yapmıştın${fixedOrder ? '' : ' · şıkların yeri değişti'} · <kbd>A</kbd>–<kbd>E</kbd> ile seç, <kbd>Shift</kbd>+harf ile ele</span></div></div>
         ${passageHtml(it)}<p class="stem">${gaps(esc(it.stem))}</p>
-        <div class="opts" role="group" aria-label="Şıklar">${optsHtml(shown)}</div><div id="rt-fb" aria-live="polite"></div>`;
+        <div class="opts" role="group" aria-label="Şıklar">${optsHtml(shown, 'button', { strike: true })}</div><div id="rt-fb" aria-live="polite"></div>`;
       wireSentences(box, it);
+      const strike = wireStrike(box);
       const pick = async (b) => {
         if (answered) return;
         answered = true;
@@ -1529,11 +1596,43 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         keyHandler = (e) => { const f = document.activeElement; if (e.key === 'Enter' && (f === document.body || f?.id === 'rt-nx')) { e.preventDefault(); nx(); } };
       };
       $$('.opt', box).forEach((b) => (b.onclick = () => pick(b)));
-      keyHandler = (e) => { const k = e.key.toUpperCase(); if (KEYS.includes(k)) { e.preventDefault(); pick($(`.opt[data-k="${k}"]`, box)); } };
+      keyHandler = (e) => { const k = e.key.toUpperCase(); if (KEYS.includes(k)) { e.preventDefault(); e.shiftKey ? strike(k) : pick($(`.opt[data-k="${k}"]`, box)); } };
       window.scrollTo(0, 0);
     };
     q();
   }
+
+  // ---------- strateji: sınav günü zaman planı + her soru tipinin yaklaşımı ----------
+  // Konu anlatımları testlerin başında gösterilenlerle aynı; burada hepsi bir arada. focus: açılacak beceri.
+  let strategyData = null;
+  async function renderStrategy(focus) {
+    show('strategy');
+    const box = $('#v-strategy');
+    box.innerHTML = '<div class="skeleton" style="height:240px"></div>';
+    try { strategyData ??= await api('GET', '/api/strategy'); } catch (err) { return errBox(box, err.message, () => renderStrategy(focus)); }
+    const d = strategyData;
+    const planned = Math.round(d.sections.reduce((s, x) => s + x.count * x.targetSec, 0) / 60);
+    box.innerHTML = `<p class="label">Strateji</p><h1 class="h-sm">Sınav günü planı ve soru tipleri</h1>
+      <p class="lede">${d.minutes} dakikayı bölümlere nasıl dağıtacağın ve her soru tipine nasıl yaklaşacağın. Testlerin başındaki konu anlatımlarının hepsi burada.</p>
+      <div class="sheet field" style="margin-bottom:14px"><span class="label">Zaman planı · ${d.minutes} dakika</span>
+        <table><thead><tr><th>Bölüm</th><th class="r">Soru</th><th class="r">Soru başı</th><th class="r">Toplam</th></tr></thead><tbody>
+        ${d.sections.map((s) => `<tr><td>${esc(s.label)}</td><td class="r">${s.count}</td><td class="r">${s.targetSec} sn</td><td class="r">${Math.round(s.count * s.targetSec / 60)} dk</td></tr>`).join('')}</tbody></table>
+        <p class="note">Toplam ${planned} dakika. Kalan ${d.minutes - planned} dakika, işaretlediğin sorulara dönmek ve boşları doldurmak için.</p></div>
+      <div class="sheet field" style="margin-bottom:14px"><span class="label">Dört kural</span>
+        <ul style="padding-left:20px;margin:0">${STRATEGY_RULES.map((x) => `<li style="margin:8px 0">${x}</li>`).join('')}</ul></div>
+      ${d.sections.map((s) => `<div class="sheet field" style="margin-bottom:14px"><span class="label">${esc(s.label)} · ${s.count} soru</span>
+        ${s.skills.map((k) => `<details class="rev" data-skill="${esc(k.skill)}"${k.skill === focus ? ' open' : ''}><summary><span class="sw"><span class="s">${esc(k.brief.title)}</span><span class="meta">${esc(k.label)}</span></span></summary>
+          <div class="body"><ul style="padding-left:20px;margin:0">${k.brief.points.map((x) => `<li style="margin:6px 0">${esc(x)}</li>`).join('')}</ul>
+          <div class="analysis"><span class="label">Örnek</span><div style="font-family:var(--read);margin-top:4px">${esc(k.brief.example.text)}</div><div class="tr">${esc(k.brief.example.note)}</div></div></div></details>`).join('')}</div>`).join('')}`;
+    const f = focus && $(`[data-skill="${CSS.escape(focus)}"]`, box);
+    if (f) f.scrollIntoView({ block: 'start' });
+  }
+  const STRATEGY_RULES = [
+    '<b>Boş bırakma.</b> Yanlış cevap doğruyu götürmez. Son beş dakikayı boş kalan soruları işaretlemeye ayır; tahmin bile boştan iyidir.',
+    '<b>Takılınca geç.</b> Bir soruda hedef sürenin iki katına geldiysen en olası şıkkı işaretle, "sonra bak" de ve ilerle. Tek bir soruya gömülen süre, sonda çözebileceğin birkaç soruya mal olur.',
+    '<b>Önce ele, sonra seç.</b> Kesin yanlış şıkların üstünü çiz. İki şık kaldığında cümleyi iki şıkla ayrı ayrı baştan oku; ikisini ayıran kelimeye bak.',
+    '<b>Okumaya zaman bırak.</b> Okuma 20 soruyla sınavın dörtte biri ve en uzun bölüm. Kelime ve dilbilgisinde hedef süreyi aşma ki okumaya en az 50 dakika kalsın.',
+  ];
 
   // ---------- bağlaç atölyesi: başvuru listesi + 10 saniyelik hızlı tur ----------
   const FORM_TR = { conj: 'bağlaç', prep: 'edat', adv: 'zarf' };
@@ -1674,7 +1773,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   }
 
   // ---------- başlangıç ----------
-  const GO = { dash: () => renderDash(), measure: () => renderMeasure(), mistakes: () => renderMistakes(), vocab: () => startVocab(), account: () => renderAccount() };
+  const GO = { dash: () => renderDash(), measure: () => renderMeasure(), mistakes: () => renderMistakes(), vocab: () => startVocab(), account: () => renderAccount(), strategy: () => renderStrategy() };
   $$('[data-go]').forEach((b) => (b.onclick = () => GO[b.dataset.go]()));
   $('#logout').onclick = async () => { try { await api('POST', '/api/logout'); } catch {} clearLocal(); setToken(null); show('auth'); };
 
