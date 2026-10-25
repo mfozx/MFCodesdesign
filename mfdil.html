@@ -1375,7 +1375,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         <button class="btn ghost" id="m-grid" aria-expanded="false">Sorular <span class="num" id="m-count"></span></button>
         <button class="btn" id="m-review">Gözden geçir</button>
       </div></div>
-      <div class="wrap narrow"><div class="sheet navgrid" id="m-nav" hidden></div><div id="m-q"></div></div>`;
+      <div class="wrap narrow"><p class="small faint" id="m-fill" aria-live="polite" hidden style="margin:12px 0 0"></p><div class="sheet navgrid" id="m-nav" hidden></div><div id="m-q"></div></div>`;
 
     // Süre: denemede sunucunun verdiği kalan süreden geri sayılır; ölçüm formunda geçen süre bu tarayıcıda tutulur.
     // Duraklatılan süre ikisinde de sayılmaz.
@@ -1520,8 +1520,42 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       }
     }
 
+    // Konulu denemede konu dışı soruların yerine, sen çözerken sırayla konudan sorular gelir: önce bankadan, yoksa
+    // AI yazar (worker /api/exam/fill). Ekranda görülmüş ya da cevaplanmış soru değişmez.
+    const fillLoop = async () => {
+      const el = $('#m-fill'), topic = TOPIC_TR[d.topic];
+      let placed = 0, quota = false;
+      const failed = new Set();
+      const touched = (it) => st.answers[it.id] || st.ms[it.id] || shown?.id === it.id;
+      const paint = (busy) => {
+        if (!$('#m-fill')) return;
+        el.hidden = !busy && !placed && !quota;
+        el.textContent = busy
+          ? `Konu dışı sorular, sen çözerken ${topic} sorularıyla değiştiriliyor${placed ? ` · ${placed} değişti` : ''}`
+          : `${placed ? `${placed} soru ${topic} konusundan yenilendi.` : ''}${quota ? ' Bugünkü soru yazma kotası doldu; kalan sorular başka konulardan.' : ''}`.trim();
+      };
+      paint(true);
+      while (alive(seq) && !sending) {
+        let r;
+        const skip = [...failed, ...items.flatMap((it, k) => (touched(it) ? [k] : []))];
+        try { r = await api('POST', '/api/exam/fill', { id: d.id, at: st.i, skip }); } catch { break; }
+        if (!alive(seq) || sending) return;
+        if (r.done) { quota = !!r.quota; break; }
+        if (r.failed || touched(items[r.index])) { failed.add(r.index); continue; }
+        try { await api('POST', '/api/exam/place', { id: d.id, index: r.index, itemId: r.item.id }); } catch { failed.add(r.index); continue; }
+        if (!alive(seq) || sending) return;
+        items[r.index] = r.item;
+        placed++;
+        // Yerleştirme sürerken kullanıcı tam o soruya geldiyse yenisi gösterilir.
+        if (reviewing) renderReview(); else if (!paused && st.i === r.index) renderQ(); else paintNav();
+        paint(true);
+      }
+      paint(false);
+    };
+
     paintPause();
     if (!paused) renderQ();
+    if (d.exam && d.topic && d.offTopic) fillLoop();
   }
 
   // ---------- denemeler: mini, midi, tam ----------
@@ -1529,7 +1563,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   const SIZE_TR = { mini: 'Mini deneme', midi: 'Midi deneme', full: 'Tam deneme' }; // worker core/exam.js EXAM_SIZES
   const TOPIC_TR = { saglik: 'Sağlık ve tıp', psikoloji: 'Psikoloji', teknoloji: 'Teknoloji', bilim: 'Bilim ve uzay', cevre: 'Çevre ve doğa', tarih: 'Tarih ve arkeoloji', ekonomi: 'Ekonomi ve iş', toplum: 'Toplum, kültür ve eğitim' }; // worker core/topics.js
   const examTitle = (x) => `${SIZE_TR[x.size] ?? 'Tam deneme'}${x.topic ? ` · ${TOPIC_TR[x.topic] ?? x.topic}` : ''}`;
-  const examForm = (x) => ({ exam: true, id: x.id, form: `exam${x.id}`, minutes: x.minutes, items: x.items, startedAt: x.startedAt, leftMs: x.leftMs, paused: x.paused });
+  const examForm = (x) => ({ exam: true, id: x.id, form: `exam${x.id}`, minutes: x.minutes, items: x.items, startedAt: x.startedAt, leftMs: x.leftMs, paused: x.paused, topic: x.topic, offTopic: x.offTopic });
   const examState = (d) => {
     const ids = new Set(d.items.map((it) => it.id));
     try {
@@ -2047,23 +2081,39 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         if (!$('#front').hidden) reveal(); else next();
       };
     };
+    // Bitiş bir kez çalışır: "Bitir"e iki kez basılınca (çift dokunuş, Boşluk + tık) ikinci çağrı butonları bağlamadan
+    // ekranı yeniden çiziyordu. Hata olursa "Tekrar dene" yeniden çalıştırabilsin diye kilit açılır.
+    let finishing = false;
     const finish = async () => {
+      if (finishing) return;
+      finishing = true;
       keyHandler = null;
       $('#s-pos').textContent = `${total} tur bitti`;
-      let r;
-      try { r = await api('POST', '/api/groups/done', { id: g.id, reps: total }); }
-      catch (err) { if (alive(seq)) { $('#s-card').innerHTML = '<div id="s-err"></div>'; errBox($('#s-err'), err.message, finish); } return; }
+      let r, d;
+      try { [r, d] = [await api('POST', '/api/groups/done', { id: g.id, reps: total }), await api('GET', '/api/words').catch(() => null)]; }
+      catch (err) { finishing = false; if (alive(seq)) { $('#s-card').innerHTML = '<div id="s-err"></div>'; errBox($('#s-err'), err.message, finish); } return; }
       if (!alive(seq)) return;
       const ng = r.group;
       const plan = !r.counted ? 'Bu grup bugün tekrar beklemiyordu; ek çalışma planı değiştirmedi.'
         : ng.due == null ? 'Bu grubun bütün tekrarları bitti.' : `Sıradaki tekrar ${dayLabel(ng.due, today)}.`;
+      // Bugün tekrar bekleyen başka grup varsa önerilir; istemezse öneriyi kapatır.
+      const words = (x) => (d?.words ?? []).filter((w) => w.groupId === x.id);
+      const nx = d?.groups.find((x) => x.isDue && x.id !== g.id && words(x).length);
+      if (d) updateDueBadge(d.groups.filter((x) => x.isDue).reduce((n, x) => n + words(x).length, 0));
       $('#s-card').innerHTML = `<div class="index" style="text-align:center"><div class="lemma" style="font-size:30px">Grup bitti</div>
         <p class="muted" style="margin:0 0 18px">${list.length} kelime, ${total} tur. ${plan}</p>
-        <div class="actions" style="justify-content:center"><button class="btn" id="s-back">Kelimelere dön</button><button class="btn ghost" id="s-again">Bir kez daha çalış</button></div></div>`;
-      $('#s-quit').parentElement.remove();
-      $('#s-back').onclick = renderWords;
+        ${nx ? `<div class="sheet field" style="text-align:left;margin:0 0 18px"><span class="label">Bugün tekrar bekliyor</span>
+          <p style="margin:0"><b>${esc(nx.name)}</b> <span class="small muted">· ${words(nx).length} kelime</span></p>
+          <div class="actions" style="margin-bottom:0"><button class="btn" id="s-next-g">Bu grubu çalış</button><button class="btn ghost" id="s-close">Şimdi değil</button></div></div>` : ''}
+        <div class="actions" style="justify-content:center"><button class="btn ${nx ? 'ghost' : ''}" id="s-back">Kelimelere dön</button><button class="btn ghost" id="s-again">Bir kez daha çalış</button></div></div>`;
+      $('#s-quit')?.parentElement.remove();
+      $('#s-back').onclick = () => renderWords();
       $('#s-again').onclick = () => studyGroup(ng, list, today);
-      $('#s-back').focus({ preventScroll: true });
+      if (nx) {
+        $('#s-next-g').onclick = () => studyGroup(nx, words(nx), d.today);
+        $('#s-close').onclick = () => { $('#s-next-g').closest('.sheet').remove(); $('#s-back').classList.remove('ghost'); $('#s-back').focus({ preventScroll: true }); };
+      }
+      $(nx ? '#s-next-g' : '#s-back').focus({ preventScroll: true });
     };
     list.length ? card() : renderWords();
   }
