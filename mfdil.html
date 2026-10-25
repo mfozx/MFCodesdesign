@@ -8,7 +8,7 @@ permalink: /projects/mfdil/
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="MFdil: neyi neden çalışacağını söyleyen ücretsiz YDS hazırlığı. Zayıf konu, çeldirici analizi, mini deneme ve aralıklı kelime tekrarı.">
+<meta name="description" content="MFdil: neyi neden çalışacağını söyleyen ücretsiz YDS hazırlığı. Zayıf konu, çeldirici analizi, mini, midi ve tam deneme, aralıklı kelime tekrarı.">
 <meta property="og:title" content="MFdil | MFCodes">
 <meta property="og:description" content="Zayıf konunu bulan, hatanın kökenine inen, kelimeleri unutmadan tekrar ettiren ücretsiz YDS hazırlığı.">
 <meta property="og:url" content="https://mfcodes.org/projects/mfdil/">
@@ -307,6 +307,16 @@ tr:last-child td{border-bottom:0}
 .exambar .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .clock{font:600 18px/1 var(--label);font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .clock.over{color:var(--bad)}
+.clock.paused{color:var(--ink-3)}
+/* deneme seçimi: boy kartları */
+.sizes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 16px}
+.size{display:flex;flex-direction:column;gap:2px;border:1.5px solid var(--form-line);border-radius:var(--r-in);padding:12px 14px;cursor:pointer;transition:border-color .2s,background .2s}
+.size:hover{border-color:var(--ink-3)}
+.size:has(input:checked){border-color:var(--lead);background:var(--form-soft)}
+.size:has(input:focus-visible){outline:2px solid var(--form);outline-offset:2px}
+.size input{position:absolute;opacity:0;pointer-events:none}
+.size b{font:700 17px/1.2 var(--display)}.size span{font-size:14px;color:var(--ink-2)}
+@media (max-width:480px){.sizes{grid-template-columns:1fr}}
 .navgrid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px;padding:14px;margin:0 0 18px}
 @media (max-width:520px){.navgrid{grid-template-columns:repeat(5,minmax(0,1fr))}}
 .navgrid button{position:relative;border:1.5px solid var(--form);color:var(--form-text);background:var(--sheet);border-radius:50%;aspect-ratio:1.3;font:600 13px/1 var(--label);color:var(--form);transition:background .15s}
@@ -384,7 +394,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     </a>
     <nav id="nav" aria-label="Bölümler" hidden>
       <button data-go="dash">Bugün</button>
-      <button data-go="measure">Mini deneme</button>
+      <button data-go="measure">Deneme</button>
       <button data-go="mistakes">Hata defteri</button>
       <button data-go="strategy">Strateji</button>
       <button data-go="vocab">Kelime<span class="count" id="nav-due" hidden></span></button>
@@ -402,7 +412,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         <p class="label">Ücretsiz YDS hazırlığı</p>
         <h1>Neyi, neden çalışacağını sana söyleyen YDS hazırlığı</h1>
         <p class="lede">Her test tek bir konuya odaklanır. Yanlış yaptığında hangi çeldiriciye düştüğünü gösterir; aynı hatayı tekrarlarsan seni önkoşul konuya geri götürür. Kelimeleri de unutmak üzereyken tekrar ettirir.</p>
-        <ul class="facts"><li>190+ özgün soru, seviyene göre büyür</li><li>Sınavın 10 bölümü, 22 konu</li><li>549 çekirdek kelime, bağlaç atölyesi</li><li>3 mini deneme formu</li></ul>
+        <ul class="facts"><li>190+ özgün soru, seviyene göre büyür</li><li>Sınavın 10 bölümü, 22 konu</li><li>549 çekirdek kelime, bağlaç atölyesi</li><li>Mini, midi ve tam deneme, konu seçerek</li></ul>
 
         <div class="sheet demo marks" id="demo" aria-labelledby="demo-label">
           <div class="qhead"><span class="qno">1</span><div class="qmeta"><span class="label" id="demo-label">Kayıt olmadan dene</span><span class="small muted">Kelime · bağlama uygun sözcük</span></div></div>
@@ -1022,12 +1032,12 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
 
     const taken = rep.miniTests ?? [];
     const untaken = (rep.forms ?? ['A']).find((f) => !taken.some((x) => x.form === f));
-    $('#d-measure').innerHTML = `<span class="label">Mini deneme</span>` + (taken.length
+    $('#d-measure').innerHTML = `<span class="label">Seviye ölçümü</span>` + (taken.length
       ? `<ul class="list">${taken.map((mt) => `<li><div class="top"><span>Form ${esc(mt.form)} · <b class="num">${mt.correct}/${mt.total}</b> doğru</span><span class="small muted">${fmtDate(mt.taken_at)} · <button class="link small" data-go-measure="${esc(mt.form)}">Çözümler</button></span></div></li>`).join('')}</ul>
          <p class="note">20 soruluk karışık test. 80 soruluk sınavın puanı bundan güvenilir biçimde çıkarılamaz; bölüm dağılımına bak.</p>
          ${untaken ? `<div class="actions"><button class="btn ghost" data-go-measure="${esc(untaken)}">Form ${esc(untaken)}'ye gir</button></div>` : '<p class="note">Tüm formları çözdün. Yeni form eklendiğinde burada görünür.</p>'}`
       : `<p class="empty">Sınavın bölümlerinden 20 soru, süre tutularak. Cevaplar en sonda gösterilir, gerçek sınav gibi.</p>
-         <div class="actions"><button class="btn ghost" data-go-measure="${esc(untaken ?? 'A')}">Mini denemeye gir</button></div>`);
+         <div class="actions"><button class="btn ghost" data-go-measure="${esc(untaken ?? 'A')}">Ölçüme gir</button></div>`);
     $$('[data-go-measure]').forEach((b) => (b.onclick = () => renderMeasure(b.dataset.goMeasure)));
     fillExamCard();
 
@@ -1175,8 +1185,8 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       return;
     }
     if (data.exhausted) {
-      box.innerHTML = `<div class="sheet field"><span class="label">Havuz</span><h2>Seviyene uygun yeni sorular hazırlanıyor</h2><p class="muted">Havuzdaki tüm pratik sorularını çözdün. Yeni sorular senin seviyene göre yazılıp iki ayrı kontrolden geçiyor; genelde yarım saat içinde hazır olur. Bu arada mini denemeyi çöz, hata defterine dön ya da kelime tekrarı yap.</p><div class="actions"><button class="btn" id="b-m">Mini deneme</button><button class="btn ghost" id="b-dash">Bugün ekranına dön</button></div></div>`;
-      $('#b-m').onclick = () => renderMeasure(); $('#b-dash').onclick = renderDash;
+      box.innerHTML = `<div class="sheet field"><span class="label">Havuz</span><h2>Seviyene uygun yeni sorular hazırlanıyor</h2><p class="muted">Havuzdaki tüm pratik sorularını çözdün. Yeni sorular senin seviyene göre yazılıp iki ayrı kontrolden geçiyor; genelde yarım saat içinde hazır olur. Bu arada bir deneme çöz, hata defterine dön ya da kelime tekrarı yap.</p><div class="actions"><button class="btn" id="b-m">Deneme</button><button class="btn ghost" id="b-dash">Bugün ekranına dön</button></div></div>`;
+      $('#b-m').onclick = () => renderExam(); $('#b-dash').onclick = renderDash;
       return;
     }
     if (data.step.phase === 'brief') return renderBrief(data, opts);
@@ -1309,7 +1319,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     renderQuestion();
   }
 
-  // ---------- mini deneme: gerçek sınav gibi, cevaplar sonda ----------
+  // ---------- seviye ölçümü (sabit formlar) ve denemeler: gerçek sınav gibi, cevaplar sonda ----------
   // Taslak hesaba ve forma özel; çıkışta ve silmede temizlenir.
   const mkey = (form) => `yds-measure-${form}:${me?.email ?? ''}`;
   function clearLocal() { try { for (const k of Object.keys(localStorage)) if (k.startsWith("yds-measure-")) localStorage.removeItem(k); } catch {} }
@@ -1330,12 +1340,12 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       } catch { return null; }
     })();
     box.innerHTML = `<div class="wrap narrow">
-      <p class="label">Mini deneme · Form ${esc(d.form)}</p>
+      <p class="label">Seviye ölçümü · Form ${esc(d.form)}</p>
       <h1>${d.items.length} soru, yaklaşık ${d.minutes} dakika</h1>
       <p class="lede">${d.parts.map((x) => `${esc(x.label)} ${x.n}`).join(', ')}. Gerçek sınav gibi: sorular arasında serbestçe gezebilir, emin olmadıklarını "sonra bak" diye işaretleyebilirsin. Doğru cevaplar ve açıklamalar en sonda.</p>
       <div class="sheet field">
         <span class="label">Kurallar</span>
-        <ul style="margin:0;padding-left:20px;color:var(--ink-2)"><li>Süre işler ama seni durdurmaz; hedef süreyi aşarsan saat kırmızıya döner.</li><li>Bu deneme bir kez çözülür; sonucu konu planını değiştirmez, ayrı raporlanır.</li><li>Sayfayı kapatırsan cevapların bu tarayıcıda saklanır, kaldığın yerden devam edersin.</li></ul>
+        <ul style="margin:0;padding-left:20px;color:var(--ink-2)"><li>Süre işler ama seni durdurmaz; hedef süreyi aşarsan saat kırmızıya döner. "Duraklat" ile süreyi durdurabilirsin.</li><li>Bu deneme bir kez çözülür; sonucu konu planını değiştirmez, ayrı raporlanır.</li><li>Sayfayı kapatırsan cevapların bu tarayıcıda saklanır, kaldığın yerden devam edersin.</li></ul>
         <div class="actions"><button class="btn" id="m-start">${saved ? 'Kaldığın yerden devam et' : 'Denemeyi başlat'}</button><button class="btn ghost" id="m-back">Şimdi değil</button></div>
       </div></div>`;
     $('#m-start').onclick = () => runMeasure(d, saved ?? { answers: {}, flags: [], start: Date.now(), i: 0 });
@@ -1360,23 +1370,31 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     box.innerHTML = `
       <div class="exambar"><div class="wrap narrow">
         <span class="clock" id="m-clock">0:00</span><span class="small faint">${d.exam ? 'kaldı' : `/ ${d.minutes}:00`}</span>
+        <button class="link small" id="m-pause"></button>
         <span style="flex:1"></span>
         <button class="btn ghost" id="m-grid" aria-expanded="false">Sorular <span class="num" id="m-count"></span></button>
         <button class="btn" id="m-review">Gözden geçir</button>
       </div></div>
       <div class="wrap narrow"><div class="sheet navgrid" id="m-nav" hidden></div><div id="m-q"></div></div>`;
 
+    // Süre: denemede sunucunun verdiği kalan süreden geri sayılır; ölçüm formunda geçen süre bu tarayıcıda tutulur.
+    // Duraklatılan süre ikisinde de sayılmaz.
+    let paused = d.exam ? d.paused : st.pausedAt != null;
+    let left0 = d.leftMs, resumedAt = Date.now();
+    st.pausedMs ??= 0;
+    const elapsed = () => (st.pausedAt ?? Date.now()) - st.start - st.pausedMs;
     const tick = () => {
       const c = $('#m-clock');
       if (!c || !alive(seq)) return clearInterval(measureTimer);
-      const el = Date.now() - st.start;
+      c.classList.toggle('paused', paused);
       if (d.exam) {
-        const left = Math.max(0, limitMs - el);
+        const left = paused ? left0 : Math.max(0, left0 - (Date.now() - resumedAt));
         c.textContent = fmtClock(left);
-        c.classList.toggle('over', left < 10 * 60000);
-        if (!left) { clearInterval(measureTimer); submit(null); }
+        c.classList.toggle('over', !paused && left < 10 * 60000);
+        if (!left && !paused) { clearInterval(measureTimer); submit(null); }
         return;
       }
+      const el = elapsed();
       c.textContent = fmtMin(el);
       c.classList.toggle('over', el > limitMs);
     };
@@ -1391,6 +1409,38 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     };
     $('#m-grid').onclick = () => { const n = $('#m-nav'); n.hidden = !n.hidden; $('#m-grid').setAttribute('aria-expanded', String(!n.hidden)); };
     $('#m-review').onclick = () => renderReview();
+
+    // Duraklatınca sorular gizlenir; sürdürünce kalınan yerden devam edilir.
+    const paintPause = () => {
+      $('#m-pause').textContent = paused ? 'Devam et' : 'Duraklat';
+      $('#m-grid').disabled = $('#m-review').disabled = paused;
+      if (!paused) return;
+      leave();
+      keyHandler = null;
+      $('#m-nav').hidden = true;
+      $('#m-q').innerHTML = `<div class="sheet field" style="margin-top:8px"><span class="label">Duraklatıldı</span>
+        <h1 class="h-sm">Süre durdu</h1><p class="lede" style="margin-bottom:0">Süre dururken sorular gizli. Hazır olduğunda kaldığın yerden devam edersin.${d.exam ? ' Sayfayı kapatsan da süre durmuş kalır.' : ''}</p>
+        <div class="actions"><button class="btn" id="m-resume">Devam et</button></div></div>`;
+      $('#m-resume').onclick = () => setPause(false);
+      $('#m-resume').focus({ preventScroll: true });
+    };
+    const setPause = async (on) => {
+      if (on === paused) return;
+      if (d.exam) {
+        try { const r = await api('POST', '/api/exam/pause', { id: d.id, paused: on }); left0 = r.leftMs; paused = r.paused; resumedAt = Date.now(); }
+        catch (err) { return toast(err.message); }
+      } else {
+        if (on) st.pausedAt = Date.now();
+        else { st.pausedMs += Date.now() - st.pausedAt; delete st.pausedAt; }
+        paused = on;
+        save();
+      }
+      if (!alive(seq)) return;
+      paintPause();
+      if (!paused) reviewing ? renderReview() : renderQ();
+      tick();
+    };
+    $('#m-pause').onclick = () => setPause(!paused);
 
     const renderQ = () => {
       reviewing = false;
@@ -1458,7 +1508,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       try {
         const r = d.exam
           ? await api('POST', '/api/exam/submit', { id: d.id, answers, times: st.ms, flags: st.flags })
-          : await api('POST', '/api/measure', { form: d.form, ms: Date.now() - st.start, answers });
+          : await api('POST', '/api/measure', { form: d.form, ms: elapsed(), answers });
         clearInterval(measureTimer);
         store.set(mkey(d.form), null);
         if (alive(seq)) d.exam ? renderExamResult(r.result) : renderMeasureResult(r.result, d.form);
@@ -1470,12 +1520,16 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       }
     }
 
-    renderQ();
+    paintPause();
+    if (!paused) renderQ();
   }
 
-  // ---------- tam deneme ----------
-  // 80 soru, 180 dakika, gerçek sınav sırası. Süre sunucuda başlar; süre dolunca cevaplar kendiliğinden gönderilir.
-  const examForm = (x) => ({ exam: true, id: x.id, form: `exam${x.id}`, minutes: x.minutes, items: x.items, startedAt: x.startedAt });
+  // ---------- denemeler: mini, midi, tam ----------
+  // Gerçek sınav sırası; süre sunucuda işler, duraklatılabilir. Süre dolunca cevaplar kendiliğinden gönderilir.
+  const SIZE_TR = { mini: 'Mini deneme', midi: 'Midi deneme', full: 'Tam deneme' }; // worker core/exam.js EXAM_SIZES
+  const TOPIC_TR = { saglik: 'Sağlık ve tıp', psikoloji: 'Psikoloji', teknoloji: 'Teknoloji', bilim: 'Bilim ve uzay', cevre: 'Çevre ve doğa', tarih: 'Tarih ve arkeoloji', ekonomi: 'Ekonomi ve iş', toplum: 'Toplum, kültür ve eğitim' }; // worker core/topics.js
+  const examTitle = (x) => `${SIZE_TR[x.size] ?? 'Tam deneme'}${x.topic ? ` · ${TOPIC_TR[x.topic] ?? x.topic}` : ''}`;
+  const examForm = (x) => ({ exam: true, id: x.id, form: `exam${x.id}`, minutes: x.minutes, items: x.items, startedAt: x.startedAt, leftMs: x.leftMs, paused: x.paused });
   const examState = (d) => {
     const ids = new Set(d.items.map((it) => it.id));
     try {
@@ -1490,11 +1544,11 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     let d;
     try { d = await api('GET', '/api/exam'); } catch { card.innerHTML = '<span class="label">Tam deneme</span><p class="empty">Deneme bilgisi şu an alınamadı.</p>'; return; }
     const last = d.history.slice(0, 5);
-    card.innerHTML = `<span class="label">Tam deneme</span>` +
-      (d.active ? `<p>Süren bir denemen var: ${Math.ceil(Math.max(0, d.active.deadline - Date.now()) / 60000)} dakika kaldı.</p>` :
-        last.length ? '' : '<p class="empty">80 soru, 180 dakika, gerçek sınavın bölüm sırası ve sayılarıyla. Sonunda YDS puanını (doğru × 1,25) ve bölüm kırılımını görürsün.</p>') +
-      (last.length ? `<ul class="list">${last.map((x) => `<li><div class="top"><span><b class="num">${fmtScore(x.score)}</b> puan · ${x.correct}/${x.total} doğru</span><span class="small muted">${fmtDate(x.finishedAt)} · <button class="link small" data-exam="${x.id}">Çözümler</button></span></div></li>`).join('')}</ul>` : '') +
-      `<div class="actions"><button class="btn ghost" id="d-exam-go">${d.active ? 'Denemeye dön' : last.length ? 'Yeni deneme' : 'Tam denemeye gir'}</button></div>`;
+    card.innerHTML = `<span class="label">Deneme</span>` +
+      (d.active ? `<p>Süren denemen var (${esc(examTitle(d.active))}): ${Math.ceil(d.active.leftMs / 60000)} dakika kaldı${d.active.paused ? ', süre durdu' : ''}.</p>` :
+        last.length ? '' : '<p class="empty">Mini (20 soru), midi (40) ya da tam (80) deneme; gerçek sınavın bölüm sırasıyla. İstersen tek bir konudan çöz. Sonunda puanı ve bölüm kırılımını görürsün.</p>') +
+      (last.length ? `<ul class="list">${last.map((x) => `<li><div class="top"><span><b class="num">${fmtScore(x.score)}</b> puan · ${x.correct}/${x.total} doğru</span><span class="small muted">${fmtDate(x.finishedAt)} · <button class="link small" data-exam="${x.id}">Çözümler</button></span></div><span class="small faint">${esc(examTitle(x))}</span></li>`).join('')}</ul>` : '') +
+      `<div class="actions"><button class="btn ghost" id="d-exam-go">${d.active ? 'Denemeye dön' : 'Deneme seç'}</button></div>`;
     $('#d-exam-go').onclick = renderExam;
     $$('[data-exam]', card).forEach((b) => (b.onclick = () => openExamResult(b.dataset.exam)));
   }
@@ -1507,21 +1561,45 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     try { d = await api('GET', '/api/exam'); }
     catch (err) { box.innerHTML = '<div class="wrap narrow"></div>'; return errBox($('.wrap', box), err.message, renderExam); }
     if (d.active) { const f = examForm(d.active); return runMeasure(f, examState(f)); }
+    const pref = store.get('yds-exam-size') || 'mini';
     box.innerHTML = `<div class="wrap narrow">
-      <p class="label">Tam deneme</p>
-      <h1>80 soru, 180 dakika</h1>
-      <p class="lede">Gerçek sınavın sırası ve bölüm sayıları: kelime 6, dilbilgisi 10, cloze 10, cümle tamamlama 10, çeviri 6, okuma 20, diyalog 5, yakın anlam 4, paragraf tamamlama 4, anlam bütünlüğü 5. Sorular daha önce görmediklerin arasından seçilir.</p>
+      <p class="label">Deneme</p>
+      <h1>Mini, midi ya da tam deneme</h1>
+      <p class="lede">Üçü de gerçek sınavın bölüm sırasıyla ve bütün soru tipleriyle; yalnız soru sayısı ve süre değişir. İstersen tek bir konudan çöz: soru tipleri aynı kalır, sorular o konudan gelir. Daha önce görmediğin sorular önce seçilir.</p>
       <div class="sheet field">
-        <span class="label">Kurallar</span>
-        <ul style="margin:0;padding-left:20px;color:var(--ink-2)"><li>Süre başlattığın anda sunucuda işlemeye başlar; sayfayı kapatsan da durmaz.</li><li>Süre dolunca cevapların kendiliğinden gönderilir. Boş soru puan götürmez, yanlış cevap doğruyu götürmez.</li><li>Puan gerçek hesapla verilir: doğru sayısı × 1,25. Sonuç konu planını değiştirmez, ayrı raporlanır.</li><li>"Sonra bak" dediğin sorular deneme bitince hata defterine de düşer.</li><li>Günde en fazla 3 deneme başlatılabilir.</li></ul>
+        <span class="label">Boy</span>
+        <div class="sizes" role="radiogroup" aria-label="Deneme boyu">${d.sizes.map((x) => `<label class="size"><input type="radio" name="e-size" value="${x.id}" ${x.id === pref ? 'checked' : ''}><b>${esc(x.label.replace(' deneme', ''))}</b><span>${x.count} soru · ${x.minutes} dk</span></label>`).join('')}</div>
+        <label class="small muted" for="e-topic" style="display:block;margin-bottom:6px">Konu</label>
+        <select id="e-topic"><option value="">Karışık: bütün konular</option>${d.topics.map((t) => `<option value="${t.id}">${esc(t.label)} · ${t.count} soru</option>`).join('')}</select>
+        <p class="note" id="e-note"></p>
+        <ul style="margin:16px 0 0;padding-left:20px;color:var(--ink-2)"><li>Süre başlattığın anda işler. "Duraklat" ile durdurabilirsin; süre dururken sorular gizlenir.</li><li>Duraklatmadan sayfayı kapatırsan süre işlemeye devam eder. Süre dolunca cevapların kendiliğinden gönderilir.</li><li>Boş soru puan götürmez, yanlış cevap doğruyu götürmez. Tam denemede puan doğru × 1,25; mini ve midide doğru oranın 80 soruya çevrilir.</li><li>"Sonra bak" dediğin sorular deneme bitince hata defterine de düşer. Günde en fazla 6 deneme başlatılabilir.</li></ul>
         <div class="err" id="e-err" role="alert"></div>
         <div class="actions"><button class="btn" id="e-start">Denemeyi başlat</button><button class="btn ghost" id="e-back">Şimdi değil</button></div>
-      </div></div>`;
+      </div>
+      <div class="sheet field" style="margin-top:16px"><span class="label">Seviye ölçümü</span>
+        <p class="muted" style="margin:0">Üç sabit form (A, B, C), 20'şer soru, herkes aynı soruları çözer. Sınav planın bu formları belirli haftalara koyar.</p>
+        <div class="actions"><button class="btn ghost" id="e-measure">Ölçüm formunu aç</button></div></div></div>`;
+    const size = () => $('input[name=e-size]:checked', box)?.value ?? 'mini';
+    const note = () => {
+      const t = d.topics.find((x) => x.id === $('#e-topic').value);
+      const need = d.sizes.find((x) => x.id === size()).count;
+      $('#e-note').textContent = !t ? 'Konular karışık gelir, gerçek sınavdaki gibi.'
+        : t.count < need * 4 ? `${t.label} konusunda soru az. Eksik kalanlar konusuz genel cümlelerden, o da yetmezse başka konulardan tamamlanır; deneme başlayınca kaç tanesinin konudan geldiğini görürsün.`
+        : `Okuma, cloze ve paragraf soruları önce ${t.label.toLocaleLowerCase('tr-TR')} metinlerinden gelir; tek cümlelik sorularda konusu olmayan genel cümleler de girebilir.`;
+    };
+    $$('input[name=e-size]', box).forEach((r) => (r.onchange = () => { store.set('yds-exam-size', size()); note(); }));
+    $('#e-topic').onchange = note;
+    note();
     $('#e-back').onclick = renderDash;
+    $('#e-measure').onclick = () => renderMeasure();
     $('#e-start').onclick = async (e) => {
       e.currentTarget.disabled = true;
-      try { const f = examForm(await api('POST', '/api/exam/start')); runMeasure(f, examState(f)); }
-      catch (err) { $('#e-err').textContent = err.message; e.currentTarget.disabled = false; }
+      const topic = $('#e-topic').value || null;
+      try {
+        const x = await api('POST', '/api/exam/start', { size: size(), topic });
+        if (x.topic) toast(x.offTopic ? `${x.items.length - x.offTopic} soru ${TOPIC_TR[x.topic]} konusundan, ${x.offTopic} soru genel ya da başka konulardan` : `Bütün sorular ${TOPIC_TR[x.topic]} konusundan`);
+        const f = examForm(x); runMeasure(f, examState(f));
+      } catch (err) { $('#e-err').textContent = err.message; e.currentTarget.disabled = false; }
     };
   }
 
@@ -1545,14 +1623,14 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     const timed = secs.some((s) => s.ms != null);
     const slow = timed && secs.filter((s) => s.ms > s.targetMs).sort((a, b) => (b.ms - b.targetMs) - (a.ms - a.targetMs))[0];
     box.innerHTML = `<div class="wrap narrow">
-      <p class="label">${exam ? 'Tam deneme' : `Mini deneme · Form ${esc(form)}`} · ${fmtDate(res.takenAt)}</p>
+      <p class="label">${exam ? esc(examTitle(exam)) : `Seviye ölçümü · Form ${esc(form)}`} · ${fmtDate(res.takenAt)}</p>
       <div class="sheet result-hero" style="margin:10px 0 16px">
         <div>${exam ? `<div class="big">${fmtScore(exam.score)}</div><span class="small muted">YDS puanı · ${res.correct}/${res.total} doğru</span><br>` : `<div class="big">${res.correct}<span class="faint" style="font-size:.5em">/${res.total}</span></div>`}<span class="small muted">${exam ? '' : 'doğru'}${res.blank ? `${exam ? '' : ' · '}${res.blank} boş` : ''}${res.ms ? ` · ${fmtMin(res.ms)} dk` : ''}</span></div>
         <table style="flex:1;min-width:240px"><thead><tr><th>Bölüm</th><th class="r">Doğru</th>${timed ? '<th class="r">Süre</th><th class="r">Hedef</th>' : ''}</tr></thead><tbody>
           ${secs.map((s) => `<tr><td>${esc(s.label)}</td><td class="r">${s.correct} / ${s.n}</td>${timed ? `<td class="r${s.ms > s.targetMs ? ' over' : ''}">${fmtMin(s.ms)}</td><td class="r">${fmtMin(s.targetMs)}</td>` : ''}</tr>`).join('')}</tbody></table>
       </div>
       ${timed ? `<p class="note" style="margin:-4px 0 12px">${slow ? `En çok zamanı ${esc(slow.label)} aldı: hedefin ${fmtMin(slow.ms - slow.targetMs)} dakika üstünde. ` : res.blank ? '' : 'Tüm bölümleri hedef süre içinde çözdün. '}Süre, sorunun ekranda kaldığı süredir; gözden geçirme ekranı sayılmaz.</p>` : ''}
-      <p class="note" style="margin:0 0 22px">${exam ? 'Puan, sınavla aynı hesapla verilir (doğru × 1,25). Sorular bu sitenin özgün sorularıdır; gerçek sınavın zorluğu dönemden döneme değişir, sonucu yön gösterici olarak oku.' : 'Bölüm başına 4-8 soru az bir örnek: bu sonuç yön gösterir, puan tahmini değildir. Konu planın pratik testlerinden gelir.'}</p>
+      <p class="note" style="margin:0 0 22px">${exam ? `${exam.total < 80 ? `${exam.total} soruluk denemede doğru oranın 80 soruya çevrildi; bölüm başına az soru olduğu için puan kabaca yön gösterir. ` : 'Puan, sınavla aynı hesapla verilir (doğru × 1,25). '}${exam.offTopic ? `${exam.offTopic} soru seçilen konu dışından geldi. ` : ''}` : ''}${exam ? ' Sorular bu sitenin özgün sorularıdır; gerçek sınavın zorluğu dönemden döneme değişir, sonucu yön gösterici olarak oku.' : 'Bölüm başına 4-8 soru az bir örnek: bu sonuç yön gösterir, puan tahmini değildir. Konu planın pratik testlerinden gelir.'}</p>
       <div class="sheet field"><span class="label">Çözümler</span>
         ${res.review.map((it, i) => `<details class="rev" data-i="${i}">
           <summary><span class="bub ${it.correct ? 'good' : it.chosen ? 'bad' : ''}" style="--s:24px">${it.chosen ?? '–'}</span><span class="s">${i + 1}. ${esc(summaryText(it))}</span>${it.ms != null ? `<span class="small faint num" style="flex:none;margin-top:3px">${fmtMin(it.ms)}</span>` : ''}</summary>
@@ -1575,7 +1653,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     for (const it of d.items) (groups[it.skillLabel] ??= []).push(it);
     const open = d.items.filter((it) => !it.fixed);
     box.innerHTML = `<p class="label">Hata defteri · pratik testler ve tam deneme</p><h1 class="h-sm">${d.items.length ? `İlk denemede yanlış yaptığın ${d.total} soru` : 'Hata defterin boş'}</h1>
-      ${d.total > d.items.length ? `<p class="note" style="margin:0 0 10px">${d.items.length} tanesi gösteriliyor, düzeltmediklerin önce. Mini deneme yanlışları mini deneme sonucunda.</p>` : ''}
+      ${d.total > d.items.length ? `<p class="note" style="margin:0 0 10px">${d.items.length} tanesi gösteriliyor, düzeltmediklerin önce. Seviye ölçümü yanlışları ölçüm sonucunda.</p>` : ''}
       <p class="lede">${d.items.length ? `Konulara göre gruplu. ${d.fixed ? `${d.fixed} tanesini sonradan doğru çözdün. ` : ''}Yanlış yaptığın soru 1, 3 ve 7 gün sonra şıkların yeri değişmiş olarak yeniden gelir; üçünde de doğru yaparsan tekrar sırasından çıkar.` : 'Bir testte yanlış yaptığın her soru gerekçesiyle buraya düşer. Sınavdan önceki hafta tekrar etmek için en verimli liste budur.'}</p>
       ${d.due || open.length ? `<div class="actions" style="margin:0 0 20px">${d.due ? `<button class="btn" id="mk-due">Tekrar vakti gelen ${d.due} soruyu çöz</button>` : ''}${open.length ? `<button class="btn ${d.due ? 'ghost' : ''}" id="mk-retry">Cevapları gizle, ${open.length} soruyu şimdi çöz</button>` : ''}</div>` : d.items.length ? '<p class="note" style="margin:0 0 20px">Listedeki tüm soruları sonradan doğru çözdün.</p>' : ''}
       ${d.items.length ? Object.entries(groups).map(([label, list]) => `<div class="sheet field" style="margin-bottom:14px"><span class="label">${esc(label)} · ${list.length}</span>
@@ -1991,7 +2069,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   }
 
   // ---------- başlangıç ----------
-  const GO = { dash: () => renderDash(), measure: () => renderMeasure(), mistakes: () => renderMistakes(), vocab: () => renderWords(), account: () => renderAccount(), strategy: () => renderStrategy() };
+  const GO = { dash: () => renderDash(), measure: () => renderExam(), mistakes: () => renderMistakes(), vocab: () => renderWords(), account: () => renderAccount(), strategy: () => renderStrategy() };
   $$('[data-go]').forEach((b) => (b.onclick = () => GO[b.dataset.go]()));
   $('#logout').onclick = async () => { try { await api('POST', '/api/logout'); } catch {} clearLocal(); setToken(null); show('auth'); };
 
