@@ -532,6 +532,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         <div><label for="o-year">Yıl</label><input id="o-year" type="number" min="2000" max="2100"></div>
         <div><label for="o-score">Puan</label><input id="o-score" type="number" min="0" max="100" step="0.25"></div>
       </div>
+      <p class="small muted" id="o-prev-note" style="margin:8px 0 0" hidden>İlk sorular bu puana göre seçilir, böylece çok kolay ya da çok zor sorularla başlamazsın. Puan eskidikçe etkisi azalır (her yıl yarıya iner, dört yıl ve daha eski puan sayılmaz). Cevapların biriktikçe seviyen tamamen cevaplarından hesaplanır.</p>
       <div class="err" id="onboard-err" role="alert"></div>
       <div class="actions"><button class="btn">Kaydet ve başla</button></div>
     </form>
@@ -957,7 +958,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     $('#o-need').textContent = t >= 0 && t <= 100 ? `${t} puan için 80 sorudan en az ${Math.ceil(t / 1.25 - 1e-9)} doğru gerekir. Her doğru 1,25 puan; yanlış doğruyu götürmez.` : '';
   };
   $('#o-target').oninput = needText;
-  $('#o-had').onchange = () => { $('#o-prev').hidden = !$('#o-had').checked; };
+  $('#o-had').onchange = () => { $('#o-prev').hidden = $('#o-prev-note').hidden = !$('#o-had').checked; };
   $('#onboard-form').onsubmit = async (e) => {
     e.preventDefault();
     $('#onboard-err').textContent = '';
@@ -1166,7 +1167,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         <div><label for="r-year">Yıl</label><input id="r-year" type="number" min="2000" max="2100" required></div>
         <div><label for="r-score">Puan</label><input id="r-score" type="number" min="0" max="100" step="0.25" required></div>
       </div><div class="err" id="r-err" role="alert"></div><button class="btn ghost">Puanı ekle</button></form>
-      <p class="note">Sınavdan sonra puanını eklersen, sistemin ölçümlerini gerçek sonuçlarla karşılaştırabiliriz.</p>`;
+      <p class="note">En son puanın, henüz az çalıştığın konularda soruların hangi zorlukta başlayacağını belirler; eskidikçe etkisi azalır. Sınavdan sonra yeni puanını eklemeyi unutma.</p>`;
     $('#real-form').onsubmit = async (e) => {
       e.preventDefault();
       try { await api('POST', '/api/real-score', { exam: $('#r-exam').value, year: Number($('#r-year').value), score: Number($('#r-score').value) }); toast('Puan eklendi'); renderAccount(); }
