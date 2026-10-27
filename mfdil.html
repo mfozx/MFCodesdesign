@@ -76,10 +76,49 @@ nav button{background:none;border:0;padding:8px 10px;border-radius:6px;font-weig
 nav button:hover{color:var(--ink);background:var(--form-soft)}
 nav button[aria-current=page]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--form);border-radius:0}
 nav .count{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--form);color:#fff;font:600 11px/1 var(--label)}
+.streak{display:flex;align-items:baseline;gap:5px;flex:none;padding:6px 0 7px 14px;border-left:1px solid var(--form-line);font:500 13px/1 var(--label);color:var(--ink-2);white-space:nowrap;position:relative;cursor:default}
+.streak b{font:700 17px/1 var(--display);letter-spacing:-.02em;color:var(--ink)}
+.streak .sl{color:var(--form-line);margin:0 2px}
+.streak .bar{position:absolute;left:14px;right:0;bottom:0;height:2px;background:var(--form-soft)}
+.streak .bar i{display:block;height:100%;background:var(--form);transition:width .4s}
+.streak.idle b{color:var(--ink-2)}
+@media (max-width:640px){.streak{order:1;padding:6px 0 7px 10px}.streak .tm{display:none}}
 @media (max-width:640px){header{position:static}header .wrap{height:auto;flex-wrap:wrap;padding-top:10px;gap:4px}nav{margin:0 -10px;width:calc(100% + 20px);padding-bottom:4px;flex-wrap:wrap;overflow:visible}nav button{padding:7px 9px;font-size:14.5px}
   /* Hesap ve Çıkış logonun yanına çıkar, dört ana bölüm alt satırda tek sıra kalır. */
   nav:not([hidden]){display:contents}nav [data-go=account]{margin-left:auto}nav [data-go=account],#logout{order:1}
   header .wrap:has(nav:not([hidden]))::after{content:'';order:2;flex-basis:100%}nav [data-go]:not([data-go=account]){order:3}nav [data-go=dash]{margin-left:-9px}}
+
+/* okuma kütüphanesi */
+.lib-filters{display:grid;gap:10px;margin:0 0 22px}
+.lib-filters .chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:none;border:1px solid var(--form-line);border-radius:999px;padding:6px 12px;font:500 14px/1.2 var(--label);color:var(--ink-2)}
+.chip:hover{border-color:var(--ink-3);color:var(--ink)}
+.chip[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.lib-list{list-style:none;padding:0;margin:0;border-top:1px solid var(--form-line)}
+.lib-list li{border-bottom:1px solid var(--form-line)}
+.lib-row{display:grid;grid-template-columns:5.5rem 1fr auto;gap:4px 18px;align-items:baseline;width:100%;text-align:left;background:none;border:0;padding:16px 4px;color:var(--ink)}
+.lib-row:hover{background:var(--form-soft)}
+.lib-row .len{font:700 22px/1 var(--display);letter-spacing:-.03em;color:var(--form-text);font-variant-numeric:tabular-nums}
+.lib-row .len small{font:500 11px/1 var(--label);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-left:3px}
+.lib-row .tt{font:600 19px/1.3 var(--read)}
+.lib-row .meta{grid-column:2;font-size:13.5px;color:var(--ink-3)}
+.lib-row .prog{grid-row:1/3;grid-column:3;font:500 13px/1.3 var(--label);color:var(--ink-3);text-align:right;white-space:nowrap}
+.lib-row .prog.done{color:var(--good)}
+@media (max-width:560px){.lib-row{grid-template-columns:4rem 1fr}.lib-row .prog{grid-row:auto;grid-column:2;text-align:left}}
+.reader{display:grid;gap:28px;align-items:start}
+@media (min-width:1000px){.reader{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}.reader .rtext{position:sticky;top:76px;max-height:calc(100vh - 92px);overflow:auto;padding-right:6px}}
+.rtext h1{font:600 clamp(26px,3.4vw,34px)/1.2 var(--read);letter-spacing:-.01em;margin:6px 0 6px}
+.rtext .byline{font-size:13.5px;color:var(--ink-3);margin:0 0 18px}
+.rtext .body{font:18px/1.75 var(--read);max-width:66ch}
+.rtext .body p{margin:0 0 1em}
+.rtext .body .s{transition:background .3s}
+.rtext .body .s.ev{background:var(--good-soft);box-shadow:0 0 0 2px var(--good-soft);border-radius:2px}
+.rtext .credit{font-size:13px;color:var(--ink-3);border-top:1px solid var(--form-line);padding-top:10px;margin-top:6px;max-width:66ch}
+.rq{padding:18px 0 22px;border-top:1px solid var(--form-line)}
+.rq:first-child{border-top:0;padding-top:0}
+.rq .qhead{margin-bottom:10px}.rq .qno{font-size:30px}
+.rq .was{font:500 12.5px/1 var(--label);color:var(--ink-3)}
+.rq .showev{margin-top:10px}
 
 /* tipografi */
 h1{font:700 clamp(30px,4.6vw,46px)/1.04 var(--display);letter-spacing:-.035em;margin:0 0 12px}
@@ -395,12 +434,14 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     <nav id="nav" aria-label="Bölümler" hidden>
       <button data-go="dash">Bugün</button>
       <button data-go="measure">Deneme</button>
+      <button data-go="library">Okuma</button>
       <button data-go="mistakes">Hata defteri</button>
       <button data-go="strategy">Strateji</button>
       <button data-go="vocab">Kelime<span class="count" id="nav-due" hidden></span></button>
       <button data-go="account">Hesap</button>
       <button id="logout">Çıkış</button>
     </nav>
+    <div class="streak" id="streak" hidden></div>
   </div>
 </header>
 
@@ -525,6 +566,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
 
   <section id="v-study" class="wrap narrow" hidden></section>
   <section id="v-measure" hidden></section>
+  <section id="v-library" class="wrap" hidden></section>
   <section id="v-mistakes" class="wrap narrow" hidden></section>
   <section id="v-vocab" class="wrap narrow" hidden></section>
   <section id="v-connect" class="wrap narrow" hidden></section>
@@ -584,12 +626,13 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   }
 
   const RECENT = 10; // worker diagnosis.js RECENT ile aynı
-  const VIEWS = ['auth', 'recovery', 'onboard', 'dash', 'study', 'measure', 'mistakes', 'vocab', 'account', 'connect', 'strategy'];
+  const VIEWS = ['auth', 'recovery', 'onboard', 'dash', 'study', 'measure', 'library', 'mistakes', 'vocab', 'account', 'connect', 'strategy'];
   function show(view) {
     viewSeq++;
     clearInterval(measureTimer);
     for (const v of VIEWS) $('#v-' + v).hidden = v !== view;
     $('#nav').hidden = ['auth', 'recovery'].includes(view);
+    if ($('#nav').hidden) $('#streak').hidden = true; else refreshStreak();
     $$('[data-go]').forEach((b) => (b.dataset.go === view ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current')));
     keyHandler = null;
     window.scrollTo(0, 0);
@@ -968,7 +1011,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         : `Son cevaplarına bakarak seçtik.`}</p>
       <p class="coach" id="d-next" style="margin:12px 0 4px" hidden></p>
       <p class="small faint" style="margin:0">Haftada ${p.weekly_minutes} dk ayırdın: yaklaşık ${sessions} oturum × ${perSession} dk.</p>
-      ${fresh ? '' : habitLine(rep.habit)}
+      ${fresh ? '' : habitLine(rep.habit)}${(setStreak(rep.habit), '')}
       <div class="actions">
         <button class="btn" id="start">${fresh ? 'İlk teste başla' : 'Teste başla'}</button>
         ${rep.review.due ? `<button class="btn ghost" id="start-review">${rep.review.due} soru tekrar</button>` : ''}
@@ -1088,6 +1131,27 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       <p class="note">Soru kalmayan konuya girersen yenisi üretilmek üzere sıraya alınır.</p>`;
     $$('[data-skill]', box).forEach((b) => (b.onclick = () => startStudy({ skill: b.dataset.skill })));
   }
+
+  // Sağ üstteki seri rozeti: seri günü ve bu günlerdeki dakika, altında bugünkü hedefe doğru ince bir çizgi.
+  function setStreak(h) {
+    const el = $('#streak');
+    if (!h) { el.hidden = true; return; }
+    const goal = h.goalMinutes;
+    el.hidden = false;
+    el.classList.toggle('idle', !h.activeToday);
+    el.innerHTML = `<b class="num">${h.streak}</b>gün<span class="tm"> · <span class="num">${h.streakMinutes ?? 0}</span> dk</span><span class="sl">/</span>bugün <span class="num">${h.todayMinutes}${goal ? `/${goal}` : ''}</span> dk`
+      + (goal ? `<span class="bar"><i style="width:${Math.min(100, Math.round((h.todayMinutes / goal) * 100))}%"></i></span>` : '');
+    el.title = (h.streak ? `${h.streak} gündür her gün en az bir soru çözdün; bu günlerde soru başında ${h.streakMinutes ?? 0} dakika geçti.` : 'Henüz seri yok: bugün çözdüğün bir soru seriyi başlatır.')
+      + (h.streak && !h.activeToday ? ' Bugün bir soru çözersen seri sürer.' : '')
+      + (goal ? ` Günlük hedef ${goal} dk (haftalık hedefinin yedide biri).` : ' Hesap sayfasından haftalık süre hedefi koyarsan günlük hedef de görünür.');
+    el.setAttribute('aria-label', el.title);
+  }
+  let streakAt = 0;
+  const refreshStreak = async (force) => {
+    if (!token || (!force && Date.now() - streakAt < 6e4)) return;
+    streakAt = Date.now();
+    try { setStreak((await api('GET', '/api/me')).habit); } catch {}
+  };
 
   function habitLine(h) {
     const goal = h.goalMinutes ? ` · bugün ${h.todayMinutes}/${h.goalMinutes} dk` : '';
@@ -1904,6 +1968,112 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     ask();
   }
 
+  // ---------- okuma kütüphanesi ----------
+  // Açık lisanslı metinler (ABD kamu kurumları, Wikipedia) konu ve uzunluğa göre; her metnin altında YDS tipi sorular.
+  // Cevaplar pratik sayılır: hata defterine ve seriye girer. Kanıt, cevaptan sonra metnin içinde vurgulanır.
+  const LICENSE_HTML = {
+    'public-domain': 'ABD federal kurumu yayını, kamu malı',
+    'CC BY-SA 4.0': '<a href="https://creativecommons.org/licenses/by-sa/4.0/deed.tr" rel="noopener">CC BY-SA 4.0</a> lisanslı',
+  };
+  const LIB_SKILL_TR = { 'reading.main_idea': 'Ana fikir', 'reading.detail': 'Ayrıntı', 'reading.inference': 'Çıkarım', 'reading.vocab_context': 'Bağlamda kelime' };
+  const normWs = (t) => t.replace(/\s+/g, ' ').trim();
+
+  async function renderLibrary() {
+    show('library');
+    const box = $('#v-library');
+    box.innerHTML = '<div class="skeleton" style="height:320px"></div>';
+    const seq = viewSeq;
+    let d;
+    try { d = await api('GET', '/api/library'); } catch (err) { return alive(seq) && errBox(box, err.message, renderLibrary); }
+    if (!alive(seq)) return;
+    let topic = store.get('yds-lib-topic') || '', len = store.get('yds-lib-len') || '';
+    const topics = Object.keys(TOPIC_TR).filter((k) => d.texts.some((t) => t.topic === k));
+    const read = d.texts.filter((t) => t.questions && t.done >= t.questions).length;
+    box.innerHTML = `<div class="narrow" style="margin:0 auto">
+      <p class="label">Okuma · konu konu metin</p>
+      <h1 class="h-sm">${d.texts.length} metin, ${d.texts.reduce((n, t) => n + t.questions, 0)} soru${read ? ` · ${read} metni bitirdin` : ''}</h1>
+      <p class="lede">YDS'deki akademik metinlerle aynı türden kaynaklar: NIH, NASA, NOAA, NIST gibi kurumların yayınları ve Wikipedia. Metni oku, altındaki soruları çöz. Cevap verdikten sonra doğru şıkkın dayandığı cümle metinde yeşil yanar.</p>
+      <div class="lib-filters">
+        <div class="chips" role="group" aria-label="Konu"><button class="chip" data-t="">Hepsi</button>${topics.map((k) => `<button class="chip" data-t="${k}">${esc(TOPIC_TR[k])}</button>`).join('')}</div>
+        <div class="chips" role="group" aria-label="Uzunluk"><button class="chip" data-l="">Her uzunluk</button>${[150, 250, 500].map((n) => `<button class="chip" data-l="${n}">${n} kelime</button>`).join('')}</div>
+      </div>
+      <ul class="lib-list" id="lib-list"></ul>
+      <p class="note">Hazırlık forumlarının önerdiği dergiler (New Scientist, Scientific American, The Economist…) telifli olduğu için kopyalanmadı. Onların yerine aynı konuları işleyen ve yeniden kullanımı serbest metinler alındı. Sorular bu metinler için özgün yazıldı.</p></div>`;
+    const paint = () => {
+      $$('[data-t]', box).forEach((b) => b.setAttribute('aria-pressed', b.dataset.t === topic));
+      $$('[data-l]', box).forEach((b) => b.setAttribute('aria-pressed', b.dataset.l === String(len)));
+      const list = d.texts.filter((t) => (!topic || t.topic === topic) && (!len || String(t.len) === String(len)));
+      $('#lib-list').innerHTML = list.length ? list.map((t) => {
+        const done = t.questions && t.done >= t.questions;
+        const prog = !t.done ? `${t.questions} soru` : done ? `✓ ${t.correct}/${t.questions} doğru` : `${t.done}/${t.questions} çözüldü`;
+        return `<li><button class="lib-row" data-id="${t.id}"><span class="len num">${t.len}<small>kel.</small></span><span class="tt">${esc(t.title)}</span>
+          <span class="prog${done ? ' done' : ''}">${prog}</span><span class="meta">${esc(TOPIC_TR[t.topic] ?? t.topic)} · ${esc(t.source)}</span></button></li>`;
+      }).join('') : '<li><p class="muted" style="padding:16px 4px;margin:0">Bu seçimde metin yok.</p></li>';
+      $$('.lib-row', box).forEach((b) => (b.onclick = () => openText(b.dataset.id)));
+    };
+    $$('[data-t]', box).forEach((b) => (b.onclick = () => { topic = b.dataset.t; store.set('yds-lib-topic', topic); paint(); }));
+    $$('[data-l]', box).forEach((b) => (b.onclick = () => { len = b.dataset.l; store.set('yds-lib-len', len); paint(); }));
+    paint();
+  }
+
+  async function openText(id) {
+    show('library');
+    const box = $('#v-library');
+    box.innerHTML = '<div class="skeleton" style="height:420px"></div>';
+    const seq = viewSeq;
+    let t;
+    try { t = await api('GET', `/api/library/text?id=${encodeURIComponent(id)}`); } catch (err) { return alive(seq) && errBox(box, err.message, () => openText(id)); }
+    if (!alive(seq)) return;
+    const paras = t.text.split('\n\n').map((p) => `<p>${splitSentences(p).map((x) => `<span class="s">${esc(x)}</span>`).join(' ')}</p>`).join('');
+    const prev = (it) => t.answered[it.id];
+    box.innerHTML = `<p style="margin:0 0 14px"><button class="link small" id="lib-back">← Okuma listesi</button></p>
+      <div class="reader">
+        <article class="rtext">
+          <span class="label">${esc(TOPIC_TR[t.topic] ?? t.topic)} · ${t.words} kelime</span>
+          <h1>${esc(t.title)}</h1>
+          <p class="byline">${esc(t.source)}</p>
+          <div class="body" id="lib-body">${paras}</div>
+          <p class="credit">Kaynak: <a href="${esc(t.url)}" rel="noopener" target="_blank">${esc(t.source)}, “${esc(t.title)}”</a>. ${LICENSE_HTML[t.license] ?? esc(t.license)}. Metin sınav çalışması için kısaltıldı.</p>
+        </article>
+        <div class="rqs" aria-label="Sorular">${t.items.map((it, i) => `<div class="rq" data-i="${i}">
+          <div class="qhead"><span class="qno">${i + 1}</span><div class="qmeta"><span class="label">${esc(LIB_SKILL_TR[it.skill] ?? 'Okuma')}</span>${prev(it) ? `<span class="was">Daha önce ${prev(it).correct ? 'doğru' : 'yanlış'} çözdün</span>` : ''}</div></div>
+          <p class="stem">${gaps(esc(it.stem))}</p><div class="opts">${optsHtml(it.options)}</div><div data-fb></div></div>`).join('')}
+          <div class="actions" id="lib-end" hidden><button class="btn" id="lib-next">Listeye dön</button></div>
+        </div>
+      </div>`;
+    $('#lib-back').onclick = renderLibrary;
+    $('#lib-next').onclick = renderLibrary;
+    const body = $('#lib-body');
+    const showEvidence = (ev) => {
+      const want = (ev ?? []).map(normWs);
+      $$('.s', body).forEach((el) => el.classList.toggle('ev', want.some((w) => w.includes(normWs(el.textContent)))));
+      $('.s.ev', body)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+    let t0 = performance.now(), left = t.items.length;
+    $$('.rq', box).forEach((q) => {
+      const it = t.items[Number(q.dataset.i)];
+      $$('.opt', q).forEach((b) => (b.onclick = async () => {
+        const ms = Math.round(performance.now() - t0);
+        $$('.opt', q).forEach((x) => (x.disabled = true));
+        b.classList.add('picked');
+        let r;
+        try { r = await api('POST', '/api/answer', { itemId: it.id, chosen: b.dataset.k, ms }); }
+        catch (err) { $('[data-fb]', q).innerHTML = `<p class="err">${esc(err.message)}</p>`; $$('.opt', q).forEach((x) => (x.disabled = false)); b.classList.remove('picked'); return; }
+        if (!alive(seq)) return;
+        t0 = performance.now();
+        r.chosen = b.dataset.k;
+        paintOptions(q, r, r.chosen);
+        $('[data-fb]', q).innerHTML = feedbackHtml(r) + (r.evidence?.length ? '<button class="btn ghost showev">Kanıtı metinde göster</button>' : '');
+        wireFeedback($('[data-fb]', q), it.id);
+        const sb = $('.showev', q);
+        if (sb) sb.onclick = () => showEvidence(r.evidence);
+        showEvidence(r.evidence);
+        // Metinden kelime seçmek bütün sorular bitince açılır: kelime sorusunun cevabını önceden vermesin.
+        if (--left === 0) { body.dataset.pick = it.id; $('#lib-end').hidden = false; refreshStreak(true); toast('Metni bitirdin. Bilmediğin kelimeye metinde çift tıklayıp ekleyebilirsin.'); }
+      }));
+    });
+  }
+
   // ---------- kelimeler: topla, grupla, gün aralıklarıyla tekrar et ----------
   const POS_TR = { n: 'isim', v: 'fiil', adj: 'sıfat', adv: 'zarf', conj: 'bağlaç', prep: 'edat', phr: 'kalıp' };
   const DAY = 864e5;
@@ -1913,9 +2083,17 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   };
   // Aralıklar art arda tekrarlar arasındaki gün sayısı; kullanıcıya ilk çalışmadan sonraki günler gösterilir.
   const gapDays = (gaps) => { let t = 0; return gaps.map((g) => (t += g)); };
-  const parseGaps = (t) => {
-    const g = t.split(/[^0-9]+/).filter(Boolean).map(Number);
-    return g.length && g.length <= 10 && g.every((x) => x >= 1 && x <= 180) ? g : null;
+  // Kendi plan gün numarasıyla yazılır, son sayı süresiz tekrar aralığıdır (worker core/vocab.js planFromDays).
+  const parseDays = (t) => {
+    const d = t.split(/[^0-9]+/).filter(Boolean).map(Number);
+    if (!d.length || d.length > 10 || d.some((x) => x < 1 || x > 365)) return null;
+    const marks = d.slice(0, -1);
+    return marks.every((x, i) => x > (marks[i - 1] ?? 0)) && d.at(-1) <= 180 ? d : null;
+  };
+  const ownPlanText = (d) => {
+    const marks = d.slice(0, -1), every = d.at(-1), last = marks.at(-1) ?? 0;
+    const next = [1, 2, 3].map((k) => `${last + k * every}.`).join(', ');
+    return `Bugün ilk çalışma${marks.length ? `, sonra ${marks.join('., ')}. günlerde tekrar` : ''}; ardından her ${every} günde bir (${next} gün …) sen grubu silene kadar.`;
   };
   const wordsSel = new Set();
 
@@ -1941,8 +2119,9 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     const groupRow = (g) => {
       const n = inGroup(g).length;
       const state = g.due == null ? '<span class="ok">Bütün tekrarlar bitti</span>' : g.isDue ? '<span class="due">Bugün tekrar</span>' : `Sonraki tekrar ${dayLabel(g.due, d.today)}`;
-      return `<div class="grp"><div><b>${esc(g.name)}</b> <span class="small muted">· ${n} kelime · ${Math.min(g.stage, g.sessions)} / ${g.sessions} tekrar</span>
-          <div class="small faint">${state} · aralık ${g.gaps.join(', ')} gün</div></div>
+      const plan = g.every ? `${g.gaps.length ? `${gapDays(g.gaps).join(', ')}. gün, ` : ''}sonra her ${g.every} günde bir` : `aralık ${g.gaps.join(', ')} gün`;
+      return `<div class="grp"><div><b>${esc(g.name)}</b> <span class="small muted">· ${n} kelime · ${g.every ? `${g.stage} tekrar yapıldı` : `${Math.min(g.stage, g.sessions)} / ${g.sessions} tekrar`}</span>
+          <div class="small faint">${state} · ${plan}</div></div>
         <div class="actions" style="margin:0"><button class="btn ${g.isDue ? '' : 'ghost'}" data-study="${g.id}" ${n ? '' : 'disabled'}>${g.isDue ? 'Çalış' : 'Aç'}</button><button class="link small" data-gdel="${g.id}">Sil</button></div></div>`;
     };
     const wordRow = (w) => `<li data-w="${esc(w.lemma)}"><input type="checkbox" aria-label="${esc(w.lemma)} seç" ${wordsSel.has(w.lemma) ? 'checked' : ''}>
@@ -1960,7 +2139,8 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
             <div><label for="w-name">Grup adı</label><input id="w-name" maxlength="40" value="${esc(name)}"></div>
             <div><label for="w-gap">Kaç gün arayla tekrar edeceksin?</label><select id="w-gap">${d.presets.map((p) => `<option value="${p.id}">${esc(p.label)} · ${gapDays(p.gaps).join(', ')}. gün</option>`).join('')}<option value="own">Kendi aralığım</option></select></div>
           </div>
-          <div id="w-own" style="margin-top:12px" hidden><label for="w-gaps">Tekrarlar arasındaki gün sayıları, virgülle (en çok 10)</label><input id="w-gaps" inputmode="numeric" placeholder="1, 2, 5, 4, 7" value="${esc(store.get('yds-gaps-own') || '')}"></div>
+          <div id="w-own" style="margin-top:12px" hidden><label for="w-gaps">Tekrar günleri, virgülle (en çok 10 sayı)</label><input id="w-gaps" inputmode="numeric" placeholder="1, 2, 5, 7, 21, 30" value="${esc(store.get('yds-days-own') || '')}">
+            <p class="small muted" style="margin:8px 0 0">Grubu kurduğun gün ilk çalışmadır. Yazdığın sayılar o günden sonraki gün numaralarıdır ve artan sırada olmalı. <b>Son sayı ise tekrar aralığıdır:</b> plan bitince grup o kadar günde bir yeniden karşına çıkar. Örnek: <span class="num">1, 2, 5, 7, 21, 30</span> yazarsan 1., 2., 5., 7. ve 21. gün tekrar edersin, sonra her 30 günde bir. Tek sayı yazarsan (ör. <span class="num">7</span>) grup hep o aralıkla döner.</p></div>
           <p class="note" id="w-plan"></p>
           <div class="actions"><button class="btn" id="w-go" disabled></button></div></div>`
         : '<p class="muted" style="margin:0">Gruba konmamış kelime yok.</p>'}
@@ -1978,18 +2158,25 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     }));
     if (!loose.length) return;
 
-    const gaps = () => ($('#w-gap').value === 'own' ? parseGaps($('#w-gaps').value) : d.presets.find((p) => p.id === $('#w-gap').value).gaps);
+    const own = () => $('#w-gap').value === 'own';
+    // Hazır plan aralık listesi, kendi plan gün numarası olarak gider.
+    const plan = () => {
+      if (!own()) return { gaps: d.presets.find((p) => p.id === $('#w-gap').value).gaps };
+      const days = parseDays($('#w-gaps').value);
+      return days && { days };
+    };
     const refresh = () => {
-      const g = gaps();
-      $('#w-own').hidden = $('#w-gap').value !== 'own';
-      $('#w-plan').textContent = g ? `Bugün ilk çalışma, sonra ${gapDays(g).join(', ')}. gün tekrar. Bir tekrarı geç yaparsan sıradaki, yaptığın günden sayılır.` : 'Gün sayılarını 1-180 arası, virgülle yaz.';
+      const g = plan();
+      $('#w-own').hidden = !own();
+      $('#w-plan').textContent = !g ? 'Günleri artan sırada, 1-365 arası ve virgülle yaz. Son sayı (tekrar aralığı) en çok 180 olabilir.'
+        : (g.days ? ownPlanText(g.days) : `Bugün ilk çalışma, sonra ${gapDays(g.gaps).join(', ')}. gün tekrar.`) + ' Bir tekrarı geç yaparsan sıradaki, yaptığın günden sayılır.';
       $('#w-go').textContent = `Seçili ${wordsSel.size} kelimeyle grup yap`;
       $('#w-go').disabled = !wordsSel.size || !g;
       $('#w-n').textContent = $$('.wl li', box).length;
     };
     if ([...$('#w-gap').options].some((o) => o.value === gapPref)) $('#w-gap').value = gapPref;
     $('#w-gap').onchange = () => { store.set('yds-gaps', $('#w-gap').value); refresh(); };
-    $('#w-gaps').oninput = () => { store.set('yds-gaps-own', $('#w-gaps').value); refresh(); };
+    $('#w-gaps').oninput = () => { store.set('yds-days-own', $('#w-gaps').value); refresh(); };
     const setAll = (list) => { wordsSel.clear(); list.forEach((l) => wordsSel.add(l)); $$('.wl li', box).forEach((li) => ($('input', li).checked = wordsSel.has(li.dataset.w))); refresh(); };
     const lemmas = () => $$('.wl li', box).map((li) => li.dataset.w);
     $('#w-ten').onclick = () => setAll(lemmas().slice(0, 10));
@@ -2015,10 +2202,10 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       };
     });
     $('#w-go').onclick = async () => {
-      const g = gaps();
+      const g = plan();
       if (!g || !wordsSel.size) return;
       try {
-        await api('POST', '/api/groups', { name: $('#w-name').value.trim() || name, lemmas: [...wordsSel], gaps: g });
+        await api('POST', '/api/groups', { name: $('#w-name').value.trim() || name, lemmas: [...wordsSel], ...g });
         wordsSel.clear();
         toast('Grup kuruldu. İlk çalışması bugün.');
         renderWords();
@@ -2123,7 +2310,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   }
 
   // ---------- başlangıç ----------
-  const GO = { dash: () => renderDash(), measure: () => renderExam(), mistakes: () => renderMistakes(), vocab: () => renderWords(), account: () => renderAccount(), strategy: () => renderStrategy() };
+  const GO = { dash: () => renderDash(), measure: () => renderExam(), library: () => renderLibrary(), mistakes: () => renderMistakes(), vocab: () => renderWords(), account: () => renderAccount(), strategy: () => renderStrategy() };
   $$('[data-go]').forEach((b) => (b.onclick = () => GO[b.dataset.go]()));
   $('#logout').onclick = async () => { try { await api('POST', '/api/logout'); } catch {} clearLocal(); setToken(null); show('auth'); };
 
@@ -2134,6 +2321,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     if (!token) return show('auth');
     try { me = await api('GET', '/api/me'); }
     catch { return show('auth'); }
+    setStreak(me.habit); streakAt = Date.now();
     if (me.profile.target_score == null) return openOnboard();
     renderDash();
   }
