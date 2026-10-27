@@ -114,6 +114,8 @@ nav .count{display:inline-grid;place-items:center;min-width:18px;height:18px;pad
 .rtext .w:hover{background:var(--form-soft)}
 .rtext .w.on{background:var(--form-soft);box-shadow:0 1px 0 var(--form)}
 .rtext .w:focus-visible{outline:2px solid var(--form);outline-offset:1px}
+.passage .pcredit{font-size:12px;color:var(--ink-3);margin:8px 0 0;text-align:left}
+.passage .pcredit a{color:inherit}
 .rtext .credit{font-size:13px;color:var(--ink-3);border-top:1px solid var(--form-line);padding-top:10px;margin-top:6px}
 .gloss{position:absolute;z-index:15;width:min(300px,100%);background:var(--sheet);border:1px solid var(--form-line);border-radius:var(--r-sheet);box-shadow:var(--shadow);padding:12px 14px}
 .gloss .g-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
@@ -787,7 +789,9 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     if (!it.passage) return '';
     let html = gaps(esc(it.passage), it.blank);
     for (const s of it.sentences || []) html = html.replace(gaps(esc(s.text)), `<span class="sent" tabindex="0" role="button" data-s="${esc(s.text)}" aria-label="Cümleyi çözümle">${gaps(esc(s.text))}</span>`);
-    return `<div class="passage"><p>${html}</p>${it.sentences?.length ? '<p class="note">Vurgulu cümleye dokun, yapısını göster (ipucu sayılır: o cevap beceri ölçümüne girmez).</p>' : ''}<div data-analysis></div></div>`;
+    // Açık lisanslı kaynaktan uyarlanan metinde atıf (lisans gereği)
+    const cr = it.credit ? `<p class="pcredit">Metin <a href="${esc(it.credit.url)}" rel="noopener" target="_blank">${esc(it.credit.source)}</a> kaynağından uyarlandı · ${LICENSE_HTML[it.credit.license] ?? esc(it.credit.license)}</p>` : '';
+    return `<div class="passage"><p>${html}</p>${cr}${it.sentences?.length ? '<p class="note">Vurgulu cümleye dokun, yapısını göster (ipucu sayılır: o cevap beceri ölçümüne girmez).</p>' : ''}<div data-analysis></div></div>`;
   }
   function wireSentences(root, it, onHint) {
     const map = new Map((it.sentences || []).map((s) => [s.text, s]));
@@ -1980,6 +1984,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   const LICENSE_HTML = {
     'public-domain': 'ABD federal kurumu yayını, kamu malı',
     'CC BY-SA 4.0': '<a href="https://creativecommons.org/licenses/by-sa/4.0/deed.tr" rel="noopener">CC BY-SA 4.0</a> lisanslı',
+    'CC BY 4.0': '<a href="https://creativecommons.org/licenses/by/4.0/deed.tr" rel="noopener">CC BY 4.0</a> lisanslı',
   };
   const libRead = () => { try { return new Set(JSON.parse(localStorage.getItem('yds-lib-read') || '[]')); } catch { return new Set(); } };
 
