@@ -105,20 +105,24 @@ nav .count{display:inline-grid;place-items:center;min-width:18px;height:18px;pad
 .lib-row .prog{grid-row:1/3;grid-column:3;font:500 13px/1.3 var(--label);color:var(--ink-3);text-align:right;white-space:nowrap}
 .lib-row .prog.done{color:var(--good)}
 @media (max-width:560px){.lib-row{grid-template-columns:4rem 1fr}.lib-row .prog{grid-row:auto;grid-column:2;text-align:left}}
-.reader{display:grid;gap:28px;align-items:start}
-@media (min-width:1000px){.reader{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}.reader .rtext{position:sticky;top:76px;max-height:calc(100vh - 92px);overflow:auto;padding-right:6px}}
+.rtext{position:relative;max-width:720px;margin:0 auto}
 .rtext h1{font:600 clamp(26px,3.4vw,34px)/1.2 var(--read);letter-spacing:-.01em;margin:6px 0 6px}
 .rtext .byline{font-size:13.5px;color:var(--ink-3);margin:0 0 18px}
-.rtext .body{font:18px/1.75 var(--read);max-width:66ch}
+.rtext .body{font:18px/1.8 var(--read)}
 .rtext .body p{margin:0 0 1em}
-.rtext .body .s{transition:background .3s}
-.rtext .body .s.ev{background:var(--good-soft);box-shadow:0 0 0 2px var(--good-soft);border-radius:2px}
-.rtext .credit{font-size:13px;color:var(--ink-3);border-top:1px solid var(--form-line);padding-top:10px;margin-top:6px;max-width:66ch}
-.rq{padding:18px 0 22px;border-top:1px solid var(--form-line)}
-.rq:first-child{border-top:0;padding-top:0}
-.rq .qhead{margin-bottom:10px}.rq .qno{font-size:30px}
-.rq .was{font:500 12.5px/1 var(--label);color:var(--ink-3)}
-.rq .showev{margin-top:10px}
+.rtext .w{cursor:pointer;border-radius:2px;transition:background .15s}
+.rtext .w:hover{background:var(--form-soft)}
+.rtext .w.on{background:var(--form-soft);box-shadow:0 1px 0 var(--form)}
+.rtext .w:focus-visible{outline:2px solid var(--form);outline-offset:1px}
+.rtext .credit{font-size:13px;color:var(--ink-3);border-top:1px solid var(--form-line);padding-top:10px;margin-top:6px}
+.gloss{position:absolute;z-index:15;width:min(300px,100%);background:var(--sheet);border:1px solid var(--form-line);border-radius:var(--r-sheet);box-shadow:var(--shadow);padding:12px 14px}
+.gloss .g-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.gloss .g-head b{font:600 18px/1.2 var(--read)}
+.gloss .pos,.gloss .src{font:500 12px/1 var(--label);color:var(--ink-3)}
+.gloss .g-sense{margin:6px 0 10px;font-size:15.5px}
+.gloss .g-ok{margin:0;font-size:14px;color:var(--good)}
+.gloss .btn{min-height:34px;padding:6px 12px;font-size:14px}
+.gloss .g-own{display:flex;gap:6px}.gloss .g-own input{flex:1;min-width:0}
 
 /* tipografi */
 h1{font:700 clamp(30px,4.6vw,46px)/1.04 var(--display);letter-spacing:-.035em;margin:0 0 12px}
@@ -201,6 +205,7 @@ td.over{color:var(--bad);font-weight:600}
 .qmeta{display:flex;flex-direction:column;gap:2px}
 .passage{font:18px/1.75 var(--read);padding:22px 24px;margin:0 0 18px;max-width:70ch;background:var(--sheet);border:1px solid var(--form-line);border-left:3px solid var(--form);border-radius:4px var(--r-sheet) var(--r-sheet) 4px}
 .passage p{margin:0}
+.passage,.stem,.rtext .body{text-align:justify}.rtext .body{hyphens:auto;-webkit-hyphens:auto}
 .passage>p:first-child{white-space:pre-line}
 .stem{font:19px/1.6 var(--read);margin:0 0 16px;max-width:68ch}
 .gap{display:inline-block;width:3.4em;height:1em;border-bottom:1.5px solid currentColor;vertical-align:-.12em;margin:0 .1em}
@@ -1970,14 +1975,13 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   }
 
   // ---------- okuma kütüphanesi ----------
-  // Açık lisanslı metinler (ABD kamu kurumları, Wikipedia) konu ve uzunluğa göre; her metnin altında YDS tipi sorular.
-  // Cevaplar pratik sayılır: hata defterine ve seriye girer. Kanıt, cevaptan sonra metnin içinde vurgulanır.
+  // Yalnız okuma: açık lisanslı metinler (ABD kamu kurumları, Wikipedia) konu ve uzunluğa göre. Metindeki kelimeye
+  // dokununca anlamı çıkar (önce bizim sözlüğümüz, yoksa yapay zekâ), tek dokunuşla kelimelere eklenir.
   const LICENSE_HTML = {
     'public-domain': 'ABD federal kurumu yayını, kamu malı',
     'CC BY-SA 4.0': '<a href="https://creativecommons.org/licenses/by-sa/4.0/deed.tr" rel="noopener">CC BY-SA 4.0</a> lisanslı',
   };
-  const LIB_SKILL_TR = { 'reading.main_idea': 'Ana fikir', 'reading.detail': 'Ayrıntı', 'reading.inference': 'Çıkarım', 'reading.vocab_context': 'Bağlamda kelime' };
-  const normWs = (t) => t.replace(/\s+/g, ' ').trim();
+  const libRead = () => { try { return new Set(JSON.parse(localStorage.getItem('yds-lib-read') || '[]')); } catch { return new Set(); } };
 
   async function renderLibrary() {
     show('library');
@@ -1989,33 +1993,33 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     if (!alive(seq)) return;
     let topic = store.get('yds-lib-topic') || '', len = store.get('yds-lib-len') || '';
     const topics = Object.keys(TOPIC_TR).filter((k) => d.texts.some((t) => t.topic === k));
-    const read = d.texts.filter((t) => t.questions && t.done >= t.questions).length;
+    const read = libRead();
     box.innerHTML = `<div class="narrow" style="margin:0 auto">
       <p class="label">Okuma · konu konu metin</p>
-      <h1 class="h-sm">${d.texts.length} metin, ${d.texts.reduce((n, t) => n + t.questions, 0)} soru${read ? ` · ${read} metni bitirdin` : ''}</h1>
-      <p class="lede">YDS'deki akademik metinlerle aynı türden kaynaklar: NIH, NASA, NOAA, NIST gibi kurumların yayınları ve Wikipedia. Metni oku, altındaki soruları çöz. Cevap verdikten sonra doğru şıkkın dayandığı cümle metinde yeşil yanar.</p>
+      <h1 class="h-sm">${d.texts.length} metin${read.size ? ` · ${read.size} tanesini okudun` : ''}</h1>
+      <p class="lede">YDS'deki akademik metinlerle aynı türden kaynaklar: NIH, NASA, NOAA, NIST gibi kurumların yayınları ve Wikipedia. Bilmediğin kelimeye dokun, anlamını gör; istersen tek dokunuşla kelimelerine ekle.</p>
       <div class="lib-filters">
         <div class="chips" role="group" aria-label="Konu"><button class="chip" data-t="">Hepsi</button>${topics.map((k) => `<button class="chip" data-t="${k}">${esc(TOPIC_TR[k])}</button>`).join('')}</div>
         <div class="chips" role="group" aria-label="Uzunluk"><button class="chip" data-l="">Her uzunluk</button>${[150, 250, 500].map((n) => `<button class="chip" data-l="${n}">${n} kelime</button>`).join('')}</div>
       </div>
       <ul class="lib-list" id="lib-list"></ul>
-      <p class="note">Hazırlık forumlarının önerdiği dergiler (New Scientist, Scientific American, The Economist…) telifli olduğu için kopyalanmadı. Onların yerine aynı konuları işleyen ve yeniden kullanımı serbest metinler alındı. Sorular bu metinler için özgün yazıldı.</p></div>`;
+      <p class="note">Hazırlık forumlarının önerdiği dergiler (New Scientist, Scientific American, The Economist…) telifli olduğu için kopyalanmadı. Onların yerine aynı konuları işleyen ve yeniden kullanımı serbest metinler alındı.</p></div>`;
     const paint = () => {
       $$('[data-t]', box).forEach((b) => b.setAttribute('aria-pressed', b.dataset.t === topic));
       $$('[data-l]', box).forEach((b) => b.setAttribute('aria-pressed', b.dataset.l === String(len)));
       const list = d.texts.filter((t) => (!topic || t.topic === topic) && (!len || String(t.len) === String(len)));
-      $('#lib-list').innerHTML = list.length ? list.map((t) => {
-        const done = t.questions && t.done >= t.questions;
-        const prog = !t.done ? `${t.questions} soru` : done ? `✓ ${t.correct}/${t.questions} doğru` : `${t.done}/${t.questions} çözüldü`;
-        return `<li><button class="lib-row" data-id="${t.id}"><span class="len num">${t.len}<small>kel.</small></span><span class="tt">${esc(t.title)}</span>
-          <span class="prog${done ? ' done' : ''}">${prog}</span><span class="meta">${esc(TOPIC_TR[t.topic] ?? t.topic)} · ${esc(t.source)}</span></button></li>`;
-      }).join('') : '<li><p class="muted" style="padding:16px 4px;margin:0">Bu seçimde metin yok.</p></li>';
+      $('#lib-list').innerHTML = list.length ? list.map((t) => `<li><button class="lib-row" data-id="${t.id}"><span class="len num">${t.len}<small>kel.</small></span><span class="tt">${esc(t.title)}</span>
+          <span class="prog${read.has(t.id) ? ' done' : ''}">${read.has(t.id) ? '✓ okundu' : ''}</span><span class="meta">${esc(TOPIC_TR[t.topic] ?? t.topic)} · ${esc(t.source)}</span></button></li>`).join('')
+        : '<li><p class="muted" style="padding:16px 4px;margin:0">Bu seçimde metin yok.</p></li>';
       $$('.lib-row', box).forEach((b) => (b.onclick = () => openText(b.dataset.id)));
     };
     $$('[data-t]', box).forEach((b) => (b.onclick = () => { topic = b.dataset.t; store.set('yds-lib-topic', topic); paint(); }));
     $$('[data-l]', box).forEach((b) => (b.onclick = () => { len = b.dataset.l; store.set('yds-lib-len', len); paint(); }));
     paint();
   }
+
+  // Kelimeler tek tek dokunulabilir span olur; noktalama ve boşluk olduğu gibi kalır.
+  const wordsHtml = (p) => esc(p).replace(/[A-Za-z][A-Za-z'’-]*[A-Za-z]|[A-Za-z]/g, (w) => `<span class="w" tabindex="0">${w}</span>`);
 
   async function openText(id) {
     show('library');
@@ -2025,54 +2029,71 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     let t;
     try { t = await api('GET', `/api/library/text?id=${encodeURIComponent(id)}`); } catch (err) { return alive(seq) && errBox(box, err.message, () => openText(id)); }
     if (!alive(seq)) return;
-    const paras = t.text.split('\n\n').map((p) => `<p>${splitSentences(p).map((x) => `<span class="s">${esc(x)}</span>`).join(' ')}</p>`).join('');
-    const prev = (it) => t.answered[it.id];
-    box.innerHTML = `<p style="margin:0 0 14px"><button class="link small" id="lib-back">← Okuma listesi</button></p>
-      <div class="reader">
-        <article class="rtext">
-          <span class="label">${esc(TOPIC_TR[t.topic] ?? t.topic)} · ${t.words} kelime</span>
-          <h1>${esc(t.title)}</h1>
-          <p class="byline">${esc(t.source)}</p>
-          <div class="body" id="lib-body">${paras}</div>
-          <p class="credit">Kaynak: <a href="${esc(t.url)}" rel="noopener" target="_blank">${esc(t.source)}, “${esc(t.title)}”</a>. ${LICENSE_HTML[t.license] ?? esc(t.license)}. Metin sınav çalışması için kısaltıldı.</p>
-        </article>
-        <div class="rqs" aria-label="Sorular">${t.items.map((it, i) => `<div class="rq" data-i="${i}">
-          <div class="qhead"><span class="qno">${i + 1}</span><div class="qmeta"><span class="label">${esc(LIB_SKILL_TR[it.skill] ?? 'Okuma')}</span>${prev(it) ? `<span class="was">Daha önce ${prev(it).correct ? 'doğru' : 'yanlış'} çözdün</span>` : ''}</div></div>
-          <p class="stem">${gaps(esc(it.stem))}</p><div class="opts">${optsHtml(it.options)}</div><div data-fb></div></div>`).join('')}
-          <div class="actions" id="lib-end" hidden><button class="btn" id="lib-next">Listeye dön</button></div>
-        </div>
-      </div>`;
+    box.innerHTML = `<article class="rtext">
+        <p style="margin:0 0 14px"><button class="link small" id="lib-back">← Okuma listesi</button></p>
+        <span class="label">${esc(TOPIC_TR[t.topic] ?? t.topic)} · ${t.words} kelime</span>
+        <h1>${esc(t.title)}</h1>
+        <p class="byline">${esc(t.source)} · Bilmediğin kelimeye dokun</p>
+        <div class="body" id="lib-body" lang="en">${t.text.split('\n\n').map((p) => `<p>${wordsHtml(p)}</p>`).join('')}</div>
+        <p class="credit">Kaynak: <a href="${esc(t.url)}" rel="noopener" target="_blank">${esc(t.source)}, “${esc(t.title)}”</a>. ${LICENSE_HTML[t.license] ?? esc(t.license)}. Metin sınav çalışması için kısaltıldı.</p>
+        <div class="actions"><button class="btn" id="lib-done">Okudum, listeye dön</button></div>
+        <div class="gloss" id="gloss" role="dialog" aria-live="polite" hidden></div>
+      </article>`;
     $('#lib-back').onclick = renderLibrary;
-    $('#lib-next').onclick = renderLibrary;
-    const body = $('#lib-body');
-    const showEvidence = (ev) => {
-      const want = (ev ?? []).map(normWs);
-      $$('.s', body).forEach((el) => el.classList.toggle('ev', want.some((w) => w.includes(normWs(el.textContent)))));
-      $('.s.ev', body)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    $('#lib-done').onclick = () => {
+      const r = libRead(); r.add(t.id);
+      try { localStorage.setItem('yds-lib-read', JSON.stringify([...r])); } catch {}
+      renderLibrary();
     };
-    let t0 = performance.now(), left = t.items.length;
-    $$('.rq', box).forEach((q) => {
-      const it = t.items[Number(q.dataset.i)];
-      $$('.opt', q).forEach((b) => (b.onclick = async () => {
-        const ms = Math.round(performance.now() - t0);
-        $$('.opt', q).forEach((x) => (x.disabled = true));
-        b.classList.add('picked');
-        let r;
-        try { r = await api('POST', '/api/answer', { itemId: it.id, chosen: b.dataset.k, ms }); }
-        catch (err) { $('[data-fb]', q).innerHTML = `<p class="err">${esc(err.message)}</p>`; $$('.opt', q).forEach((x) => (x.disabled = false)); b.classList.remove('picked'); return; }
-        if (!alive(seq)) return;
-        t0 = performance.now();
-        r.chosen = b.dataset.k;
-        paintOptions(q, r, r.chosen);
-        $('[data-fb]', q).innerHTML = feedbackHtml(r) + (r.evidence?.length ? '<button class="btn ghost showev">Kanıtı metinde göster</button>' : '');
-        wireFeedback($('[data-fb]', q), it.id);
-        const sb = $('.showev', q);
-        if (sb) sb.onclick = () => showEvidence(r.evidence);
-        showEvidence(r.evidence);
-        // Metinden kelime seçmek bütün sorular bitince açılır: kelime sorusunun cevabını önceden vermesin.
-        if (--left === 0) { body.dataset.pick = it.id; $('#lib-end').hidden = false; refreshStreak(true); toast('Metni bitirdin. Bilmediğin kelimeye metinde çift tıklayıp ekleyebilirsin.'); }
-      }));
-    });
+    const body = $('#lib-body'), gloss = $('#gloss');
+    let cur = null;
+    const close = () => { gloss.hidden = true; cur?.classList.remove('on'); cur = null; };
+    const place = (el) => {
+      gloss.hidden = false;
+      const r = el.getBoundingClientRect(), host = gloss.offsetParent.getBoundingClientRect(); // .rtext
+      gloss.style.left = Math.max(0, Math.min(r.left - host.left, host.width - gloss.offsetWidth)) + 'px';
+      gloss.style.top = r.bottom - host.top + 8 + 'px';
+    };
+    const card = (x, el) => {
+      gloss.innerHTML = `<div class="g-head"><b>${esc(x.lemma)}</b>${x.pos ? `<span class="pos">${esc(POS_TR[x.pos] || x.pos)}</span>` : ''}${x.source === 'ai' ? '<span class="src">yapay zekâ</span>' : ''}</div>
+        <p class="g-sense">${esc(x.sense)}</p>
+        ${x.have ? '<p class="g-ok">✓ Kelimelerinde</p>' : '<button class="btn ghost g-add" type="button">+ Kelimelerime ekle</button>'}`;
+      place(el);
+      const add = $('.g-add', gloss);
+      if (add) add.onclick = () => save(el.textContent);
+    };
+    const save = async (word, sense) => {
+      try {
+        const r = await api('POST', '/api/library/word', { id: t.id, word, ...(sense && { sense }) });
+        toast(`${r.lemma}: ${r.sense}${r.added ? ' · kelimelerine eklendi' : ' · zaten kelimelerinde'}`);
+        close();
+      } catch (err) { toast(err.message); }
+    };
+    // Anlam bulunamazsa kullanıcı yazar ve öyle eklenir.
+    const ownSense = (el, msg) => {
+      gloss.innerHTML = `<p class="g-sense muted">${esc(msg)}</p><div class="g-own"><input aria-label="Anlamı" placeholder="Anlamını yaz" maxlength="60"><button class="btn ghost" type="button">Ekle</button></div>`;
+      place(el);
+      const inp = $('input', gloss);
+      inp.focus();
+      const go = () => inp.value.trim() && save(el.textContent, inp.value.trim());
+      $('button', gloss).onclick = go;
+      inp.onkeydown = (e) => { if (e.key === 'Enter') go(); if (e.key === 'Escape') close(); };
+    };
+    const open = async (el) => {
+      if (cur === el) return close();
+      cur?.classList.remove('on');
+      cur = el; el.classList.add('on');
+      gloss.innerHTML = '<p class="g-sense muted">Anlamına bakılıyor…</p>';
+      place(el);
+      try {
+        const x = await api('GET', `/api/library/word?id=${encodeURIComponent(t.id)}&w=${encodeURIComponent(el.textContent)}`);
+        if (cur === el) card(x, el);
+      } catch (err) { if (cur === el) ownSense(el, err.message); }
+    };
+    body.onclick = (e) => { const el = e.target.closest('.w'); if (el) open(el); };
+    body.onkeydown = (e) => { const el = e.target.closest('.w'); if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(el); } };
+    keyHandler = (e) => { if (e.key === 'Escape') close(); };
+    box.onmousedown = (e) => { if (!gloss.hidden && !gloss.contains(e.target) && !e.target.closest('.w')) close(); };
   }
 
   // ---------- kelimeler: topla, grupla, gün aralıklarıyla tekrar et ----------
