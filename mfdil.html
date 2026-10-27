@@ -110,6 +110,9 @@ nav .count{display:inline-grid;place-items:center;min-width:18px;height:18px;pad
 .rtext .byline{font-size:13.5px;color:var(--ink-3);margin:0 0 18px}
 .rtext .body{font:18px/1.8 var(--read)}
 .rtext .body p{margin:0 0 1em}
+.passage[data-item] .w{cursor:pointer;border-radius:2px}
+.passage[data-item] .w:hover,.passage[data-item] .w.on{background:var(--form-soft)}
+.gloss .g-sent{display:block;margin-top:8px}
 .rtext .w{cursor:pointer;border-radius:2px;transition:background .15s}
 .rtext .w:hover{background:var(--form-soft)}
 .rtext .w.on{background:var(--form-soft);box-shadow:0 1px 0 var(--form)}
@@ -642,7 +645,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     $('#nav').hidden = ['auth', 'recovery'].includes(view);
     if ($('#nav').hidden) $('#streak').hidden = true; else refreshStreak();
     $$('[data-go]').forEach((b) => (b.dataset.go === view ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current')));
-    keyHandler = null;
+    keyHandler = null; wordHint = null; closeGloss();
     window.scrollTo(0, 0);
   }
   document.addEventListener('keydown', (e) => {
@@ -785,13 +788,15 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   const ROLE_TR = { subject: 'özne', verb: 'yüklem', complement: 'tümleç', conjunction: 'bağlaç', relative_clause: 'sıfat cümleciği', adverbial_clause: 'zarf cümleciği' };
 
   // Metin + tıklanabilir cümleler. onHint: cümle çözümlemesi açılınca (ipucu sayılır).
-  function passageHtml(it) {
+  // words: kelimeye dokununca anlam kartı (mini deneme sürerken kapalı).
+  function passageHtml(it, words = true) {
     if (!it.passage) return '';
     let html = gaps(esc(it.passage), it.blank);
     for (const s of it.sentences || []) html = html.replace(gaps(esc(s.text)), `<span class="sent" tabindex="0" role="button" data-s="${esc(s.text)}" aria-label="Cümleyi çözümle">${gaps(esc(s.text))}</span>`);
+    if (words) html = html.replace(/(<[^>]*>|&#?\w+;)|[A-Za-z](?:[A-Za-z’-]|&#39;)*[A-Za-z]|[A-Za-z]/g, (m, skip) => skip ?? `<span class="w">${m}</span>`);
     // Açık lisanslı kaynaktan uyarlanan metinde atıf (lisans gereği)
     const cr = it.credit ? `<p class="pcredit">Metin <a href="${esc(it.credit.url)}" rel="noopener" target="_blank">${esc(it.credit.source)}</a> kaynağından uyarlandı · ${LICENSE_HTML[it.credit.license] ?? esc(it.credit.license)}</p>` : '';
-    return `<div class="passage"><p>${html}</p>${cr}${it.sentences?.length ? '<p class="note">Vurgulu cümleye dokun, yapısını göster (ipucu sayılır: o cevap beceri ölçümüne girmez).</p>' : ''}<div data-analysis></div></div>`;
+    return `<div class="passage"${words ? ` data-item="${esc(it.id)}"` : ''}><p>${html}</p>${cr}${it.sentences?.length ? '<p class="note">Vurgulu cümleye dokun, yapısını göster (ipucu sayılır: o cevap beceri ölçümüne girmez).</p>' : ''}<div data-analysis></div></div>`;
   }
   function wireSentences(root, it, onHint) {
     const map = new Map((it.sentences || []).map((s) => [s.text, s]));
@@ -802,10 +807,78 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         $('[data-analysis]', root).innerHTML = `<div class="analysis">${s.parts.map((p) => `<span class="part p-${esc(p.role)}"><span class="role">${esc(ROLE_TR[p.role] || p.role)}</span>${esc(p.text)}</span>`).join(' ')}
           ${s.parts.filter((p) => p.note).map((p) => `<div class="tr">${esc(p.note)}</div>`).join('')}<div class="tr">${esc(s.tr)}</div></div>`;
       };
-      el.onclick = open;
+      el.onclick = (e) => { if (!e.target.closest('.w')) open(); };
       el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } };
     });
   }
+
+  // ---------- kelime kartı: metindeki kelimeye dokununca anlam + ekleme ----------
+  // src.get(word) → {lemma, sense, pos, source, have}; src.add(word, sense?) → {lemma, sense, added}.
+  // Anlam bulunamazsa kullanıcı yazar ve öyle eklenir.
+  const gloss = document.createElement('div');
+  gloss.className = 'gloss'; gloss.id = 'gloss'; gloss.hidden = true;
+  gloss.setAttribute('role', 'dialog'); gloss.setAttribute('aria-live', 'polite');
+  document.body.append(gloss);
+  let glossAt = null;
+  const closeGloss = () => { gloss.hidden = true; glossAt?.classList.remove('on'); glossAt = null; };
+  const placeGloss = (el) => {
+    gloss.hidden = false;
+    const r = el.getBoundingClientRect();
+    gloss.style.left = Math.max(16, Math.min(r.left + scrollX, scrollX + document.documentElement.clientWidth - gloss.offsetWidth - 16)) + 'px';
+    gloss.style.top = r.bottom + scrollY + 8 + 'px';
+  };
+  async function openGloss(el, src) {
+    if (glossAt === el) return closeGloss();
+    glossAt?.classList.remove('on');
+    glossAt = el; el.classList.add('on');
+    const word = el.textContent, sent = el.closest('.sent');
+    const save = async (sense) => {
+      try {
+        const r = await src.add(word, sense);
+        toast(`${r.lemma}: ${r.sense}${r.added ? ' · kelimelerine eklendi' : ' · zaten kelimelerinde'}`);
+        if (glossAt === el) closeGloss();
+      } catch (err) { toast(err.message); }
+    };
+    const extra = sent ? '<button class="link small g-sent" type="button">Cümleyi çözümle</button>' : '';
+    gloss.innerHTML = '<p class="g-sense muted">Anlamına bakılıyor…</p>';
+    placeGloss(el);
+    try {
+      const x = await src.get(word);
+      if (glossAt !== el) return;
+      gloss.innerHTML = `<div class="g-head"><b>${esc(x.lemma)}</b>${x.pos ? `<span class="pos">${esc(POS_TR[x.pos] || x.pos)}</span>` : ''}${x.source === 'ai' ? '<span class="src">yapay zekâ</span>' : ''}</div>
+        <p class="g-sense">${esc(x.sense)}</p>
+        ${x.have ? '<p class="g-ok">✓ Kelimelerinde</p>' : '<button class="btn ghost g-add" type="button">+ Kelimelerime ekle</button>'}${extra}`;
+      const add = $('.g-add', gloss);
+      if (add) add.onclick = () => save();
+    } catch (err) {
+      if (glossAt !== el) return;
+      gloss.innerHTML = `<p class="g-sense muted">${esc(err.message)}</p>${/kendin/i.test(err.message) ? '<div class="g-own"><input aria-label="Anlamı" placeholder="Anlamını yaz" maxlength="60"><button class="btn ghost" type="button">Ekle</button></div>' : ''}${extra}`;
+      const inp = $('input', gloss);
+      if (inp) {
+        inp.focus();
+        const go = () => inp.value.trim() && save(inp.value.trim());
+        $('.g-own button', gloss).onclick = go;
+        inp.onkeydown = (e) => { if (e.key === 'Enter') go(); if (e.key === 'Escape') closeGloss(); };
+      }
+    }
+    placeGloss(el);
+    const sb = $('.g-sent', gloss);
+    if (sb) sb.onclick = () => { closeGloss(); sent.click(); };
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !gloss.hidden) closeGloss(); });
+  document.addEventListener('mousedown', (e) => { if (!gloss.hidden && !gloss.contains(e.target) && !e.target.closest('.w')) closeGloss(); });
+  // Soru metni: cevaplamadan anlama bakmak ipucu sayılır (wordHint'i açık sorunun görünümü kurar).
+  let wordHint = null;
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('.passage[data-item] .w');
+    if (!el) return;
+    const itemId = el.closest('[data-item]').dataset.item;
+    wordHint?.(itemId);
+    openGloss(el, {
+      get: (w) => api('GET', `/api/words/sense?itemId=${encodeURIComponent(itemId)}&w=${encodeURIComponent(w)}`),
+      add: (w, sense) => api('POST', '/api/words/pick', { itemId, word: w, ...(sense && { sense }) }),
+    });
+  });
 
   // ---------- metinden kelime seçme ----------
   // Seçim (çift tıklama, telefonda basılı tutma) cevaplanmış bir sorunun içindeyse altında ekleme düğmesi çıkar.
@@ -1309,6 +1382,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         <div class="opts" role="group" aria-label="Şıklar">${optsHtml(it.options, 'button', { strike: true })}</div>
         <div id="fb" aria-live="polite"></div>`;
       wireSentences(box, it, () => { hinted = true; });
+      wordHint = (id) => { if (id === it.id && !answered) hinted = true; };
       const strike = wireStrike(box);
       if (opts.timed) {
         const limit = it.targetSec * 1000;
@@ -1524,7 +1598,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       const flagged = st.flags.includes(it.id);
       $('#m-q').innerHTML = `
         <div class="qhead"><span class="qno">${st.i + 1}</span><div class="qmeta"><span class="label">Soru ${st.i + 1} / ${items.length}</span><span class="small faint"><kbd>A</kbd>–<kbd>E</kbd> seç · <kbd>Shift</kbd>+harf ele · <kbd>←</kbd> <kbd>→</kbd> gez</span></div></div>
-        ${passageHtml(it)}
+        ${passageHtml(it, false)}
         <p class="stem">${gaps(esc(it.stem))}</p>
         <div class="opts" role="group" aria-label="Şıklar">${optsHtml(it.options, 'button', { strike: true })}</div>
         <div class="actions" style="justify-content:space-between">
@@ -2024,7 +2098,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   }
 
   // Kelimeler tek tek dokunulabilir span olur; noktalama ve boşluk olduğu gibi kalır.
-  const wordsHtml = (p) => esc(p).replace(/[A-Za-z][A-Za-z'’-]*[A-Za-z]|[A-Za-z]/g, (w) => `<span class="w" tabindex="0">${w}</span>`);
+  const wordsHtml = (p) => esc(p).replace(/[A-Za-z](?:[A-Za-z’-]|&#39;)*[A-Za-z]|[A-Za-z]/g, (w) => `<span class="w" tabindex="0">${w}</span>`);
 
   async function openText(id) {
     show('library');
@@ -2042,7 +2116,6 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         <div class="body" id="lib-body" lang="en">${t.text.split('\n\n').map((p) => `<p>${wordsHtml(p)}</p>`).join('')}</div>
         <p class="credit">Kaynak: <a href="${esc(t.url)}" rel="noopener" target="_blank">${esc(t.source)}, “${esc(t.title)}”</a>. ${LICENSE_HTML[t.license] ?? esc(t.license)}. Metin sınav çalışması için kısaltıldı.</p>
         <div class="actions"><button class="btn" id="lib-done">Okudum, listeye dön</button></div>
-        <div class="gloss" id="gloss" role="dialog" aria-live="polite" hidden></div>
       </article>`;
     $('#lib-back').onclick = renderLibrary;
     $('#lib-done').onclick = () => {
@@ -2050,55 +2123,14 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       try { localStorage.setItem('yds-lib-read', JSON.stringify([...r])); } catch {}
       renderLibrary();
     };
-    const body = $('#lib-body'), gloss = $('#gloss');
-    let cur = null;
-    const close = () => { gloss.hidden = true; cur?.classList.remove('on'); cur = null; };
-    const place = (el) => {
-      gloss.hidden = false;
-      const r = el.getBoundingClientRect(), host = gloss.offsetParent.getBoundingClientRect(); // .rtext
-      gloss.style.left = Math.max(0, Math.min(r.left - host.left, host.width - gloss.offsetWidth)) + 'px';
-      gloss.style.top = r.bottom - host.top + 8 + 'px';
+    const body = $('#lib-body');
+    const src = {
+      get: (w) => api('GET', `/api/library/word?id=${encodeURIComponent(t.id)}&w=${encodeURIComponent(w)}`),
+      add: (w, sense) => api('POST', '/api/library/word', { id: t.id, word: w, ...(sense && { sense }) }),
     };
-    const card = (x, el) => {
-      gloss.innerHTML = `<div class="g-head"><b>${esc(x.lemma)}</b>${x.pos ? `<span class="pos">${esc(POS_TR[x.pos] || x.pos)}</span>` : ''}${x.source === 'ai' ? '<span class="src">yapay zekâ</span>' : ''}</div>
-        <p class="g-sense">${esc(x.sense)}</p>
-        ${x.have ? '<p class="g-ok">✓ Kelimelerinde</p>' : '<button class="btn ghost g-add" type="button">+ Kelimelerime ekle</button>'}`;
-      place(el);
-      const add = $('.g-add', gloss);
-      if (add) add.onclick = () => save(el.textContent);
-    };
-    const save = async (word, sense) => {
-      try {
-        const r = await api('POST', '/api/library/word', { id: t.id, word, ...(sense && { sense }) });
-        toast(`${r.lemma}: ${r.sense}${r.added ? ' · kelimelerine eklendi' : ' · zaten kelimelerinde'}`);
-        close();
-      } catch (err) { toast(err.message); }
-    };
-    // Anlam bulunamazsa kullanıcı yazar ve öyle eklenir.
-    const ownSense = (el, msg) => {
-      gloss.innerHTML = `<p class="g-sense muted">${esc(msg)}</p><div class="g-own"><input aria-label="Anlamı" placeholder="Anlamını yaz" maxlength="60"><button class="btn ghost" type="button">Ekle</button></div>`;
-      place(el);
-      const inp = $('input', gloss);
-      inp.focus();
-      const go = () => inp.value.trim() && save(el.textContent, inp.value.trim());
-      $('button', gloss).onclick = go;
-      inp.onkeydown = (e) => { if (e.key === 'Enter') go(); if (e.key === 'Escape') close(); };
-    };
-    const open = async (el) => {
-      if (cur === el) return close();
-      cur?.classList.remove('on');
-      cur = el; el.classList.add('on');
-      gloss.innerHTML = '<p class="g-sense muted">Anlamına bakılıyor…</p>';
-      place(el);
-      try {
-        const x = await api('GET', `/api/library/word?id=${encodeURIComponent(t.id)}&w=${encodeURIComponent(el.textContent)}`);
-        if (cur === el) card(x, el);
-      } catch (err) { if (cur === el) ownSense(el, err.message); }
-    };
+    const open = (el) => openGloss(el, src);
     body.onclick = (e) => { const el = e.target.closest('.w'); if (el) open(el); };
     body.onkeydown = (e) => { const el = e.target.closest('.w'); if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(el); } };
-    keyHandler = (e) => { if (e.key === 'Escape') close(); };
-    box.onmousedown = (e) => { if (!gloss.hidden && !gloss.contains(e.target) && !e.target.closest('.w')) close(); };
   }
 
   // ---------- kelimeler: topla, grupla, gün aralıklarıyla tekrar et ----------
