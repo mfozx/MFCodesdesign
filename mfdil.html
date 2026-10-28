@@ -14,6 +14,9 @@ permalink: /projects/mfdil/
 <meta property="og:url" content="https://mfcodes.org/projects/mfdil/">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#F6F7F5">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="MFdil">
 <title>MFdil | MFCodes</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23F6F7F5'/%3E%3Cellipse cx='16' cy='16' rx='10' ry='7' fill='none' stroke='%23C9506A' stroke-width='2'/%3E%3Cellipse cx='16' cy='16' rx='6.5' ry='4' fill='%2324262B'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -396,6 +399,11 @@ details.rev .body{padding:4px 0 18px}
 .index .pos{font:600 12px/1 var(--label);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-left:8px;vertical-align:middle}
 .index .sense{font-size:21px;font-weight:500;margin:0 0 10px}
 .index .ex{font:italic 17px/2 var(--read);color:var(--ink-2);margin:0 0 18px}
+.say{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;margin:0 2px 0 6px;padding:0;border:0;border-radius:50%;background:none;color:var(--ink-3);vertical-align:middle;cursor:pointer}
+.say:hover,.say:focus-visible{color:var(--form);background:var(--form-soft)}
+.index .lemma .say{width:36px;height:36px}.index .lemma .say svg{width:20px;height:20px}
+.remind{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px}.remind select{width:auto}
+.chk{display:flex;gap:8px;align-items:center;font-weight:500}
 .lesson{border:1px solid var(--form-line);border-left:3px solid var(--form);border-radius:var(--r-in);padding:14px 16px;margin:16px 0 4px;background:var(--sheet)}
 .lesson h3{margin:8px 0 6px;font-size:18px}.lesson ul{padding-left:20px;margin:0 0 10px}.lesson li{margin:5px 0}
 .index .ex.qz{font-style:normal;color:var(--ink);margin:0 0 18px}
@@ -579,6 +587,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     <p class="label">Hesap</p>
     <h1>Hesap ve sınav kayıtların</h1>
     <div class="sheet field" id="d-real" style="margin:18px 0 16px"></div>
+    <div class="sheet field" id="d-phone" style="margin:0 0 16px"></div>
     <div class="sheet field" id="d-account"></div>
   </section>
 
@@ -629,7 +638,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
         body: body ? JSON.stringify(body) : undefined,
       });
-    } catch { throw new Error('Sunucuya ulaşılamadı. İnternet bağlantını kontrol edip tekrar dene.'); }
+    } catch { throw Object.assign(new Error('Sunucuya ulaşılamadı. İnternet bağlantını kontrol edip tekrar dene.'), { offline: true }); }
     const data = await res.json().catch(() => ({}));
     if (res.status === 401 && token) { setToken(null); show('auth'); }
     if (!res.ok) throw new Error(data.error || 'İstek başarısız oldu, tekrar dene.');
@@ -820,6 +829,21 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     });
   }
 
+  // ---------- okunuş: tarayıcının kendi İngilizce sesi (ağ ya da yapay zekâ yok) ----------
+  const canSay = 'speechSynthesis' in window;
+  const SAY_ICON = '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3 8v4h3l4 3V5L6 8H3z" fill="currentColor"/><path d="M13 7.5a3.5 3.5 0 0 1 0 5M15 5a7 7 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  const sayBtn = (word) => (canSay ? `<button class="say" type="button" data-say="${esc(word)}" aria-label="${esc(word)} okunuşunu dinle" title="Dinle">${SAY_ICON}</button>` : '');
+  function say(text) {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const voices = speechSynthesis.getVoices().filter((v) => /^en[-_]/i.test(v.lang));
+    u.voice = voices.find((v) => /en[-_](US|GB)/i.test(v.lang) && v.localService) ?? voices[0] ?? null;
+    u.lang = u.voice?.lang ?? 'en-US';
+    u.rate = 0.9;
+    speechSynthesis.speak(u);
+  }
+  if (canSay) document.addEventListener('click', (e) => { const b = e.target.closest('[data-say]'); if (b) { e.stopPropagation(); say(b.dataset.say); } }, true);
+
   // ---------- kelime kartı: metindeki kelimeye dokununca anlam + ekleme ----------
   // src.get(word) → {lemma, sense, pos, source, have}; src.add(word, sense?) → {lemma, sense, added}.
   // Anlam bulunamazsa kullanıcı yazar ve öyle eklenir.
@@ -853,7 +877,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     try {
       const x = await src.get(word);
       if (glossAt !== el) return;
-      gloss.innerHTML = `<div class="g-head"><b>${esc(x.lemma)}</b>${x.pos ? `<span class="pos">${esc(POS_TR[x.pos] || x.pos)}</span>` : ''}${x.source === 'ai' ? '<span class="src">yapay zekâ</span>' : ''}</div>
+      gloss.innerHTML = `<div class="g-head"><b>${esc(x.lemma)}</b>${sayBtn(x.lemma)}${x.pos ? `<span class="pos">${esc(POS_TR[x.pos] || x.pos)}</span>` : ''}${x.source === 'ai' ? '<span class="src">yapay zekâ</span>' : ''}</div>
         <p class="g-sense">${esc(x.sense)}</p>
         ${x.have ? '<p class="g-ok">✓ Kelimelerinde</p>' : '<button class="btn ghost g-add" type="button">+ Kelimelerime ekle</button>'}${extra}`;
       const add = $('.g-add', gloss);
@@ -1307,6 +1331,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     show('account');
     try { me = await api('GET', '/api/me'); } catch (err) { return errBox($('#d-account'), err.message, renderAccount); }
     renderRealScores();
+    renderPhone();
     $('#d-account').innerHTML = `<span class="label">Hesap</span><p style="margin:0 0 6px;word-break:break-all">${esc(me.email)}</p>
       ${me.hasRecovery ? '<p class="muted small" style="margin:0">Kurtarma kodun var. Kaybettiysen yenisini al; eskisi geçersiz olur.</p>' : '<p class="small" style="margin:0;color:var(--warn)">Hesabında kurtarma kodu yok. Şifreni unutursan giriş yapamazsın; aşağıdan bir kod oluştur.</p>'}
       <div class="actions">
@@ -1325,6 +1350,54 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       await api('DELETE', '/api/me', { password });
       clearLocal(); setToken(null); show('auth'); toast('Hesabın ve tüm verin silindi');
     });
+  }
+
+  // ---------- telefonda: ana ekrana ekleme ve günlük hatırlatma ----------
+  // Servis çalışanı yalnız yayındaki adreste (/projects/mfdil/) kayıtlıdır; yerel dosyada bu bölüm bilgi verir.
+  let installPrompt = null;
+  addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; if (!$('#v-account').hidden) renderPhone(); });
+  if ('serviceWorker' in navigator && location.pathname.endsWith('/')) navigator.serviceWorker.register('sw.js').catch(() => {});
+  const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const keyBytes = (b64) => Uint8Array.from(atob(b64.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+
+  async function renderPhone() {
+    const box = $('#d-phone');
+    const reg = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration().catch(() => null) : null;
+    const canPush = reg && 'PushManager' in window && 'Notification' in window;
+    const sub = canPush ? await reg.pushManager.getSubscription().catch(() => null) : null;
+    let st = { key: null, on: false, hour: null };
+    if (canPush) st = await api('GET', '/api/push' + (sub ? '?endpoint=' + encodeURIComponent(sub.endpoint) : '')).catch(() => st);
+    const hour = st.hour ?? Number(store.get('yds-remind-hour') || 20);
+    const install = standalone() ? '<p class="small muted" style="margin:0">Uygulama olarak açıksın.</p>'
+      : installPrompt ? '<div class="actions" style="margin-top:0"><button class="btn ghost" id="ph-install">Ana ekrana ekle</button></div>'
+      : isIOS ? '<p class="small muted" style="margin:0">iPhone\'da: Safari\'de Paylaş düğmesi → <b>Ana Ekrana Ekle</b>. Hatırlatma, uygulama ana ekrandan açıldığında çalışır.</p>'
+      : '<p class="small muted" style="margin:0">Tarayıcının menüsünden <b>Ana ekrana ekle</b> ya da <b>Uygulamayı yükle</b> ile telefona kurabilirsin.</p>';
+    box.innerHTML = `<span class="label">Telefonda</span>
+      ${install}
+      <p class="small muted" style="margin:10px 0 0">Açtığın okuma metinleri internet yokken de açılır. Hepsini indirmek için Okuma sayfasındaki düğmeyi kullan.</p>
+      <div class="remind"><label class="chk"><input type="checkbox" id="ph-on" ${st.on ? 'checked' : ''} ${canPush && st.key ? '' : 'disabled'}> Günlük hatırlatma</label>
+        <select id="ph-hour" aria-label="Hatırlatma saati" ${canPush && st.key ? '' : 'disabled'}>${Array.from({ length: 17 }, (_, k) => k + 7).map((h) => `<option value="${h}" ${h === hour ? 'selected' : ''}>${String(h).padStart(2, '0')}:00</option>`).join('')}</select></div>
+      <p class="small muted" style="margin:6px 0 0" id="ph-note">${!canPush ? (isIOS && !standalone() ? 'Hatırlatma için önce ana ekrana ekle, sonra uygulamadan aç.' : 'Bu tarayıcı bildirim desteklemiyor.') : !st.key ? 'Hatırlatma yakında açılacak.' : 'O gün hiç soru çözmediysen seçtiğin saatte tek bir bildirim gelir.'}</p>`;
+    if ($('#ph-install')) $('#ph-install').onclick = async () => { installPrompt.prompt(); await installPrompt.userChoice.catch(() => null); installPrompt = null; renderPhone(); };
+    if (!canPush || !st.key) return;
+    const save = async () => {
+      const on = $('#ph-on').checked, h = Number($('#ph-hour').value);
+      store.set('yds-remind-hour', String(h));
+      try {
+        if (!on) {
+          const cur = await reg.pushManager.getSubscription();
+          if (cur) { await api('POST', '/api/push/off', { endpoint: cur.endpoint }); await cur.unsubscribe(); }
+          return toast('Hatırlatma kapandı');
+        }
+        if (await Notification.requestPermission() !== 'granted') { $('#ph-on').checked = false; return toast('Bildirim izni verilmedi'); }
+        const cur = await reg.pushManager.getSubscription() ?? await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(st.key) });
+        await api('POST', '/api/push', { endpoint: cur.endpoint, hour: h });
+        toast(`Hatırlatma her gün ${String(h).padStart(2, '0')}:00'da`);
+      } catch (err) { $('#ph-on').checked = false; toast(err.message || 'Hatırlatma açılamadı'); }
+    };
+    $('#ph-on').onchange = save;
+    $('#ph-hour').onchange = () => $('#ph-on').checked && save();
   }
 
   async function addCore() {
@@ -1521,7 +1594,10 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   // ---------- seviye ölçümü (sabit formlar) ve denemeler: gerçek sınav gibi, cevaplar sonda ----------
   // Taslak hesaba ve forma özel; çıkışta ve silmede temizlenir.
   const mkey = (form) => `yds-measure-${form}:${me?.email ?? ''}`;
-  function clearLocal() { try { for (const k of Object.keys(localStorage)) if (k.startsWith("yds-measure-")) localStorage.removeItem(k); } catch {} }
+  function clearLocal() {
+    try { for (const k of Object.keys(localStorage)) if (k.startsWith("yds-measure-")) localStorage.removeItem(k); } catch {}
+    if (window.caches) caches.delete('mfdil-lib').catch(() => {}); // çevrimdışı okuma önbelleği (sw.js)
+  }
   // form verilmezse sunucu henüz çözülmemiş ilk formu açar
   async function renderMeasure(form) {
     show('measure');
@@ -2132,6 +2208,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         <div class="chips" role="group" aria-label="Konu"><button class="chip" data-t="">Hepsi</button>${topics.map((k) => `<button class="chip" data-t="${k}">${esc(TOPIC_TR[k])}</button>`).join('')}</div>
         <div class="chips" role="group" aria-label="Uzunluk"><button class="chip" data-l="">Her uzunluk</button>${[150, 250, 500].map((n) => `<button class="chip" data-l="${n}">${n} kelime</button>`).join('')}</div>
       </div>
+      ${navigator.serviceWorker?.controller ? '<p class="small muted" style="margin:0 0 10px"><button class="link small" id="lib-dl">Çevrimdışı okumak için hepsini indir</button> <span id="lib-dl-n"></span></p>' : ''}
       <ul class="lib-list" id="lib-list"></ul>
       <p class="note">Hazırlık forumlarının önerdiği dergiler (New Scientist, Scientific American, The Economist…) telifli olduğu için kopyalanmadı. Onların yerine aynı konuları işleyen ve yeniden kullanımı serbest metinler alındı.</p></div>`;
     const paint = () => {
@@ -2142,6 +2219,15 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
           <span class="prog${read.has(t.id) ? ' done' : ''}">${read.has(t.id) ? '✓ okundu' : ''}</span><span class="meta">${esc(TOPIC_TR[t.topic] ?? t.topic)} · ${esc(t.source)}</span></button></li>`).join('')
         : '<li><p class="muted" style="padding:16px 4px;margin:0">Bu seçimde metin yok.</p></li>';
       $$('.lib-row', box).forEach((b) => (b.onclick = () => openText(b.dataset.id)));
+    };
+    if ($('#lib-dl')) $('#lib-dl').onclick = async () => {
+      $('#lib-dl').disabled = true;
+      let n = 0;
+      for (const t of d.texts) {
+        try { await api('GET', `/api/library/text?id=${encodeURIComponent(t.id)}`); n++; } catch { break; }
+        $('#lib-dl-n').textContent = `${n}/${d.texts.length}`;
+      }
+      $('#lib-dl-n').textContent = n === d.texts.length ? `${n} metin indirildi` : `${n}/${d.texts.length} indirildi, bağlantı kesildi`;
     };
     $$('[data-t]', box).forEach((b) => (b.onclick = () => { topic = b.dataset.t; store.set('yds-lib-topic', topic); paint(); }));
     $$('[data-l]', box).forEach((b) => (b.onclick = () => { len = b.dataset.l; store.set('yds-lib-len', len); paint(); }));
@@ -2235,7 +2321,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         <div class="actions" style="margin:0"><button class="btn ${g.isDue ? '' : 'ghost'}" data-study="${g.id}" ${n ? '' : 'disabled'}>${g.isDue ? 'Çalış' : 'Aç'}</button><button class="btn ghost" data-ctx="${g.id}" ${n && d.words.length >= 2 ? '' : 'disabled'} title="Kelime, eklendiği cümlede boşluk olarak sorulur">Cümlede çalış</button><button class="link small" data-gdel="${g.id}">Sil</button></div></div>`;
     };
     const wordRow = (w) => `<li data-w="${esc(w.lemma)}"><input type="checkbox" aria-label="${esc(w.lemma)} seç" ${wordsSel.has(w.lemma) ? 'checked' : ''}>
-      <div><span class="lm">${esc(w.lemma)}</span>${w.pos ? `<span class="pos">${esc(POS_TR[w.pos] || w.pos)}</span>` : ' '}<span class="sn">${esc(w.sense)}</span>${w.source === 'ai' ? '<span class="src">yapay zekâ</span>' : ''}</div>
+      <div><span class="lm">${esc(w.lemma)}</span>${sayBtn(w.lemma)}${w.pos ? `<span class="pos">${esc(POS_TR[w.pos] || w.pos)}</span>` : ' '}<span class="sn">${esc(w.sense)}</span>${w.source === 'ai' ? '<span class="src">yapay zekâ</span>' : ''}</div>
       <div class="tools"><button class="link small" data-edit>Düzelt</button><button class="link small" data-del>Sil</button></div></li>`;
 
     box.innerHTML = `<p class="label">Kelimeler · topla, grupla, tekrar et</p>
@@ -2372,7 +2458,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       const ex = exHtml(w);
       const last = round >= total && i + 1 >= order.length;
       $('#s-card').innerHTML = `<div class="index">
-          <div class="lemma">${esc(w.lemma)}${w.pos ? `<span class="pos">${esc(POS_TR[w.pos] || w.pos)}</span>` : ''}</div>
+          <div class="lemma">${esc(w.lemma)}${sayBtn(w.lemma)}${w.pos ? `<span class="pos">${esc(POS_TR[w.pos] || w.pos)}</span>` : ''}</div>
           <div id="front"><p class="muted" style="margin:0 0 18px">Anlamını hatırlamaya çalış, sonra kartı çevir. Biliyorsan bakmadan geç.</p><div class="actions" style="justify-content:center;margin:0"><button class="btn" id="reveal">Kartı çevir <kbd style="color:inherit;border-color:currentColor">Boşluk</kbd></button><button class="btn ghost" id="s-skip">${last ? 'Bakmadan bitir' : 'Bakmadan geç'} <kbd style="color:inherit;border-color:currentColor">→</kbd></button></div></div>
           <div id="back" hidden><p class="sense">${esc(w.sense)}</p>${ex ? `<p class="ex">${ex}</p>` : ''}${w.exampleTr ? `<p class="ex-tr">${esc(w.exampleTr)}</p>` : ''}${w.exampleSrc ? `<p class="ex-src">Örnek: <a href="https://tatoeba.org/tr/sentences/show/${Number(w.exampleSrc.id)}" target="_blank" rel="noopener">Tatoeba #${Number(w.exampleSrc.id)}</a>, ${esc(w.exampleSrc.by)} · CC BY 2.0 FR</p>` : ''}
             <button class="btn" id="s-next">${last ? 'Bitir' : 'Sonraki kart'} <kbd style="color:inherit;border-color:currentColor">Boşluk</kbd></button></div>
@@ -2427,7 +2513,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         if (!o.ok && !missed.has(w.lemma)) { missed.add(w.lemma); order.push(w); }
         const again = !o.ok && order.length - 1 > i;
         $('#q-back').hidden = false;
-        $('#q-back').innerHTML = `<p class="sense" style="margin-top:18px"><b>${esc(w.lemma)}</b>${w.pos ? `<span class="pos">${esc(POS_TR[w.pos] || w.pos)}</span>` : ''} · ${esc(w.sense)}</p>
+        $('#q-back').innerHTML = `<p class="sense" style="margin-top:18px"><b>${esc(w.lemma)}</b>${sayBtn(w.lemma)}${w.pos ? `<span class="pos">${esc(POS_TR[w.pos] || w.pos)}</span>` : ''} · ${esc(w.sense)}</p>
           ${b ? `<p class="ex">${esc(b.before)}<mark>${esc(b.word)}</mark>${esc(b.after)}</p>` : ''}${w.exampleTr ? `<p class="ex-tr">${esc(w.exampleTr)}</p>` : ''}
           ${again ? '<p class="small muted" style="margin:0 0 12px">Bu kelime turun sonunda bir kez daha gelecek.</p>' : ''}
           <button class="btn" id="s-next">${last && !again ? 'Bitir' : 'Sonraki'} <kbd style="color:inherit;border-color:currentColor">Boşluk</kbd></button>`;
@@ -2492,7 +2578,11 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     if (m) { resetToken = m[1]; setMode('confirm'); return show('auth'); }
     if (!token) return show('auth');
     try { me = await api('GET', '/api/me'); }
-    catch { return show('auth'); }
+    catch (err) {
+      // Sunucuya ulaşılamıyorsa oturum düşmez: indirilen okuma metinleri açılır (sw.js önbelleği).
+      if (err.offline) { toast('İnternet yok. İndirdiğin okuma metinleri açık.'); return renderLibrary(); }
+      return show('auth');
+    }
     setStreak(me.habit); streakAt = Date.now();
     if (me.profile.target_score == null) return openOnboard();
     renderDash();
