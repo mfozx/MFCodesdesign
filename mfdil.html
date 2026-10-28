@@ -394,6 +394,8 @@ details.rev .body{padding:4px 0 18px}
 .index .pos{font:600 12px/1 var(--label);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-left:8px;vertical-align:middle}
 .index .sense{font-size:21px;font-weight:500;margin:0 0 10px}
 .index .ex{font:italic 17px/2 var(--read);color:var(--ink-2);margin:0 0 18px}
+.index .ex.qz{font-style:normal;color:var(--ink);margin:0 0 18px}
+.index .opts{margin:0}
 .index .ex mark{background:none;color:var(--ink);font-style:normal;font-weight:600}
 .index .ex-tr{margin:-14px 0 18px;font-size:15px;line-height:1.5;color:var(--ink-2)}
 .index .ex-src{margin:-12px 0 18px;font-size:12px;color:var(--ink-3)}
@@ -791,6 +793,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   // words: kelimeye dokununca anlam kartı (mini deneme sürerken kapalı).
   function passageHtml(it, words = true) {
     if (!it.passage) return '';
+    if (it.skill === 'translation.tr_en') words = false; // metin Türkçe
     let html = gaps(esc(it.passage), it.blank);
     for (const s of it.sentences || []) html = html.replace(gaps(esc(s.text)), `<span class="sent" tabindex="0" role="button" data-s="${esc(s.text)}" aria-label="Cümleyi çözümle">${gaps(esc(s.text))}</span>`);
     if (words) html = html.replace(/(<[^>]*>|&#?\w+;)|[A-Za-z](?:[A-Za-z’-]|&#39;)*[A-Za-z]|[A-Za-z]/g, (m, skip) => skip ?? `<span class="w">${m}</span>`);
@@ -2134,7 +2137,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   }
 
   // ---------- kelimeler: topla, grupla, gün aralıklarıyla tekrar et ----------
-  const POS_TR = { n: 'isim', v: 'fiil', adj: 'sıfat', adv: 'zarf', conj: 'bağlaç', prep: 'edat', phr: 'kalıp' };
+  const POS_TR = { n: 'isim', v: 'fiil', adj: 'sıfat', adv: 'zarf', conj: 'bağlaç', prep: 'edat', phr: 'kalıp', pron: 'zamir', det: 'belirleyici', num: 'sayı', int: 'ünlem' };
   const DAY = 864e5;
   const dayLabel = (day, today) => {
     const n = Math.round((Date.parse(day) - Date.parse(today)) / DAY);
@@ -2181,7 +2184,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       const plan = g.every ? `${g.gaps.length ? `${gapDays(g.gaps).join(', ')}. gün, ` : ''}sonra her ${g.every} günde bir` : `aralık ${g.gaps.join(', ')} gün`;
       return `<div class="grp"><div><b>${esc(g.name)}</b> <span class="small muted">· ${n} kelime · ${g.every ? `${g.stage} tekrar yapıldı` : `${Math.min(g.stage, g.sessions)} / ${g.sessions} tekrar`}</span>
           <div class="small faint">${state} · ${plan}</div></div>
-        <div class="actions" style="margin:0"><button class="btn ${g.isDue ? '' : 'ghost'}" data-study="${g.id}" ${n ? '' : 'disabled'}>${g.isDue ? 'Çalış' : 'Aç'}</button><button class="link small" data-gdel="${g.id}">Sil</button></div></div>`;
+        <div class="actions" style="margin:0"><button class="btn ${g.isDue ? '' : 'ghost'}" data-study="${g.id}" ${n ? '' : 'disabled'}>${g.isDue ? 'Çalış' : 'Aç'}</button><button class="btn ghost" data-ctx="${g.id}" ${n && d.words.length >= 2 ? '' : 'disabled'} title="Kelime, eklendiği cümlede boşluk olarak sorulur">Cümlede çalış</button><button class="link small" data-gdel="${g.id}">Sil</button></div></div>`;
     };
     const wordRow = (w) => `<li data-w="${esc(w.lemma)}"><input type="checkbox" aria-label="${esc(w.lemma)} seç" ${wordsSel.has(w.lemma) ? 'checked' : ''}>
       <div><span class="lm">${esc(w.lemma)}</span>${w.pos ? `<span class="pos">${esc(POS_TR[w.pos] || w.pos)}</span>` : ' '}<span class="sn">${esc(w.sense)}</span>${w.source === 'ai' ? '<span class="src">yapay zekâ</span>' : ''}</div>
@@ -2189,7 +2192,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
 
     box.innerHTML = `<p class="label">Kelimeler · topla, grupla, tekrar et</p>
       <h1 class="h-sm">${due.length ? `Bugün ${due.length} grup tekrar bekliyor` : d.words.length ? 'Bugün tekrar bekleyen grup yok' : 'Henüz kelime toplamadın'}</h1>
-      <p class="lede">Soruyu çözdükten sonra metinde bilmediğin kelimeye çift tıkla (telefonda basılı tut), buraya düşer. Biriktirdiklerini seçip grup yap. Grubu açınca kaç tur döneceğini sen yazarsın; her turda kartların sırası karışır.</p>
+      <p class="lede">Soruyu çözdükten sonra metinde bilmediğin kelimeye çift tıkla (telefonda basılı tut), buraya düşer. Biriktirdiklerini seçip grup yap. Grubu açınca kaç tur döneceğini sen yazarsın; her turda kartların sırası karışır. İstersen kart yerine <b>cümlede çalış</b>: kelime eklendiği cümlede boşluk olarak sorulur, yanlış bildiğin turun sonunda bir kez daha gelir.</p>
       ${due.length ? `<div class="sheet field" style="margin-bottom:16px"><span class="label">Bugün</span>${due.map(groupRow).join('')}</div>` : ''}
       <div class="sheet field" style="margin-bottom:16px"><span class="label">Topladıkların · <span id="w-n">${loose.length}</span></span>
         ${loose.length ? `<div class="actions" style="margin:0 0 6px"><button class="link small" id="w-ten">Son 10'u seç</button><button class="link small" id="w-all">Hepsini seç</button><button class="link small" id="w-none">Seçimi temizle</button></div>
@@ -2210,6 +2213,10 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     $$('[data-study]', box).forEach((b) => (b.onclick = () => {
       const g = d.groups.find((x) => x.id === Number(b.dataset.study));
       studyGroup(g, inGroup(g), d.today);
+    }));
+    $$('[data-ctx]', box).forEach((b) => (b.onclick = () => {
+      const g = d.groups.find((x) => x.id === Number(b.dataset.ctx));
+      studyGroup(g, inGroup(g), d.today, 'ctx', d.words);
     }));
     $$('[data-gdel]', box).forEach((b) => (b.onclick = async () => {
       if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Silinsin mi? Kelimeler topladıklarına döner'; return; }
@@ -2274,13 +2281,14 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
   }
 
   // Grup çalışması: kartlar her turda karışık sırayla gelir; tur sayısı sağ üstteki kutudan değiştirilebilir.
-  function studyGroup(g, list, today) {
+  // mode 'ctx': kelime eklendiği cümlede boşluk olarak sorulur (cümlesi yoksa Türkçe anlamından); şıklar pool'dan.
+  function studyGroup(g, list, today, mode = 'card', pool = list) {
     show('vocab');
     const box = $('#v-vocab');
     const seq = viewSeq;
     let total = g.reps, round = 1, i = 0;
     let order = shuffle([...list]);
-    box.innerHTML = `<div class="studyhead"><div><span class="label">${esc(g.name)}</span><div class="small faint num" id="s-pos" aria-live="polite"></div></div>
+    box.innerHTML = `<div class="studyhead"><div><span class="label">${esc(g.name)}${mode === 'ctx' ? ' · cümlede' : ''}</span><div class="small faint num" id="s-pos" aria-live="polite"></div></div>
         <label class="reps">Kaç tur? <input id="s-reps" type="number" min="1" max="20" inputmode="numeric" value="${total}"></label></div>
       <div id="s-card"></div>
       <div class="actions" style="justify-content:center"><button class="link small" id="s-quit">Kelimelere dön</button></div>`;
@@ -2296,16 +2304,21 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
       const stem = head.slice(0, Math.max(4, head.length - 2)).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       return esc(w.example).replace(new RegExp(`\\b(${stem}\\w*)`, 'i'), '<mark>$1</mark>');
     };
+    // Tur bittiyse yenisine geçer; bütün turlar bittiyse false.
+    let missed = new Set();
+    const turn = () => {
+      if (i < order.length) return true;
+      if (round >= total) { finish(); return false; }
+      round++; i = 0; missed = new Set();
+      // Yeni turda sıra yeniden karışır; önceki turun son kartı başa gelmez.
+      const prev = order.at(-1);
+      order = shuffle([...new Set(order)]);
+      if (order.length > 1 && order[0] === prev) order.push(order.shift());
+      toast(`Tur ${round} · sıra karıştı`);
+      return true;
+    };
     const card = () => {
-      if (i >= order.length) {
-        if (round >= total) return finish();
-        round++; i = 0;
-        // Yeni turda sıra yeniden karışır; önceki turun son kartı başa gelmez.
-        const prev = order.at(-1);
-        order = shuffle([...order]);
-        if (order.length > 1 && order[0] === prev) order.push(order.shift());
-        toast(`Tur ${round} · sıra karıştı`);
-      }
+      if (!turn()) return;
       pos();
       const w = order[i];
       const ex = exHtml(w);
@@ -2327,6 +2340,57 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         if (e.key !== ' ' && e.key !== 'ArrowRight') return;
         e.preventDefault();
         if (e.key === ' ' && !$('#front').hidden) reveal(); else next();
+      };
+    };
+    // Boşluk: kelimenin cümledeki biçimi (tek kelimelik lemma); bulunmazsa anlamdan sorulur.
+    const blankOf = (w) => {
+      if (!w.example || w.lemma.includes(' ')) return null;
+      const stem = w.lemma.slice(0, Math.max(4, w.lemma.length - 2)).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const m = w.example.match(new RegExp(`\\b${stem}[a-z]*`, 'i'));
+      return m && { before: w.example.slice(0, m.index), word: m[0], after: w.example.slice(m.index + m[0].length) };
+    };
+    const quiz = () => {
+      if (!turn()) return;
+      pos();
+      const w = order[i];
+      const b = blankOf(w);
+      // Çeldiriciler: önce aynı türden kelimeler, sonra diğerleri; anlamı aynı olanlar alınmaz.
+      const others = shuffle(pool.filter((x) => x.lemma !== w.lemma && x.sense !== w.sense));
+      const pick = [...others.filter((x) => w.pos && x.pos === w.pos), ...others.filter((x) => !w.pos || x.pos !== w.pos)].slice(0, 3);
+      const opts = shuffle([w, ...pick]).map((x, k) => ({ key: KEYS[k], text: x.lemma, ok: x === w }));
+      const last = round >= total && i + 1 >= order.length;
+      $('#s-card').innerHTML = `<div class="index">
+          ${b ? `<p class="muted" style="margin:0 0 12px">Boşluğa hangi kelime gelir? Şıklar sözlük biçiminde.</p><p class="ex qz">${esc(b.before)}<span class="gap" role="img" aria-label="boşluk"></span>${esc(b.after)}</p>`
+            : `<p class="muted" style="margin:0 0 12px">Bu anlama gelen kelime hangisi?</p><p class="sense">${esc(w.sense)}</p>`}
+          <div class="opts" role="group" aria-label="Şıklar">${optsHtml(opts)}</div>
+          <div id="q-back" hidden></div>
+        </div>`;
+      let done = false;
+      const answer = (key) => {
+        if (done) return;
+        done = true;
+        const o = opts.find((x) => x.key === key);
+        $$('#s-card .opt').forEach((el) => {
+          el.disabled = true;
+          const x = opts.find((y) => y.key === el.dataset.k);
+          if (x.ok) el.classList.add('right'); else if (x === o) el.classList.add('wrong');
+        });
+        // Yanlış bilinen kelime turun sonunda bir kez daha sorulur.
+        if (!o.ok && !missed.has(w.lemma)) { missed.add(w.lemma); order.push(w); }
+        const again = !o.ok && order.length - 1 > i;
+        $('#q-back').hidden = false;
+        $('#q-back').innerHTML = `<p class="sense" style="margin-top:18px"><b>${esc(w.lemma)}</b>${w.pos ? `<span class="pos">${esc(POS_TR[w.pos] || w.pos)}</span>` : ''} · ${esc(w.sense)}</p>
+          ${b ? `<p class="ex">${esc(b.before)}<mark>${esc(b.word)}</mark>${esc(b.after)}</p>` : ''}${w.exampleTr ? `<p class="ex-tr">${esc(w.exampleTr)}</p>` : ''}
+          ${again ? '<p class="small muted" style="margin:0 0 12px">Bu kelime turun sonunda bir kez daha gelecek.</p>' : ''}
+          <button class="btn" id="s-next">${last && !again ? 'Bitir' : 'Sonraki'} <kbd style="color:inherit;border-color:currentColor">Boşluk</kbd></button>`;
+        $('#s-next').onclick = () => { i++; quiz(); };
+        $('#s-next').focus({ preventScroll: true });
+      };
+      $$('#s-card .opt').forEach((el) => (el.onclick = () => answer(el.dataset.k)));
+      keyHandler = (e) => {
+        const k = e.key.toUpperCase();
+        if (!done && opts.some((x) => x.key === k)) { e.preventDefault(); answer(k); }
+        else if (done && (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight')) { e.preventDefault(); i++; quiz(); }
       };
     };
     // Bitiş bir kez çalışır: "Bitir"e iki kez basılınca (çift dokunuş, Boşluk + tık) ikinci çağrı butonları bağlamadan
@@ -2358,14 +2422,15 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         <div class="actions" style="justify-content:center"><button class="btn ${nx ? 'ghost' : ''}" id="s-back">Kelimelere dön</button><button class="btn ghost" id="s-again">Bir kez daha çalış</button></div></div>`;
       $('#s-quit')?.parentElement.remove();
       $('#s-back').onclick = () => renderWords();
-      $('#s-again').onclick = () => studyGroup(ng, list, today);
+      $('#s-again').onclick = () => studyGroup(ng, list, today, mode, pool);
       if (nx) {
-        $$('[data-next]').forEach((b) => (b.onclick = () => { const x = dueNext.find((y) => y.id === Number(b.dataset.next)); studyGroup(x, words(x), d.today); }));
+        $$('[data-next]').forEach((b) => (b.onclick = () => { const x = dueNext.find((y) => y.id === Number(b.dataset.next)); studyGroup(x, words(x), d.today, mode, d.words); }));
         $('#s-close').onclick = () => { $('#s-next-g').closest('.sheet').remove(); $('#s-back').classList.remove('ghost'); $('#s-back').focus({ preventScroll: true }); };
       }
       $(nx ? '#s-next-g' : '#s-back').focus({ preventScroll: true });
     };
-    list.length ? card() : renderWords();
+    if (!list.length) return renderWords();
+    mode === 'ctx' && pool.length >= 2 ? quiz() : card();
   }
 
   // ---------- başlangıç ----------
