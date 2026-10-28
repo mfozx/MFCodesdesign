@@ -284,6 +284,8 @@ td.over{color:var(--bad);font-weight:600}
 .ledger div{padding:14px 16px;border-bottom:1px solid var(--form-line)}
 .ledger div:nth-child(odd){border-right:1px solid var(--form-line)}
 .ledger div:nth-last-child(-n+2){border-bottom:0}
+.wk.ledger{margin:4px 0 14px}.wk.ledger b{font-size:24px}
+.wk-line{margin:0 0 8px}.wk-line .link{margin-left:6px}
 .ledger b{display:block;font:700 30px/1.05 var(--display);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .ledger span{font-size:13.5px;color:var(--ink-2)}
 .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:34px 44px;margin-top:38px;align-items:start;counter-reset:f}
@@ -558,6 +560,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     </div>
     <div class="sheet omr marks" id="d-goal"><div class="skeleton"></div></div>
     <div class="cols">
+      <div class="sheet field" id="d-week"></div>
       <div class="sheet field" id="d-plan"></div>
       <div class="sheet field" id="d-pick"></div>
       <div class="sheet field" id="d-weak"></div>
@@ -1145,6 +1148,24 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     const pct = (x) => Math.round(x * 100);
     const ARROW = { up: '↑', down: '↓', flat: '' };
     const trend = (w) => (w.now - w.accuracy >= 0.1 ? 'up' : w.accuracy - w.now >= 0.1 ? 'down' : 'flat');
+    // Bu hafta: son 7 gün, önceki 7 günle
+    const wk = rep.week, wc = wk.current, wp = wk.previous;
+    const was = (what, x) => `<span>${what} · ${wp.answered ? `önceki hafta ${x}` : 'önceki hafta yok'}</span>`;
+    const skillList = (l) => l.map((x) => `${esc(x.label)} <span class="num">%${pct(x.before)} → %${pct(x.now)}</span>`).join(', ');
+    $('#d-week').innerHTML = `<span class="label">Bu hafta</span>` + (wc.answered || wp.answered ? `
+      <div class="ledger wk">
+        <div><b>${wc.minutes} dk</b>${was('çalışma', `${wp.minutes} dk`)}</div>
+        <div><b>${wc.answered}</b><span>cevap · ${wc.days} gün</span></div>
+        <div><b>${wc.accuracy == null ? '–' : '%' + pct(wc.accuracy)}</b>${wc.accuracy == null ? '<span>başarı için 5 cevap gerek</span>' : was('başarı', wp.accuracy == null ? '–' : '%' + pct(wp.accuracy))}</div>
+        <div><b>${wk.wordsAdded}</b><span>yeni kelime</span></div>
+      </div>
+      ${wk.improved.length ? `<p class="wk-line"><b>İlerleyen:</b> ${skillList(wk.improved)}</p>` : ''}
+      ${wk.stalled.length ? `<p class="wk-line"><b>Yerinde sayan:</b> ${skillList(wk.stalled)}<button class="link small" data-wk-skill="${esc(wk.stalled[0].skill)}">${esc(wk.stalled[0].label)} çalış</button></p>` : ''}
+      ${wk.expected ? `<p class="wk-line">Ölçülen ${wk.expected.sections} bölümde beklenen doğru <b class="num">${fmtScore(wk.expected.before)} → ${fmtScore(wk.expected.now)}</b> (<span class="num">${fmtScore(wk.expected.before * 1.25)} → ${fmtScore(wk.expected.now * 1.25)}</span> puan karşılığı).</p>` : ''}
+      <p class="note">Son 7 gün, önceki 7 günle. Konu karşılaştırması iki haftada da en az 5 cevap ister; ipucu alınan ve ısınma soruları sayılmaz.</p>`
+      : `<p class="empty">Bu hafta henüz soru çözmedin. Çözdükçe süren, başarın ve ilerleyen konular burada haftalık görünür.</p>`);
+    $$('[data-wk-skill]').forEach((b) => (b.onclick = () => startStudy({ skill: b.dataset.wkSkill })));
+
     $('#d-weak').innerHTML = `<span class="label">Konu haritası</span>` + (rep.weak.length ? `<ul class="list">${rep.weak.map((w) => `
       <li><div class="top"><span>${esc(w.label)}</span><span class="small muted num">${w.enoughData ? `%${pct(w.now)}${w.n > RECENT ? ` <span class="trend ${trend(w)}">${ARROW[trend(w)]} genel %${pct(w.accuracy)}</span>` : ''}` : 'veri az'} · ${w.n} soru</span></div>
       <div class="meter ${w.enoughData ? '' : 'low'}"><i style="width:${w.enoughData ? pct(w.now) : 100}%"></i>${w.enoughData && w.n > RECENT ? `<b class="past" style="left:${pct(w.accuracy)}%" title="Genel ortalama"></b>` : ''}</div></li>`).join('')}</ul>
