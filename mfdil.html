@@ -396,6 +396,8 @@ details.rev .body{padding:4px 0 18px}
 .index .pos{font:600 12px/1 var(--label);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-left:8px;vertical-align:middle}
 .index .sense{font-size:21px;font-weight:500;margin:0 0 10px}
 .index .ex{font:italic 17px/2 var(--read);color:var(--ink-2);margin:0 0 18px}
+.lesson{border:1px solid var(--form-line);border-left:3px solid var(--form);border-radius:var(--r-in);padding:14px 16px;margin:16px 0 4px;background:var(--sheet)}
+.lesson h3{margin:8px 0 6px;font-size:18px}.lesson ul{padding-left:20px;margin:0 0 10px}.lesson li{margin:5px 0}
 .index .ex.qz{font-style:normal;color:var(--ink);margin:0 0 18px}
 .index .opts{margin:0}
 .index .ex mark{background:none;color:var(--ink);font-style:normal;font-weight:600}
@@ -1333,15 +1335,34 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
     } catch (err) { toast(err.message); }
   }
 
+  // ---------- kısa ders: aynı konuda üst üste yanlıştan sonra ----------
+  const LESSON_RUN = 3;
+  async function showLesson(el, skill, onDrill) {
+    el.innerHTML = '<div class="lesson"><span class="label">Kısa ders</span><p class="muted" style="margin:6px 0 0">Konu anlatımı yükleniyor…</p></div>';
+    let brief;
+    try { ({ brief } = await api('GET', '/api/brief?skill=' + encodeURIComponent(skill))); } catch { brief = null; }
+    if (!el.isConnected) return;
+    // Okunan anlatım görüldü sayılır: pekiştirme testi aynı anlatımla başlamaz.
+    if (brief) api('POST', '/api/brief-seen', { skill }).catch(() => {});
+    el.innerHTML = `<div class="lesson"><span class="label">Kısa ders · üst üste ${LESSON_RUN} yanlış</span>
+      ${brief ? `<h3>${esc(brief.title)}</h3><ul>${brief.points.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+        <div class="analysis"><div style="font-family:var(--read)">${gaps(esc(brief.example.text))}</div><div class="tr">${esc(brief.example.note)}</div></div>`
+        : '<p class="muted">Bu konunun anlatımı henüz yok.</p>'}
+      <p class="small muted" style="margin:12px 0 0">Kuralı okuduktan sonra bu konudan 5 soruluk kısa bir testle pekiştirebilirsin. Bu testteki soruların yine ölçüme girer.</p>
+      <div class="actions" style="margin-bottom:0"><button class="btn ghost" data-drill>5 soruyla pekiştir</button></div></div>`;
+    $('[data-drill]', el).onclick = onDrill;
+  }
+
   // ---------- öğretmen döngüsü: konu anlatımı + test ----------
   // opts.trap: o çeldiriciyi içeren sorular; opts.skill: kullanıcının seçtiği konu; opts.timed: soru başına hedef süre gösterilir
+  // opts.size: kısa test (üst üste yanlıştan sonraki pekiştirme); opts.lesson: pekiştirme testi, kısa ders yeniden açılmaz
   async function startStudy(opts = {}) {
     show('study');
     const box = $('#v-study');
     box.innerHTML = '<div class="skeleton" style="height:48px;margin-bottom:16px"></div><div class="skeleton" style="height:300px"></div>';
     let data;
     const seq = viewSeq;
-    const qs = opts.trap ? '?trap=' + encodeURIComponent(opts.trap) : opts.skill ? '?skill=' + encodeURIComponent(opts.skill) : '';
+    const qs = (opts.trap ? '?trap=' + encodeURIComponent(opts.trap) : opts.skill ? '?skill=' + encodeURIComponent(opts.skill) : '?') + (opts.size ? '&size=' + opts.size : '');
     try { data = await api('GET', '/api/next' + qs); }
     catch (err) { return alive(seq) && errBox(box, err.message, () => startStudy(opts)); }
     if (!alive(seq)) return;
@@ -1445,7 +1466,12 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
         r.chosen = b.dataset.k;
         state.results.push({ it, r, inTime: ms <= it.targetSec * 1000 });
         const last = state.i + 1 >= items.length;
-        const nextBtn = `<div class="actions"><button class="btn" id="nx">${last ? 'Testi bitir' : 'Sonraki soru'}</button><button class="btn ghost flagbtn" id="mk"></button></div>`;
+        // Aynı konuda üst üste 3 yanlış: konu anlatımı kendiliğinden açılır, 5 soruluk pekiştirme önerilir (testte bir kez).
+        state.run = r.correct || state.runSkill !== it.skill ? (r.correct ? 0 : 1) : state.run + 1;
+        state.runSkill = it.skill;
+        const lesson = !opts.lesson && !state.lessoned && state.run >= LESSON_RUN;
+        if (lesson) state.lessoned = true;
+        const nextBtn = `${lesson ? '<div id="lesson"></div>' : ''}<div class="actions"><button class="btn" id="nx">${last ? 'Testi bitir' : 'Sonraki soru'}</button><button class="btn ghost flagbtn" id="mk"></button></div>`;
         if (explainAtEnd) $('#fb').innerHTML = nextBtn;
         else {
           paintOptions(box, r, b.dataset.k);
@@ -1454,6 +1480,7 @@ footer a{display:inline-block;padding:5px 0;text-decoration-color:var(--form-lin
           wireEvidence($('#fb'), r);
           $('.strip', box).outerHTML = stripHtml();
         }
+        if (lesson) showLesson($('#lesson'), it.skill, () => startStudy({ skill: it.skill, size: 5, lesson: true }));
         wireMark($('#mk'), it.id);
         const nx = () => { state.i++; state.i < items.length ? renderQuestion() : renderSummary(); };
         $('#nx').onclick = nx;
